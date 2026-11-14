@@ -14,7 +14,10 @@
     "lint": "eslint . --max-warnings 0 && prettier --check .",
     "format": "prettier --write .",
     "check:contrast": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/check-contrast.mjs",
-    "check": "npm run lint && npm run typecheck && npm run build && npm run check:contrast"
+    "build:docs": "node scripts/extract-api.mjs && node scripts/extract-examples.mjs && ng build docs && node scripts/write-404.mjs",
+    "check:ssr": "node scripts/check-ssr.mjs",
+    "check:a11y": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/check-a11y.mjs",
+    "check": "npm run lint && npm run typecheck && npm run build && npm run check:contrast && npm run build:docs && npm run check:ssr && npm run check:a11y"
   },
   "devDependencies": {
     "@angular/build": "~22.2.6",
@@ -26,7 +29,9 @@
     "@angular/core": "~22.2.6",
     "@angular/forms": "~22.2.6",
     "@angular/platform-browser": "~22.2.6",
+    "@angular/platform-server": "~22.2.6",
     "@angular/router": "~22.2.6",
+    "@angular/ssr": "~22.2.6",
     "@openng/optimus-ui": "~2.0.2",
     "@openng/optimus-ui-themes": "~2.0.2",
     "@types/node": "^24.0.0",

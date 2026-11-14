@@ -1,0 +1,193 @@
+<h1 tabindex="-1">{{ doc().title }}</h1>
+<p class="purpose"><docs-text [value]="doc().purpose" /></p>
+<docs-code-block [code]="importLine()" label="import line" />
+
+<section aria-labelledby="examples">
+  <h2 id="examples">Examples</h2>
+  @for (example of examples(); track example.sourceKey) {
+    <article class="example">
+      <h3>{{ example.title }}</h3>
+      <p><docs-text [value]="example.description" /></p>
+      @if (example.component) {
+        <div class="live docs-live">
+          <ng-container [ngComponentOutlet]="example.component" />
+        </div>
+      }
+      <docs-code-block [code]="example.source" [label]="example.title + ' example source'" />
+    </article>
+  }
+</section>
+
+<section aria-labelledby="accessibility">
+  <h2 id="accessibility">Accessibility</h2>
+  <h3>Keyboard</h3>
+  <div class="scroll" tabindex="0" role="region" aria-label="Keyboard interaction">
+    <table>
+      <thead>
+        <tr>
+          <th scope="col">Key</th>
+          <th scope="col">Effect</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of doc().keyboard; track row.key) {
+          <tr>
+            <th scope="row"><docs-text [value]="row.key" /></th>
+            <td><docs-text [value]="row.effect" /></td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+  <h3>ARIA</h3>
+  <ul>
+    @for (note of doc().aria; track note) {
+      <li><docs-text [value]="note" /></li>
+    }
+  </ul>
+</section>
+
+<section aria-labelledby="styling">
+  <h2 id="styling">Styling</h2>
+  <p><docs-text [value]="doc().stylingIntro" /></p>
+  <div class="scroll" tabindex="0" role="region" aria-label="Pass-through parts">
+    <table>
+      <thead>
+        <tr>
+          <th scope="col"><code>pt</code> part</th>
+          <th scope="col">What it reaches</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (part of doc().parts; track part.part) {
+          <tr>
+            <th scope="row">
+              <code>{{ part.part }}</code>
+            </th>
+            <td><docs-text [value]="part.description" /></td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section aria-labelledby="api">
+  <h2 id="api">API</h2>
+  @for (component of components(); track component.api.name) {
+    <h3>
+      <code>{{ component.api.name }}</code>
+    </h3>
+    <p>
+      Selector: <code>{{ component.api.selector }}</code>.
+      <docs-text [value]="component.api.description" />
+    </p>
+    @for (section of component.sections; track section.title) {
+      <h4>{{ section.title }}</h4>
+      @if (section.rows.length === 0) {
+        <p class="none">None</p>
+      } @else {
+        <div class="scroll" tabindex="0" role="region" [attr.aria-label]="section.title">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Name</th>
+                <th scope="col">Type</th>
+                <th scope="col">Default</th>
+                <th scope="col">Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of section.rows; track row.name) {
+                <tr>
+                  <th scope="row">
+                    <code>{{ row.alias }}</code>
+                  </th>
+                  <td>
+                    <code>{{ row.type }}</code>
+                  </td>
+                  <td>
+                    @if (row.required) {
+                      Required
+                    } @else if (row.defaultValue !== null) {
+                      <code>{{ row.defaultValue }}</code>
+                    }
+                  </td>
+                  <td><docs-text [value]="row.description" /></td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    }
+  }
+
+  <h3>Content slots</h3>
+  @if (slots().length === 0) {
+    <p class="none">None</p>
+  } @else {
+    <ul>
+      @for (slot of slots(); track slot.name) {
+        <li>
+          <code>{{ slot.selector }}</code>: <docs-text [value]="slot.description" />
+        </li>
+      }
+    </ul>
+  }
+
+  <h3>Types</h3>
+  <div class="scroll" tabindex="0" role="region" aria-label="Types">
+    <table>
+      <thead>
+        <tr>
+          <th scope="col">Name</th>
+          <th scope="col">Definition</th>
+          <th scope="col">Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (type of api().types; track type.name) {
+          <tr>
+            <th scope="row">
+              <code>{{ type.name }}</code>
+            </th>
+            <td>
+              <code>{{ type.type }}</code>
+            </td>
+            <td><docs-text [value]="type.description" /></td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <h3>From Optimus to WeeljackNg</h3>
+  <p>
+    What the Optimus <code>p-button</code> offers, and what <code>wj-button</code> does with it.
+  </p>
+  <div class="scroll" tabindex="0" role="region" aria-label="Optimus to WeeljackNg mapping">
+    <table>
+      <thead>
+        <tr>
+          <th scope="col">Optimus</th>
+          <th scope="col">WeeljackNg</th>
+          <th scope="col">Status</th>
+          <th scope="col">Note</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of doc().mapping; track row.optimus + row.weeljack) {
+          <tr>
+            <th scope="row">
+              <code>{{ row.optimus }}</code>
+            </th>
+            <td><docs-text [value]="row.weeljack" /></td>
+            <td>{{ row.status }}</td>
+            <td><docs-text [value]="row.note" /></td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</section>

@@ -1,1 +1,69 @@
-/* You can add global styles to this file, and also import other style files */
+/*
+ * Global docs styles. They are unlayered, so they outrank everything in Optimus's `@layer wj`:
+ * every rule here targets docs-owned elements and stays away from a wj-button's own parts.
+ * Colours come from the `--wj-*` variables `provideWeeljack` emits, never raw values.
+ */
+html {
+  color-scheme: light;
+}
+
+html.wj-dark {
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  background: var(--wj-surface-50);
+  color: var(--wj-text-color);
+  font-family:
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    Roboto,
+    sans-serif;
+  line-height: 1.5;
+}
+
+html.wj-dark body {
+  background: var(--wj-surface-950);
+}
+
+h1 {
+  margin-block: 0 16px;
+  font-size: 2rem;
+  line-height: 1.25;
+}
+
+a {
+  color: inherit;
+}
+
+code,
+pre {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+p code,
+li code,
+td code,
+th code,
+h3 code {
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: var(--wj-content-border-color);
+  font-size: 0.875em;
+}
+
+/* One focus ring on every docs control. A wj-button keeps the ring Optimus gives it. */
+:focus-visible:not(wj-button *) {
+  outline: 2px solid var(--wj-primary-color);
+  outline-offset: 2px;
+}
+
+/* An example's host holds its live components in a wrapping row. */
+.docs-live > * {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+}

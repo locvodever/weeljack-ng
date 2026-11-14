@@ -1,0 +1,40 @@
+.block {
+  position: relative;
+  border: 1px solid var(--wj-content-border-color);
+  border-radius: 12px;
+  background: var(--wj-content-background);
+}
+
+.code {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 16px 96px 16px 16px;
+  overflow-x: auto;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.copy {
+  position: absolute;
+  inset-block-start: 8px;
+  inset-inline-end: 8px;
+  min-block-size: 44px;
+  min-inline-size: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--wj-surface-500);
+  border-radius: 8px;
+  background: var(--wj-content-background);
+  color: var(--wj-text-color);
+  font: inherit;
+  cursor: pointer;
+}
+
+.visually-hidden {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

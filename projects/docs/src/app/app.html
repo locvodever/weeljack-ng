@@ -1,1 +1,16 @@
-<router-outlet />
+<a class="skip-link" href="#main" (click)="skipToMain($event)">Skip to content</a>
+<header class="header">
+  <div class="group">
+    <a class="wordmark" routerLink="">WeeljackNg</a>
+    <span class="version">v{{ version }}</span>
+  </div>
+  <div class="group">
+    <a class="action" href="https://github.com/locvodever/weeljack-ng" rel="noopener">GitHub</a>
+    <button type="button" class="action" [attr.aria-pressed]="dark()" (click)="toggleDark()">
+      Dark mode <span aria-hidden="true">{{ dark() ? 'on' : 'off' }}</span>
+    </button>
+  </div>
+</header>
+<main id="main" tabindex="-1">
+  <router-outlet />
+</main>

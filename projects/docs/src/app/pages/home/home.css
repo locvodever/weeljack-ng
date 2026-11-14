@@ -1,0 +1,18 @@
+.lede {
+  max-inline-size: 72ch;
+  margin-block: 0 24px;
+  font-size: 1.125rem;
+}
+
+.primary {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 44px;
+  margin-block-start: 24px;
+  padding: 0 24px;
+  border-radius: 8px;
+  background: var(--wj-primary-color);
+  color: var(--wj-primary-contrast-color);
+  font-weight: 600;
+  text-decoration: none;
+}

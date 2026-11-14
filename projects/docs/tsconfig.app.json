@@ -2,6 +2,7 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "types": [],
+    "resolveJsonModule": true,
     "paths": {
       "weeljack-ng": ["../../dist/weeljack-ng"],
       "weeljack-ng/*": ["../../dist/weeljack-ng/*"]

@@ -1,0 +1,7 @@
+<div class="block">
+  <pre class="code" tabindex="0"><code>{{ code() }}</code></pre>
+  <button type="button" class="copy" (click)="copy()">
+    Copy<span class="visually-hidden"> {{ label() }}</span>
+  </button>
+  <span class="visually-hidden" role="status">{{ copied() ? 'Copied' : '' }}</span>
+</div>

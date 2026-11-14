@@ -71,6 +71,9 @@
           "builder": "@angular/build:application",
           "options": {
             "browser": "projects/docs/src/main.ts",
+            "server": "projects/docs/src/main.server.ts",
+            "outputMode": "static",
+            "outputPath": "dist/docs",
             "tsConfig": "projects/docs/tsconfig.app.json",
             "assets": [
               {
@@ -85,7 +88,7 @@
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "500kB",
+                  "maximumWarning": "600kB",
                   "maximumError": "1MB"
                 },
                 {
@@ -94,7 +97,8 @@
                   "maximumError": "8kB"
                 }
               ],
-              "outputHashing": "all"
+              "outputHashing": "all",
+              "baseHref": "/weeljack-ng/"
             },
             "development": {
               "optimization": false,
