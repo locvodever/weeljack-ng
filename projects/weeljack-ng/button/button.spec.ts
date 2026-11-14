@@ -576,6 +576,18 @@ describe('WjButton', () => {
     });
   });
 
+  describe('autofocus', () => {
+    it('carries no autofocus attribute and does not take focus on load', async () => {
+      const { element, button } = await render();
+      const { host, control } = parts(element);
+
+      expect(control.hasAttribute('autofocus')).toBe(false);
+      expect(host.hasAttribute('autofocus')).toBe(false);
+      expect(document.activeElement).not.toBe(control);
+      expect(await button.isFocused()).toBe(false);
+    });
+  });
+
   describe('accessibility', () => {
     describe.each<Scheme>(['light', 'dark'])('%s', (scheme) => {
       it.each(STATES)('has no axe violations: %s', async (_name, setup) => {

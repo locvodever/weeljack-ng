@@ -58,6 +58,13 @@ export class WjButton {
    */
   readonly pt = input<WjButtonPt>();
 
+  /**
+   * Optimus 2.0.2 binds `[pAutoFocus]="autofocus || buttonProps?.autofocus"`; with neither set that
+   * is `undefined`, which its `AutoFocus` directive does not treat as `false`, so the button gets
+   * `autofocus="true"` and the browser focuses it on load. An explicit `false` keeps it off.
+   */
+  protected readonly inertProps = { autofocus: false };
+
   /** `pt` forwarded as given, plus the ARIA attributes this wrapper routes to the button. */
   protected readonly partAttributes = computed<WjButtonPt>(() => {
     const pt = this.pt();
