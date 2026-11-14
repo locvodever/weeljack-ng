@@ -1,0 +1,35 @@
+/* Shared compiler options only. No `paths` here: the library maps itself to source
+   (projects/weeljack-ng/tsconfig.lib.json) and the docs app maps to ./dist (projects/docs/tsconfig.app.json; its lint-only twin tsconfig.lint.json maps to source). */
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "noImplicitOverride": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "skipLibCheck": true,
+    "isolatedModules": true,
+    "experimentalDecorators": true,
+    "importHelpers": true,
+    "target": "ES2022",
+    "module": "preserve"
+  },
+  "angularCompilerOptions": {
+    "enableI18nLegacyMessageIdFormat": false,
+    "strictInjectionParameters": true,
+    "strictInputAccessModifiers": true,
+    "strictTemplates": true,
+    "extendedDiagnostics": {
+      "defaultCategory": "error"
+    }
+  },
+  "files": [],
+  "references": [
+    { "path": "./projects/weeljack-ng/tsconfig.lib.json" },
+    { "path": "./projects/weeljack-ng/tsconfig.spec.json" },
+    { "path": "./projects/docs/tsconfig.app.json" }
+  ]
+}

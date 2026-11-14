@@ -1,0 +1,19 @@
+{
+  "name": "weeljack-ng",
+  "version": "0.0.0",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/locvodever/weeljack-ng.git"
+  },
+  "peerDependencies": {
+    "@angular/cdk": "^22.2.0",
+    "@angular/core": "^22.2.0",
+    "@openng/optimus-ui": "~2.0.2",
+    "@openng/optimus-ui-themes": "~2.0.2"
+  },
+  "dependencies": {
+    "tslib": "^2.3.0"
+  },
+  "sideEffects": false
+}

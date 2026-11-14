@@ -1,0 +1,8 @@
+/* Host and Optimus's own element share one inline-flex box, so the host is exactly as tall as
+   the button (44 px by default) with no inline-baseline gap. Everything else is the preset. */
+@layer wj {
+  :host,
+  p-button {
+    display: inline-flex;
+  }
+}
