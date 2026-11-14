@@ -7,7 +7,7 @@ import {
 } from '@angular/core';
 import { Optimus, provideOptimus } from '@openng/optimus-ui/config';
 import { definePreset } from '@openng/optimus-ui-themes';
-import { WJ_PROVIDED } from './dev-warnings';
+import { _WJ_PROVIDED } from 'weeljack-ng/private';
 import { wjLayerStyles } from './layer-styles';
 import { wjNoirOnZinc } from './noir-on-zinc';
 
@@ -36,7 +36,7 @@ export function provideWeeljack(options: WjThemeOptions = {}): EnvironmentProvid
   const preset = definePreset(wjNoirOnZinc, { css: wjLayerStyles });
 
   return makeEnvironmentProviders([
-    { provide: WJ_PROVIDED, useValue: true },
+    { provide: _WJ_PROVIDED, useValue: true },
     // Ahead of Optimus's own initializer: its config is static and cannot read the DI token, so
     // the nonce is on the service before the theme effect first injects a style.
     provideAppInitializer(() => {

@@ -2,14 +2,14 @@ import { Component, type EnvironmentProviders, type Provider } from '@angular/co
 import { TestBed } from '@angular/core/testing';
 import aura from '@openng/optimus-ui-themes/aura';
 import { provideOptimus } from '@openng/optimus-ui/config';
-import { checkWeeljackSetup } from './dev-warnings';
+import { _checkWeeljackSetup } from 'weeljack-ng/private';
 import { provideWeeljack } from './public-api';
 
 /** Stands in for the first `wj-*` component: it runs the setup check the way a wrapper will. */
 @Component({ selector: 'wj-probe', template: 'probe' })
 class Probe {
   constructor() {
-    checkWeeljackSetup('wj-probe');
+    _checkWeeljackSetup('wj-probe');
   }
 }
 

@@ -45,3 +45,6 @@ Thumbs.db
 
 # Worktrees (per-feature checkouts)
 .worktrees/
+
+# Vitest browser-mode failure screenshots
+.vitest/
