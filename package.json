@@ -13,7 +13,8 @@
     "test": "ng test weeljack-ng --watch=false",
     "lint": "eslint . --max-warnings 0 && prettier --check .",
     "format": "prettier --write .",
-    "check": "npm run lint && npm run typecheck && npm run build"
+    "check:contrast": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/check-contrast.mjs",
+    "check": "npm run lint && npm run typecheck && npm run build && npm run check:contrast"
   },
   "devDependencies": {
     "@angular/build": "~22.2.6",

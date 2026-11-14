@@ -1,5 +1,5 @@
 /*
- * Public API surface of the root entry `weeljack-ng`.
- * Phase 2 adds `provideWeeljack` and the theme types.
+ * Public API surface of the root entry `weeljack-ng`: `provideWeeljack` and its option type,
+ * nothing else. The root never exports a component or re-exports another entry (01 Q2).
  */
-export {};
+export { provideWeeljack, type WjThemeOptions } from './provide-weeljack';
