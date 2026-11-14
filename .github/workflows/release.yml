@@ -1,0 +1,77 @@
+name: release
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  # Keeps the release PR current; merging that PR is the release (CLAUDE.md section 9).
+  release-please:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
+    steps:
+      - id: release
+        uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
+        with:
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+
+  # T0 ends here: the `publish` and `docs` jobs are T0b's and land after the hand-published 0.0.1.
+  build:
+    needs: release-please
+    if: needs.release-please.outputs.release_created == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.release-please.outputs.tag_name }}
+          persist-credentials: false
+      # No npm cache on the release build: nothing restored from a cache may reach a release artifact.
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          package-manager-cache: false
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run check
+      - name: npm audit (blocking)
+        run: npm audit --audit-level=high
+      - name: npm audit signatures (blocking)
+        run: npm audit signatures
+      - name: The built version equals the tag
+        run: |
+          built="$(node -p "require('./dist/weeljack-ng/package.json').version")"
+          expected="${TAG_NAME#v}"
+          if [ "$built" != "$expected" ]; then
+            echo "dist/weeljack-ng is $built but the tag is $TAG_NAME" >&2
+            exit 1
+          fi
+        env:
+          TAG_NAME: ${{ needs.release-please.outputs.tag_name }}
+      - name: Pack the library tarball
+        run: npm pack ./dist/weeljack-ng --pack-destination "$RUNNER_TEMP/tarball"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: weeljack-ng-tarball
+          path: ${{ runner.temp }}/tarball/*.tgz
+          if-no-files-found: error
+      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: dist/docs/browser
