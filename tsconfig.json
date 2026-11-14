@@ -1,5 +1,5 @@
 /* Shared compiler options only. No `paths` here: the library maps itself to source
-   (projects/weeljack-ng/tsconfig.lib.json) and the docs app maps to ./dist (projects/docs/tsconfig.app.json). */
+   (projects/weeljack-ng/tsconfig.lib.json) and the docs app maps to ./dist (projects/docs/tsconfig.app.json; its lint-only twin tsconfig.lint.json maps to source). */
 {
   "compileOnSave": false,
   "compilerOptions": {

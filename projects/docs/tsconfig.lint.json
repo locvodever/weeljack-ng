@@ -1,0 +1,13 @@
+/* Typed linting only (eslint.config.js). Same sources as tsconfig.app.json, but `weeljack-ng`
+   resolves to the library SOURCE: `npm run check` lints before it builds (FR-28), so ./dist does
+   not exist yet on a clean checkout. The docs BUILD still compiles against ./dist (FR-2). */
+{
+  "extends": "./tsconfig.app.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "paths": {
+      "weeljack-ng": ["../weeljack-ng/src/public-api.ts"],
+      "weeljack-ng/*": ["../weeljack-ng/*/public-api.ts"]
+    }
+  }
+}

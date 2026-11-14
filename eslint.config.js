@@ -158,7 +158,7 @@ const TEMPLATE_SINKS = [
 const TS_PROJECTS = [
   `${LIB}/tsconfig.lib.json`,
   `${LIB}/tsconfig.spec.json`,
-  'projects/docs/tsconfig.app.json',
+  'projects/docs/tsconfig.lint.json',
 ];
 
 // Lints inline `template:` strings with the template rules. Typed optional upstream; fail loudly.
