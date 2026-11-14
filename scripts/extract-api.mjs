@@ -155,7 +155,12 @@ function toApiClass(entry, tsProgram) {
     throw new Error(`extract-api: ${entry.name} has no source location.`);
   }
   const filePath = entry.source.filePath;
-  const source = tsProgram.getSourceFile(filePath);
+  // The extractor strips the program's current directory from the path with a plain string
+  // replace. On Linux that leaves `/projects/...`, so join it back; on Windows the separators
+  // differ, nothing is stripped, and the path is already absolute.
+  const source =
+    tsProgram.getSourceFile(filePath) ??
+    tsProgram.getSourceFile(toPosix(join(tsProgram.getCurrentDirectory(), filePath)));
   if (source === undefined) {
     throw new Error(`extract-api: ${filePath} is not in the program.`);
   }
