@@ -50,26 +50,54 @@
 <section aria-labelledby="styling">
   <h2 id="styling">Styling</h2>
   <p><docs-text [value]="doc().stylingIntro" /></p>
-  <div class="scroll" tabindex="0" role="region" aria-label="Pass-through parts">
-    <table>
-      <thead>
-        <tr>
-          <th scope="col"><code>pt</code> part</th>
-          <th scope="col">What it reaches</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (part of doc().parts; track part.part) {
+  @if (doc().customProperties?.length) {
+    <div class="scroll" tabindex="0" role="region" aria-label="Custom properties">
+      <table>
+        <thead>
           <tr>
-            <th scope="row">
-              <code>{{ part.part }}</code>
-            </th>
-            <td><docs-text [value]="part.description" /></td>
+            <th scope="col">Custom property</th>
+            <th scope="col">Default</th>
+            <th scope="col">What it does</th>
           </tr>
-        }
-      </tbody>
-    </table>
-  </div>
+        </thead>
+        <tbody>
+          @for (property of doc().customProperties; track property.name) {
+            <tr>
+              <th scope="row">
+                <code>{{ property.name }}</code>
+              </th>
+              <td>
+                <code>{{ property.defaultValue }}</code>
+              </td>
+              <td><docs-text [value]="property.description" /></td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+  @if (doc().parts.length > 0) {
+    <div class="scroll" tabindex="0" role="region" aria-label="Pass-through parts">
+      <table>
+        <thead>
+          <tr>
+            <th scope="col"><code>pt</code> part</th>
+            <th scope="col">What it reaches</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (part of doc().parts; track part.part) {
+            <tr>
+              <th scope="row">
+                <code>{{ part.part }}</code>
+              </th>
+              <td><docs-text [value]="part.description" /></td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
 </section>
 
 <section aria-labelledby="api">
@@ -162,32 +190,108 @@
     </table>
   </div>
 
-  <h3>From Optimus to WeeljackNg</h3>
-  <p>
-    What the Optimus <code>p-button</code> offers, and what <code>wj-button</code> does with it.
-  </p>
-  <div class="scroll" tabindex="0" role="region" aria-label="Optimus to WeeljackNg mapping">
-    <table>
-      <thead>
-        <tr>
-          <th scope="col">Optimus</th>
-          <th scope="col">WeeljackNg</th>
-          <th scope="col">Status</th>
-          <th scope="col">Note</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (row of doc().mapping; track row.optimus + row.weeljack) {
-          <tr>
-            <th scope="row">
-              <code>{{ row.optimus }}</code>
-            </th>
-            <td><docs-text [value]="row.weeljack" /></td>
-            <td>{{ row.status }}</td>
-            <td><docs-text [value]="row.note" /></td>
-          </tr>
+  @if (api().services.length > 0) {
+    <h3>Services</h3>
+    @for (service of api().services; track service.name) {
+      <h4>
+        <code>{{ service.name }}</code>
+      </h4>
+      <p>
+        @if (service.providedIn !== null) {
+          Provided in <code>{{ service.providedIn }}</code>.
         }
-      </tbody>
-    </table>
-  </div>
+        <docs-text [value]="service.description" />
+      </p>
+      @if (service.properties.length > 0) {
+        <div
+          class="scroll"
+          tabindex="0"
+          role="region"
+          [attr.aria-label]="service.name + ' properties'"
+        >
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Property</th>
+                <th scope="col">Type</th>
+                <th scope="col">Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (property of service.properties; track property.name) {
+                <tr>
+                  <th scope="row">
+                    <code>{{ property.name }}</code>
+                  </th>
+                  <td>
+                    <code>{{ property.type }}</code>
+                  </td>
+                  <td><docs-text [value]="property.description" /></td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+      @if (service.methods.length > 0) {
+        <div
+          class="scroll"
+          tabindex="0"
+          role="region"
+          [attr.aria-label]="service.name + ' methods'"
+        >
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Method</th>
+                <th scope="col">Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (method of service.methods; track method.signature) {
+                <tr>
+                  <th scope="row">
+                    <code>{{ method.signature }}</code>
+                  </th>
+                  <td><docs-text [value]="method.description" /></td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    }
+  }
+
+  @if (doc().mapping.length > 0) {
+    <h3>From Optimus to WeeljackNg</h3>
+    <p>
+      What the Optimus <code>{{ selectors().optimus }}</code> offers, and what
+      <code>{{ selectors().weeljack }}</code> does with it.
+    </p>
+    <div class="scroll" tabindex="0" role="region" aria-label="Optimus to WeeljackNg mapping">
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">Optimus</th>
+            <th scope="col">WeeljackNg</th>
+            <th scope="col">Status</th>
+            <th scope="col">Note</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of doc().mapping; track row.optimus + row.weeljack) {
+            <tr>
+              <th scope="row">
+                <code>{{ row.optimus }}</code>
+              </th>
+              <td><docs-text [value]="row.weeljack" /></td>
+              <td>{{ row.status }}</td>
+              <td><docs-text [value]="row.note" /></td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
 </section>

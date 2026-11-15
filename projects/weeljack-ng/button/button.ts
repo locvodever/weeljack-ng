@@ -8,7 +8,7 @@ import {
   input,
 } from '@angular/core';
 import { Button } from '@openng/optimus-ui/button';
-import { _checkAriaOnHost, _checkWeeljackSetup } from 'weeljack-ng/private';
+import { _checkAriaOnHost, _checkWeeljackSetup, _mergePartAttributes } from 'weeljack-ng/private';
 import type {
   WjButtonPt,
   WjButtonSeverity,
@@ -66,26 +66,13 @@ export class WjButton {
   protected readonly inertProps = { autofocus: false };
 
   /** `pt` forwarded as given, plus the ARIA attributes this wrapper routes to the button. */
-  protected readonly partAttributes = computed<WjButtonPt>(() => {
-    const pt = this.pt();
-    const own: Record<string, string> = {};
-    const labelledBy = this.ariaLabelledBy();
-    const describedBy = this.ariaDescribedBy();
-    if (labelledBy !== undefined) {
-      own['aria-labelledby'] = labelledBy;
-    }
-    if (describedBy !== undefined) {
-      own['aria-describedby'] = describedBy;
-    }
-    if (this.loading()) {
-      own['aria-busy'] = 'true';
-    }
-    return (context) => {
-      const parts = typeof pt === 'function' ? pt(context) : pt;
-      const root = typeof parts?.root === 'function' ? parts.root(context) : parts?.root;
-      return { ...parts, root: { ...(typeof root === 'string' ? { class: root } : root), ...own } };
-    };
-  });
+  protected readonly partAttributes = computed<WjButtonPt>(() =>
+    _mergePartAttributes(this.pt(), 'root', {
+      'aria-labelledby': this.ariaLabelledBy(),
+      'aria-describedby': this.ariaDescribedBy(),
+      'aria-busy': this.loading() ? 'true' : undefined,
+    }),
+  );
 
   constructor() {
     _checkWeeljackSetup('wj-button');

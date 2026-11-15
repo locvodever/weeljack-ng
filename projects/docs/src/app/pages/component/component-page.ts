@@ -19,6 +19,9 @@ interface ClassApi {
   sections: MemberSection[];
 }
 
+const isSlot = (item: ApiClass): boolean =>
+  item.kind === 'directive' && item.selector.startsWith('ng-template[');
+
 /** `/components/<entry>` in the fixed order of 07 Q3: content from `COMPONENT_DOCS` + generated API. */
 @Component({
   selector: 'docs-component-page',
@@ -61,9 +64,13 @@ export class ComponentPage {
     }),
   );
 
+  /**
+   * Components and wrapper directives (`input[wjInputText]`): each gets Inputs, Outputs and
+   * Two-way models tables. A slot directive is told apart by its `ng-template[...]` selector.
+   */
   protected readonly components = computed<ClassApi[]>(() =>
     this.api()
-      .classes.filter((item) => item.kind === 'component')
+      .classes.filter((item) => !isSlot(item))
       .map((api) => ({
         api,
         sections: [
@@ -74,8 +81,12 @@ export class ComponentPage {
       })),
   );
 
-  /** Content slots are the typed `wj<Component><Slot>` directives an entry exports (02). */
-  protected readonly slots = computed(() =>
-    this.api().classes.filter((item) => item.kind === 'directive'),
-  );
+  /** Content slots are the typed `wj<Component><Slot>` directives an entry exports (02 Q6). */
+  protected readonly slots = computed(() => this.api().classes.filter(isSlot));
+
+  /** The mapping sentence's selectors: the page's own, and Optimus's (`optimusSelector`). */
+  protected readonly selectors = computed(() => ({
+    weeljack: this.components()[0]?.api.selector ?? `wj-${this.entry()}`,
+    optimus: this.doc().optimusSelector ?? `p-${this.entry()}`,
+  }));
 }
