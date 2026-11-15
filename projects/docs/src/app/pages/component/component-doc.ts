@@ -1,5 +1,4 @@
 import type { Type } from '@angular/core';
-import { BUTTON_DOC } from './button-doc';
 
 /** A live example. Its source panel shows `examples/<sourceKey>.ts`. */
 export interface ExampleDoc {
@@ -43,6 +42,3 @@ export interface ComponentDoc {
   /** The Optimus to WeeljackNg mapping (02): kept, renamed, added, dropped. */
   mapping: MappingRow[];
 }
-
-/** Page content per entry. Every entry in the generated API index needs one (prerender fails). */
-export const COMPONENT_DOCS: ReadonlyMap<string, ComponentDoc> = new Map([['button', BUTTON_DOC]]);

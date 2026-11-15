@@ -48,3 +48,6 @@ Thumbs.db
 
 # Vitest browser-mode failure screenshots
 .vitest/
+
+# Generated docs inputs (npm run generate)
+/projects/docs/src/generated/

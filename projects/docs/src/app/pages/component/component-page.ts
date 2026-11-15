@@ -1,10 +1,11 @@
 import { NgComponentOutlet } from '@angular/common';
 import { Component, computed, input } from '@angular/core';
+import { COMPONENT_DOCS } from '../../../generated/component-docs';
 import exampleSources from '../../../generated/examples.json';
-import { API_DOCUMENTS, type ApiClass, type ApiMember } from '../../api/api-documents';
+import { API_DOCUMENTS } from '../../../generated/api-documents';
+import type { ApiClass, ApiMember } from '../../api/api-types';
 import { CodeBlock } from '../../code-block/code-block';
 import { DocsText } from '../../text/text';
-import { COMPONENT_DOCS } from './component-docs';
 
 const SOURCES: ReadonlyMap<string, string> = new Map(Object.entries(exampleSources));
 

@@ -1,5 +1,5 @@
 import type { CanMatchFn, ResolveFn, Routes } from '@angular/router';
-import { COMPONENT_DOCS } from './pages/component/component-docs';
+import { COMPONENT_DOCS } from '../generated/component-docs';
 
 const SITE = 'WeeljackNg';
 

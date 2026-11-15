@@ -1,10 +1,10 @@
-import { ButtonBasicExample } from '../../examples/button/basic';
-import { ButtonDisabledExample } from '../../examples/button/disabled';
-import { ButtonLoadingExample } from '../../examples/button/loading';
-import { ButtonSeveritiesExample } from '../../examples/button/severities';
-import { ButtonSizesExample } from '../../examples/button/sizes';
-import { ButtonVariantsExample } from '../../examples/button/variants';
-import type { ComponentDoc, MappingRow } from './component-docs';
+import { ButtonBasicExample } from '../../../examples/button/basic';
+import { ButtonDisabledExample } from '../../../examples/button/disabled';
+import { ButtonLoadingExample } from '../../../examples/button/loading';
+import { ButtonSeveritiesExample } from '../../../examples/button/severities';
+import { ButtonSizesExample } from '../../../examples/button/sizes';
+import { ButtonVariantsExample } from '../../../examples/button/variants';
+import type { ComponentDoc, MappingRow } from '../component-doc';
 
 const droppedByNeed = 'Not exposed: WeeljackNg exposes by need, never a mirror.';
 const droppedAlways = 'Never exposed on any wrapper (ADR 0002).';
@@ -16,7 +16,7 @@ const dropped = (optimus: string, note: string): MappingRow => ({
   note,
 });
 
-export const BUTTON_DOC: ComponentDoc = {
+export const DOC: ComponentDoc = {
   entry: 'button',
   title: 'Button',
   purpose: 'A button with a label, a loading state and a disabled state, 44 px tall by default.',
