@@ -18,14 +18,15 @@
     "lint": "eslint . --max-warnings 0 && prettier --check .",
     "format": "prettier --write .",
     "check:contrast": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/check-contrast.mjs",
-    "build:docs": "node scripts/extract-api.mjs && node scripts/extract-examples.mjs && ng build docs && node scripts/write-404.mjs",
+    "generate": "node scripts/extract-api.mjs && node scripts/extract-examples.mjs && node scripts/generate-registries.mjs",
+    "build:docs": "npm run generate && ng build docs && node scripts/write-404.mjs",
     "check:ssr": "node scripts/check-ssr.mjs",
     "check:a11y": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/check-a11y.mjs",
     "size": "node scripts/size.mjs",
     "check:pack": "node scripts/check-pack.mjs",
     "check:licences": "node scripts/check-licences.mjs",
     "pack:local": "npm run build && npm pack ./dist/weeljack-ng --pack-destination dist",
-    "check": "npm run lint && npm run typecheck && npm run build && npm run check:contrast && npm run test && npm run build:docs && npm run check:ssr && npm run check:a11y && npm run size && npm run check:pack && npm run check:licences"
+    "check": "npm run generate && npm run lint && npm run typecheck && npm run build && npm run check:contrast && npm run test && npm run build:docs && npm run check:ssr && npm run check:a11y && npm run size && npm run check:pack && npm run check:licences"
   },
   "devDependencies": {
     "@angular/build": "~22.2.6",

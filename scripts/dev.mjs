@@ -1,5 +1,5 @@
 // @ts-check
-import { execFileSync, spawn } from 'node:child_process';
+import { execFileSync, execSync, spawn } from 'node:child_process';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -14,6 +14,9 @@ import { fileURLToPath } from 'node:url';
  *
  * Pattern ported from quanoi's `scripts/dev.mjs` (spawn through the shell, prefixed output, tree
  * kill on Ctrl-C); nothing else of it applies.
+ *
+ * The docs registries are generated once at start (`npm run generate`); a new entry's docs page or
+ * public API needs a restart to show up.
  */
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const port = process.env['PORT'] ?? '4200';
@@ -93,6 +96,10 @@ for (const signal of /** @type {const} */ (['SIGINT', 'SIGTERM'])) {
     process.exit(0);
   });
 }
+
+// The docs app imports gitignored generated files (API JSON, example sources, registries).
+console.log('[dev] generating the docs registries...');
+execSync('npm run generate', { cwd: root, stdio: 'inherit' });
 
 let docsStarted = false;
 console.log('[dev] building the library, then serving the docs once it is ready…');

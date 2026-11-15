@@ -12,11 +12,6 @@
       "note": "Root entry: provideWeeljack, the theme preset and the layer styles."
     },
     {
-      "entry": "weeljack-ng/button",
-      "optimus": "button",
-      "note": "wj-button over @openng/optimus-ui/button."
-    },
-    {
       "entry": "weeljack-ng/private",
       "optimus": "own",
       "note": "Shared helpers (_-prefixed, outside semver). Shipped to every consumer, so it gets an own-entry row."

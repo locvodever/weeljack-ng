@@ -53,13 +53,16 @@ projects/weeljack-ng/          library (sourceRoot)
     testing/                   `weeljack-ng/<entry>/testing` — Wj<Name>Harness
   sheet/, field/, locale/      own entries
 projects/docs/                 the docs app (static prerender)
+  src/app/pages/component/docs/<entry>.ts   one page's content, `export const DOC: ComponentDoc`
+  src/app/examples/<entry>/    the page's live examples
+  src/generated/               GITIGNORED (`npm run generate`): API JSON, example sources, registries
 scripts/                       build, check and dev scripts
 docs/adr/                      architecture decisions
 ```
 
 **Naming.** The wrapper selector is Optimus's first selector with `p-` → `wj-` (`wj-toggleswitch`)
 or `p` → `wj` (`input[wjInputText]`). The class is `Wj` + Optimus's class name. Folder, file,
-selector suffix, docs slug and size row all share one word.
+selector suffix and docs slug all share one word, and the size budget finds the Optimus entry by it.
 
 **Imports.**
 - Component entries import the root and `private`; the root imports `private`; `testing` imports
@@ -130,8 +133,9 @@ selector suffix, docs slug and size row all share one word.
 
 **Budget, SSR and errors (21):**
 - A wrapper entry weighs at most the larger of 1.5 KB or 25% of the Optimus entry it wraps; an own
-  entry at most 3.2 KB (esbuild minify + gzip-6, read from `size-budgets.json`). No PR raises a
-  limit.
+  entry at most 3.2 KB (esbuild minify + gzip-6). A wrapper entry needs no row: `size` defaults
+  `weeljack-ng/<x>` to `@openng/optimus-ui/<x>`, and only the root, `private` and own entries have
+  a row in `size-budgets.json`. No PR raises a limit.
 - SSR is claimed; hydration is not, in v1.
 - Optimus errors are never caught or re-wrapped.
 - Own errors follow `WJ<NNNN>: <wj-selector>: <what is wrong>. <what to do>. Find more at
@@ -150,9 +154,21 @@ selector suffix, docs slug and size row all share one word.
 | `npm run setup` | Main checkout only: refuses inside a worktree, then `npm ci` + `npx playwright install chromium` (or set `CHROME_BIN` to system Chrome) |
 | `npm start` | `scripts/dev.mjs`: library watch build, then `ng serve docs` on 4200 (`PORT` overrides), full reload on library edits |
 | `npm run test:watch` / `test:debug` | Headless watch / headed Chromium with the Vitest UI. Focus with `-- --include=<entry>/**` |
-| `npm run check` | **The gate**, failing fast: lint → typecheck → build → `check:contrast` → test → `build:docs` → `check:ssr` → `check:a11y` → size → `check:pack` → `check:licences` |
+| `npm run generate` | Writes the gitignored `projects/docs/src/generated/` (`extract-api`, `extract-examples`, `generate-registries`); needs only library source, not `dist/`. `build:docs`, `start` and `check` run it |
+| `npm run check` | **The gate**, failing fast: generate → lint → typecheck → build → `check:contrast` → test → `build:docs` → `check:ssr` → `check:a11y` → size → `check:pack` → `check:licences` |
 | `npm run lint` / `format` | `eslint . --max-warnings 0 && prettier --check .` / `prettier --write .` |
 | `npm run pack:local` | Build and pack a tarball for a consumer trial: `npm install --no-save <tgz>` in the app, reverted by `npm install`, never merged |
+
+**Adding an entry `<entry>`** (a slice touches only these):
+- `projects/weeljack-ng/<entry>/**`: `ng-package.json`, `public-api.ts`, the wrapper, its spec and
+  `testing/` harness.
+- `projects/docs/src/app/examples/<entry>/**`: the live examples.
+- `projects/docs/src/app/pages/component/docs/<entry>.ts`: `export const DOC: ComponentDoc` (types
+  in `pages/component/component-doc.ts`).
+- Never edit `projects/docs/src/generated/` (gitignored), a registry, `size-budgets.json` (unless
+  it is an own entry), `private/` (unless the slice owns a shared helper) or root config.
+- Registries (`COMPONENT_DOCS`, `API_DOCUMENTS`) and the API index are generated from those files.
+  An API-index entry with no `DOC` fails the prerender.
 
 **Executors:**
 - Iterate with focused `npx ng test --include=<entry>/**` runs, then run `npm run check` **once**
@@ -178,7 +194,7 @@ selector suffix, docs slug and size row all share one word.
    the docs page.
 4. A docs page (purpose and import → examples → Accessibility → Styling → generated API) that
    prerenders, never with `RenderMode.Client`.
-5. A size row within budget.
+5. A size within budget (no row to add for a wrapper; an own entry needs a row).
 6. OnPush and zoneless.
 7. `npm run check` exits 0.
 
@@ -312,7 +328,7 @@ Copied from the roadmap's engineering baseline (one line per area that applies).
   - strict TypeScript plus `strictTemplates` and `extendedDiagnostics` as errors;
   - no pixel-diff suite in v1;
   - the 7-point per-wrapper definition of done;
-  - `npm run check` (lint → typecheck → build → `check:contrast` → test → `build:docs` →
+  - `npm run check` (generate → lint → typecheck → build → `check:contrast` → test → `build:docs` →
     `check:ssr` → `check:a11y` → size → `check:pack` → `check:licences`) is the gate, run once at
     the end after focused `npx ng test --include=<entry>/**` runs.
   - Sources: ticket 16, ticket 20.

@@ -168,7 +168,17 @@ if (inlineTemplates === undefined) {
 }
 
 export default defineConfig([
-  { ignores: ['dist', '.angular', 'coverage', '.worktrees/**', 'out-tsc', 'node_modules'] },
+  {
+    ignores: [
+      'dist',
+      'projects/docs/src/generated',
+      '.angular',
+      'coverage',
+      '.worktrees/**',
+      'out-tsc',
+      'node_modules',
+    ],
+  },
 
   // TypeScript: strict type-checked + stylistic + angular-eslint.
   {

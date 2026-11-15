@@ -1,5 +1,5 @@
 import { RenderMode, type ServerRoute } from '@angular/ssr';
-import { COMPONENT_DOCS } from './pages/component/component-docs';
+import { COMPONENT_DOCS } from '../generated/component-docs';
 import apiIndex from '../generated/api/index.json';
 
 /**
@@ -15,7 +15,9 @@ export const serverRoutes: ServerRoute[] = [
       const missing = apiIndex.entries.filter((entry) => !COMPONENT_DOCS.has(entry));
       if (missing.length > 0) {
         return Promise.reject(
-          new Error(`No docs page content for: ${missing.join(', ')}. Add it to COMPONENT_DOCS.`),
+          new Error(
+            `No docs page content for: ${missing.join(', ')}. Add projects/docs/src/app/pages/component/docs/<entry>.ts exporting DOC.`,
+          ),
         );
       }
       return Promise.resolve(apiIndex.entries.map((entry) => ({ entry })));
