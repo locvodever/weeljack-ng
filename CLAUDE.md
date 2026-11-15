@@ -19,7 +19,9 @@ parentheses below is a ticket there (`questions/NN-*.md`), and nothing here is r
 - **entry** — one secondary entry point, `weeljack-ng/<entry>`, named after the Optimus entry it
   wraps.
 - **own component** — WeeljackNg's own composite, not a wrapper (`wj-sheet`, `wj-field`).
-- **slot** — a typed `wj<Component><Slot>` template directive.
+- **slot** — a typed `wj<Component><Slot>` template directive. Its class is `Wj<Component><Slot>Slot`
+  (selector `wj<Component><Slot>`; 02 Q6 fixes only the selector, and the suffix avoids a collision
+  with an item or type name such as `WjMenuItem`).
 - **`pt`** — the pass-through escape hatch, which tracks Optimus.
 - **wave** — a group of entries released together as one minor.
 
@@ -131,6 +133,16 @@ selector suffix and docs slug all share one word, and the size budget finds the 
   always supplies its message template.
 - No inline script or `eval`.
 
+**Shared helpers (`weeljack-ng/private`, `_`-prefixed, `@docs-private`).** Reuse these, never write
+a family's own:
+- `_mergePartAttributes(pt, partPath, attributes)` routes attributes onto a `pt` part (dotted path ok):
+  consumer `pt` (object or function) and keys kept, a routed attribute wins on the same name,
+  `undefined`/`null` values omitted. `wj-button` uses it.
+- `_wjId(prefix)` returns `wj-<prefix>-<n>`, a per-application counter (injection context).
+- `_warnOnce(code, selector, what, fix)` is the deduped dev-mode warn in the 21 Q8 shape, behind
+  `ngDevMode` (injection context). Use your family's `WJ<NNNN>` block.
+- `_checkWeeljackSetup(selector)` and `_checkAriaOnHost(selector)` go in every wrapper's constructor.
+
 **Budget, SSR and errors (21):**
 - A wrapper entry weighs at most the larger of 1.5 KB or 25% of the Optimus entry it wraps; an own
   entry at most 3.2 KB (esbuild minify + gzip-6). A wrapper entry needs no row: `size` defaults
@@ -140,6 +152,12 @@ selector suffix and docs slug all share one word, and the size budget finds the 
 - Optimus errors are never caught or re-wrapped.
 - Own errors follow `WJ<NNNN>: <wj-selector>: <what is wrong>. <what to do>. Find more at
   <docs>/errors/WJ<NNNN>`, behind `ngDevMode`.
+- `WJ<NNNN>` codes are allocated in blocks of ten per family, so parallel branches never collide.
+  A family uses only its block: 0001–0009 T0 (used: 0001–0003); 0010 w1-provide; 0020 w1-forms;
+  0030 w1-overlays; 0040 w1-display; 0050 w3-data; 0060 w4-menus-core; 0070 w2-forms-select;
+  0080 w2-forms-input; 0090 w2-forms-choice; 0100 w2-forms-layout; 0110 w4-panels-a;
+  0120 w4-panels-b; 0130 tree; 0140 w4-menus-more; 0150 w4-overlays; 0160 w5-feedback;
+  0170 w5-identity-media; 0180 w5-effects; 0190 w1-docs.
 
 **Theme (05, 22):**
 - `provideWeeljack({ primary, surface, darkMode, translation })`, read once.
@@ -167,6 +185,15 @@ selector suffix and docs slug all share one word, and the size budget finds the 
   in `pages/component/component-doc.ts`).
 - Never edit `projects/docs/src/generated/` (gitignored), a registry, `size-budgets.json` (unless
   it is an own entry), `private/` (unless the slice owns a shared helper) or root config.
+- A `ComponentDoc` for an own component sets `mapping: []` (the Optimus mapping section is omitted)
+  and `parts: []` (no `pt` table), and lists its `--wj-*` variables in `customProperties`. The mapping
+  sentence names `wj-*` from the generated API and `p-<entry>`, or `optimusSelector` when Optimus's
+  differs (`input[pInputText]`).
+- The generated API also carries exported `@Injectable` classes (a "Services" section; `@docs-private`
+  and `_` members stay out) and inputs a class re-exposes through `hostDirectives`. A directive wrapper
+  gets Inputs, Outputs and Two-way models tables like a component; only an `ng-template[...]`
+  directive is a slot. `check:ssr` counts an `ng-template[...]` slot selector as covered when a
+  component selector of the same entry is.
 - Registries (`COMPONENT_DOCS`, `API_DOCUMENTS`) and the API index are generated from those files.
   An API-index entry with no `DOC` fails the prerender.
 
@@ -235,7 +262,9 @@ parser for `*.html`. All Markdown is ignored. `.gitattributes` pins `eol=lf`.
 ## 9. Branches, commits, releases (14, 20)
 
 - **Branches and merges:**
-  - Trunk on `main`, with short-lived `feat/`, `fix/` and `chore/<slug>` branches.
+  - Integration branch is `dev`: families branch from and PR into `dev`, with short-lived `feat/`,
+    `fix/` and `chore/<slug>` branches. `main` receives `dev` only when Loc promotes it, and
+    release-please runs on `main` only.
   - Squash merge only. The PR title is the Conventional Commit subject (`feat(weeljack-ng): …`;
     `!` or `BREAKING CHANGE:` marks a break).
 - **release-please** owns `CHANGELOG.md` and the version; never hand-edit either.

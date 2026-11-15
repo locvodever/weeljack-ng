@@ -46,6 +46,21 @@ function warn(optimus: Optimus, code: string, selector: string, what: string, fi
 }
 
 /**
+ * Dev-mode warning (21 Q8) for a family's own `WJ<NNNN>` code: `console.warn`, never throws, once
+ * per code per application, in the message shape `WJ<NNNN>: <wj-selector>: <what is wrong>. <what
+ * to do>. Find more at <docs>/errors/WJ<NNNN>`. Must run in an injection context. A no-op in
+ * production.
+ *
+ * @docs-private
+ */
+export function _warnOnce(code: string, selector: string, what: string, fix: string): void {
+  if (!ngDevMode) {
+    return;
+  }
+  warn(inject(Optimus), code, selector, what, fix);
+}
+
+/**
  * Dev-mode setup check (09 Q6) every `wj-*` component calls from its constructor: it warns
  * (`console.warn`, never throws) when `provideWeeljack` is missing, and when Optimus's theme has
  * lost the `wj` prefix after bootstrap. Must run in an injection context. A no-op in production.

@@ -29,6 +29,14 @@ export interface MappingRow {
   note: string;
 }
 
+/** One public `--wj-*` custom property of a component. */
+export interface CustomPropertyRow {
+  /** The property name, `--wj-...`. */
+  name: string;
+  defaultValue: string;
+  description: string;
+}
+
 /** The hand-written part of a component page. Inputs, outputs and models are generated. */
 export interface ComponentDoc {
   entry: string;
@@ -38,7 +46,12 @@ export interface ComponentDoc {
   keyboard: KeyboardRow[];
   aria: string[];
   stylingIntro: string;
+  /** The `pt` parts. `[]` for an own component, which has no `pt`: no `pt` table is rendered. */
   parts: PassThroughPart[];
-  /** The Optimus to WeeljackNg mapping (02): kept, renamed, added, dropped. */
+  /** Public `--wj-*` custom properties, rendered as the first table of the Styling section. */
+  customProperties?: CustomPropertyRow[];
+  /** The Optimus selector the mapping sentence names. Defaults to `p-<entry>`. */
+  optimusSelector?: string;
+  /** The Optimus to WeeljackNg mapping (02). `[]` for an own component: the section is omitted. */
   mapping: MappingRow[];
 }
