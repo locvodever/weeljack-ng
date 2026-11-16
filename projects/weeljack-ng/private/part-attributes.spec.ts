@@ -10,14 +10,15 @@ describe('_mergePartAttributes', () => {
     expect(merged(context)).toEqual({ root: { 'aria-busy': 'true' } });
   });
 
-  it('omits undefined and null attributes', () => {
+  it('passes undefined and null attributes on as undefined keys, so Optimus removes them', () => {
     const merged = _mergePartAttributes<unknown, Parts>(null, 'root', {
       a: undefined,
       b: null,
       c: 'x',
     });
 
-    expect(merged(context)).toEqual({ root: { c: 'x' } });
+    // toStrictEqual: a key present as `undefined` is what makes Optimus's Bind remove the attribute.
+    expect(merged(context)).toStrictEqual({ root: { a: undefined, b: undefined, c: 'x' } });
   });
 
   it('keeps every key of an object pt', () => {
@@ -79,6 +80,18 @@ describe('_mergePartAttributes', () => {
       { 'aria-label': undefined },
     );
 
-    expect(merged(context)).toEqual({ root: { 'aria-label': 'consumer' } });
+    expect(merged(context)).toStrictEqual({ root: { 'aria-label': 'consumer' } });
+  });
+
+  it('keeps the consumer attribute when the routed one is null, on a nested part too', () => {
+    const merged = _mergePartAttributes<unknown, Parts>(
+      { pcInputText: { root: { 'aria-describedby': 'mine' } } },
+      'pcInputText.root',
+      { 'aria-describedby': null, 'aria-invalid': null },
+    );
+
+    expect(merged(context)).toStrictEqual({
+      pcInputText: { root: { 'aria-describedby': 'mine', 'aria-invalid': undefined } },
+    });
   });
 });

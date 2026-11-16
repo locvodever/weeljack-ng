@@ -5,12 +5,14 @@ import { fileURLToPath } from 'node:url';
 
 /**
  * Docs registries, generated so a new entry edits no shared file. Writes two TypeScript files under
- * `projects/docs/src/generated/` (gitignored):
- * - `component-docs.ts`: `COMPONENT_DOCS`, from every `pages/component/docs/<entry>.ts` (each
- *   exports `DOC: ComponentDoc`);
- * - `api-documents.ts`: `API_DOCUMENTS`, from every `generated/api/<entry>.json` that
- *   `extract-api.mjs` wrote. Each JSON is assigned to `ApiDocument`, so the compiler checks its
- *   shape against the script's output.
+ * `projects/docs/src/generated/` (gitignored). Both are maps of loaders, so every page's content,
+ * examples and API sit in their own lazy chunk and the docs app's initial bundle does not grow with
+ * each entry:
+ * - `component-docs.ts`: `COMPONENT_DOCS`, entry -> `() => import(<entry>.ts).DOC`, from every
+ *   `pages/component/docs/<entry>.ts` (each exports `DOC: ComponentDoc`);
+ * - `api-documents.ts`: `API_DOCUMENTS`, entry -> `() => import(<entry>.json)`, from every
+ *   `generated/api/<entry>.json` that `extract-api.mjs` wrote. Each loader's result is typed
+ *   `ApiDocument`, so the compiler checks the JSON's shape against the script's output.
  * Output is sorted by entry, hence deterministic. Run after `extract-api.mjs`.
  */
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -30,9 +32,6 @@ function stems(dir, keep) {
     .sort();
 }
 
-/** @param {string} entry @returns {string} a valid identifier for the entry */
-const identifier = (entry) => `${entry.replace(/[^A-Za-z0-9]/g, '_')}_`;
-
 const docEntries = stems(
   pagesDir,
   (name) => name.endsWith('.ts') && !name.endsWith('.spec.ts') && !name.endsWith('.d.ts'),
@@ -44,11 +43,10 @@ mkdirSync(outDir, { recursive: true });
 writeFileSync(
   join(outDir, 'component-docs.ts'),
   `${HEADER}import type { ComponentDoc } from '../app/pages/component/component-doc';
-${docEntries.map((entry) => `import { DOC as ${identifier(entry)} } from '../app/pages/component/docs/${entry}';`).join('\n')}
 
-/** Page content per entry. Every entry in the API index needs one (prerender fails). */
-export const COMPONENT_DOCS: ReadonlyMap<string, ComponentDoc> = new Map([
-${docEntries.map((entry) => `  ['${entry}', ${identifier(entry)}],`).join('\n')}
+/** Page content per entry, loaded on demand. Every entry in the API index needs one (prerender fails). */
+export const COMPONENT_DOCS: ReadonlyMap<string, () => Promise<ComponentDoc>> = new Map([
+${docEntries.map((entry) => `  ['${entry}', () => import('../app/pages/component/docs/${entry}').then((m) => m.DOC)],`).join('\n')}
 ]);
 `,
 );
@@ -56,13 +54,10 @@ ${docEntries.map((entry) => `  ['${entry}', ${identifier(entry)}],`).join('\n')}
 writeFileSync(
   join(outDir, 'api-documents.ts'),
   `${HEADER}import type { ApiDocument } from '../app/api/api-types';
-${apiEntries.map((entry) => `import ${identifier(entry)}Json from './api/${entry}.json';`).join('\n')}
 
-${apiEntries.map((entry) => `const ${identifier(entry)}: ApiDocument = ${identifier(entry)}Json;`).join('\n')}
-
-/** Generated API per entry. */
-export const API_DOCUMENTS: ReadonlyMap<string, ApiDocument> = new Map([
-${apiEntries.map((entry) => `  ['${entry}', ${identifier(entry)}],`).join('\n')}
+/** Generated API per entry, loaded on demand. */
+export const API_DOCUMENTS: ReadonlyMap<string, () => Promise<ApiDocument>> = new Map([
+${apiEntries.map((entry) => `  ['${entry}', () => import('./api/${entry}.json').then((m): ApiDocument => m.default)],`).join('\n')}
 ]);
 `,
 );

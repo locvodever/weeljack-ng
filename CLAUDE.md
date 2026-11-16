@@ -136,18 +136,21 @@ selector suffix and docs slug all share one word, and the size budget finds the 
 **Shared helpers (`weeljack-ng/private`, `_`-prefixed, `@docs-private`).** Reuse these, never write
 a family's own:
 - `_mergePartAttributes(pt, partPath, attributes)` routes attributes onto a `pt` part (dotted path ok):
-  consumer `pt` (object or function) and keys kept, a routed attribute wins on the same name,
-  `undefined`/`null` values omitted. `wj-button` uses it.
+  consumer `pt` (object or function) and keys kept, a routed attribute wins on the same name. An
+  `undefined`/`null` value clears the attribute: it goes on as an `undefined` key, which is what makes
+  Optimus remove it, unless the consumer's `pt` sets it. Wrappers need no seeding of their own.
+  `wj-button` uses it.
 - `_wjId(prefix)` returns `wj-<prefix>-<n>`, a per-application counter (injection context).
 - `_warnOnce(code, selector, what, fix)` is the deduped dev-mode warn in the 21 Q8 shape, behind
   `ngDevMode` (injection context). Use your family's `WJ<NNNN>` block.
 - `_checkWeeljackSetup(selector)` and `_checkAriaOnHost(selector)` go in every wrapper's constructor.
 
 **Budget, SSR and errors (21):**
-- A wrapper entry weighs at most the larger of 1.5 KB or 25% of the Optimus entry it wraps; an own
-  entry at most 3.2 KB (esbuild minify + gzip-6). A wrapper entry needs no row: `size` defaults
+- A wrapper entry weighs at most the larger of 2.5 KB or 25% of the Optimus entry it wraps; an own
+  entry at most 5 KB (esbuild minify + gzip-6). Loc raised both on 2026-11-16, from 1.5 KB and
+  3.2 KB, after the form controls hit them. A wrapper entry needs no row: `size` defaults
   `weeljack-ng/<x>` to `@openng/optimus-ui/<x>`, and only the root, `private` and own entries have
-  a row in `size-budgets.json`. No PR raises a limit.
+  a row in `size-budgets.json`. No family PR raises a limit.
 - SSR is claimed; hydration is not, in v1.
 - Optimus errors are never caught or re-wrapped.
 - Own errors follow `WJ<NNNN>: <wj-selector>: <what is wrong>. <what to do>. Find more at
@@ -195,6 +198,8 @@ a family's own:
   directive is a slot. `check:ssr` counts an `ng-template[...]` slot selector as covered when a
   component selector of the same entry is.
 - Registries (`COMPONENT_DOCS`, `API_DOCUMENTS`) and the API index are generated from those files.
+  The registries map each entry to a lazy loader, and the `components/:entry` route resolves the
+  page's `DOC` and API, so a new entry adds nothing to the docs app's initial bundle.
   An API-index entry with no `DOC` fails the prerender.
 
 **Executors:**
@@ -402,8 +407,8 @@ Copied from the roadmap's engineering baseline (one line per area that applies).
   - rollback per § 9.
   - Source: ticket 20.
 - **B14 NFRs and failure modes:**
-  - each wrapper entry ≤ max(1.5 KB, 25% of the Optimus entry it wraps), and own entries ≤ 3.2 KB,
-    esbuild + gzip-6; no PR raises a limit;
+  - each wrapper entry ≤ max(2.5 KB, 25% of the Optimus entry it wraps), and own entries ≤ 5 KB,
+    esbuild + gzip-6 (raised from 1.5 KB and 3.2 KB by Loc, 2026-11-16); no family PR raises a limit;
   - no app-level budget;
   - OnPush and zoneless as hard rules;
   - SSR claimed, hydration not in v1;
