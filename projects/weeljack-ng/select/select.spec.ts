@@ -1296,6 +1296,7 @@ describe('WjSelect', () => {
 
       await userEvent.keyboard('{ArrowDown}{ArrowDown}{ArrowDown}');
       expect(activeLabel(element)).toBe('Banana');
+      await overlayOpen(element);
       await userEvent.keyboard('{Enter}');
       await fixture.whenStable();
 
@@ -1383,6 +1384,7 @@ describe('WjSelect', () => {
 
       await userEvent.keyboard('e');
       expect(await select.isOpen()).toBe(true);
+      await overlayOpen(element);
       await expect.poll(() => activeLabel(element)).toBe('Elderberry');
 
       await userEvent.keyboard('{Escape}');

@@ -1,0 +1,16 @@
+/* The host box carries the size (see the host bindings), and Optimus's own element fills it, so a
+   percentage width resolves against the wrapper's container as it does for a bare `p-skeleton`. */
+@layer wj {
+  :host,
+  p-skeleton {
+    display: block;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    /* The shimmer is a CSS keyframe on the shape's ::after, in Optimus's own `wj` layer styles (no
+       !important needed, FR-17); `:host` lifts the specificity over its `.p-skeleton::after`. */
+    :host p-skeleton::after {
+      animation: none;
+    }
+  }
+}
