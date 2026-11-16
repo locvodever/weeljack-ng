@@ -6,6 +6,8 @@ import { userEvent } from 'vitest/browser';
 import { provideWeeljack } from 'weeljack-ng';
 import { WjField } from 'weeljack-ng/field';
 import { WjFieldHarness } from 'weeljack-ng/field/testing';
+import { WjInputText } from 'weeljack-ng/inputtext';
+import { WjInputTextHarness } from 'weeljack-ng/inputtext/testing';
 import { _registerWithField } from 'weeljack-ng/private';
 import { expectNoAxeViolations } from '../spec-support/axe';
 
@@ -169,6 +171,20 @@ class SignalHost {
     event.preventDefault();
     void submit(this.model, () => Promise.resolve());
   }
+}
+
+/** A real `input[wjInputText]` inside a field, the way an app writes it. */
+@Component({
+  selector: 'wj-field-real-host',
+  imports: [WjField, WjInputText],
+  template: `
+    <wj-field label="Email" hint="We never share it." [error]="error()">
+      <input wjInputText type="email" />
+    </wj-field>
+  `,
+})
+class RealControlHost {
+  readonly error = signal<string | undefined>(undefined);
 }
 
 type Scheme = 'light' | 'dark';
@@ -784,6 +800,31 @@ describe('WjField', () => {
       const { element } = await render();
 
       expect(labelOf(element).textContent.trim()).toBe('Email');
+    });
+  });
+
+  describe('a real input[wjInputText]', () => {
+    it('is named by the label, described by the hint and error, and invalid with the error', async () => {
+      TestBed.configureTestingModule({ providers: [provideWeeljack()] });
+      const fixture = TestBed.createComponent(RealControlHost);
+      await fixture.whenStable();
+      const loader = TestbedHarnessEnvironment.loader(fixture);
+      const field = await loader.getHarness(WjFieldHarness);
+      const input = await field.getHarness(WjInputTextHarness);
+      const label = (fixture.nativeElement as HTMLElement).querySelector('label');
+
+      expect(label?.getAttribute('for')).toBe(await input.getId());
+      expect(await field.isGroup()).toBe(false);
+      expect((await input.getAriaAttributes()).describedBy).toMatch(/^wj-field-hint-\d+$/);
+      expect(await input.isInvalid()).toBe(false);
+
+      fixture.componentInstance.error.set('Enter an email address.');
+      await fixture.whenStable();
+
+      expect((await input.getAriaAttributes()).describedBy).toMatch(
+        /^wj-field-hint-\d+ wj-field-error-\d+$/,
+      );
+      expect(await input.isInvalid()).toBe(true);
     });
   });
 

@@ -1,5 +1,9 @@
 import { FieldGroupErrorExample } from '../../../examples/field/group-error';
 import { FieldRadioGroupExample } from '../../../examples/field/radio-group';
+import { FieldReactiveExample } from '../../../examples/field/reactive';
+import { FieldSignalFormsExample } from '../../../examples/field/signal-forms';
+import { FieldTextInputExample } from '../../../examples/field/text-input';
+import { FieldTwoInputsExample } from '../../../examples/field/two-inputs';
 import type { ComponentDoc } from '../component-doc';
 
 export const DOC: ComponentDoc = {
@@ -8,6 +12,34 @@ export const DOC: ComponentDoc = {
   purpose:
     'A label, a hint and an error around a form control. The control inside it reads its name, description and invalid state from the field.',
   examples: [
+    {
+      title: 'Text input with a hint and an error',
+      description:
+        'The most common use: a `wjInputText` in a field with `ngModel`. The error is computed from the value and the touched state, so the page loads clean and the message appears after the input is blurred.',
+      sourceKey: 'field/text-input',
+      component: FieldTextInputExample,
+    },
+    {
+      title: 'The same with a reactive FormControl',
+      description:
+        'Nothing changes in the field. Compute `error` from the control, here once it is touched and its value is not an email address.',
+      sourceKey: 'field/reactive',
+      component: FieldReactiveExample,
+    },
+    {
+      title: 'Signal forms with submit()',
+      description:
+        'With `[formField]` you leave `error` empty: the field shows the first error message once the input is touched, and `submit()` touches every field, so Save shows all of them.',
+      sourceKey: 'field/signal-forms',
+      component: FieldSignalFormsExample,
+    },
+    {
+      title: 'Two inputs in one field',
+      description:
+        'Two registered controls make the field a group named by its label. Each input keeps its own visible `<label for>` and static `id`, and both are described by the hint.',
+      sourceKey: 'field/two-inputs',
+      component: FieldTwoInputsExample,
+    },
     {
       title: 'Native radio group',
       description:

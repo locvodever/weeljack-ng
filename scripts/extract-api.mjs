@@ -359,12 +359,10 @@ function readHostDirectiveMembers(source, className, checker) {
         for (const kind of /** @type {const} */ (['inputs', 'outputs'])) {
           for (const exposed of stringList(prop(kind))) {
             const [name = '', alias = name] = exposed.split(':').map((part) => part.trim());
-            const member = declaration.members.find(
-              (item) =>
-                item.name !== undefined && item.name.getText(declaration.getSourceFile()) === name,
-            );
-            const symbol =
-              member === undefined ? undefined : checker.getSymbolAtLocation(member.name ?? member);
+            // An exposed input may be inherited (Optimus's `pt` lives on its base class), so the
+            // checker's property lookup, not only the class's own members, finds it.
+            const symbol = checker.getTypeAtLocation(declaration).getProperty(name);
+            const member = symbol?.declarations?.[0];
             if (member === undefined || symbol === undefined) {
               throw new Error(
                 `extract-api: ${className} exposes "${name}", which ${declaration.name.text} does not declare.`,
