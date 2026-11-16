@@ -20,6 +20,13 @@ const WJ0002 = 'WJ0002';
 /** `aria-*` is written on a component host, where it is not forwarded to the focusable part. */
 const WJ0003 = 'WJ0003';
 
+/**
+ * A brand colour passed to `provideWeeljack` fails WCAG AA contrast (w1-provide block, 0010-0019).
+ *
+ * @docs-private
+ */
+export const _WJ0010 = 'WJ0010';
+
 /** One warning per code per application, however many components render. */
 const warned = new WeakMap<object, Set<string>>();
 

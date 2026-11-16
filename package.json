@@ -42,6 +42,7 @@
     "@angular/router": "~22.2.6",
     "@angular/ssr": "~22.2.6",
     "@openng/optimus-ui": "~2.0.2",
+    "@openng/optimus-ui-locale": "~2.0.2",
     "@openng/optimus-ui-themes": "~2.0.2",
     "@types/node": "^24.0.0",
     "@vitest/browser-playwright": "^5.1.0",

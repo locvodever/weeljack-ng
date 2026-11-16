@@ -3,10 +3,14 @@ import { definePreset } from '@openng/optimus-ui-themes';
 
 /*
  * The default look, "Noir on zinc" (22 Q1-Q3, variant B of the default-look prototype), built on
- * Aura. Everything this file does not name stays Aura.
+ * Aura. Everything this file does not name stays Aura. It is two layers:
+ *  - `wjAlwaysOn`: the AA corrections and sizing over Aura (22 Q2-Q3), whatever the brand;
+ *  - `wjNoirPrimary`: the ink primary (22 Q1), dropped when an app passes its own `primary`, so
+ *    Aura's own primary mapping holds.
+ * `wjNoirOnZinc` is Aura, then both.
  *
  * Two readers share this file and keep it dependency-light on purpose:
- *  - `provideWeeljack` hands it to the one `provideOptimus` call;
+ *  - `provideWeeljack` hands the preset to the one `provideOptimus` call;
  *  - `scripts/check-contrast.mjs` imports it under Node's type stripping to resolve it in both
  *    schemes. So: only erasable TypeScript, imports only from `@openng/*`, no relative imports.
  */
@@ -42,13 +46,11 @@ const zinc = {
 };
 
 /**
- * The Optimus preset `provideWeeljack` passes to `provideOptimus`. Not exported from the root
- * entry: apps never see a raw preset (05 Q3).
+ * Aura plus the always-on layer: focus ring, 44px controls, AA boundaries and severity fills.
+ * Not exported from the root entry: apps never see a raw preset (05 Q3).
  */
-export const wjNoirOnZinc = definePreset(aura, {
+export const wjAlwaysOn = definePreset(aura, {
   semantic: {
-    // Primary ink: Optimus's noir mapping. The palette itself is zinc in both schemes.
-    primary: zinc,
     // One focus ring on every control: 2px solid primary, 2px offset.
     focusRing: {
       width: '2px',
@@ -85,18 +87,6 @@ export const wjNoirOnZinc = definePreset(aura, {
       light: {
         // Zinc surfaces: page zinc.50, white cards (surface.0).
         surface: { 0: '#ffffff', ...zinc },
-        primary: {
-          color: '{zinc.950}',
-          contrastColor: '#ffffff',
-          hoverColor: '{zinc.900}',
-          activeColor: '{zinc.800}',
-        },
-        highlight: {
-          background: '{zinc.950}',
-          focusBackground: '{zinc.700}',
-          color: '#ffffff',
-          focusColor: '#ffffff',
-        },
         formField: {
           // AA: control boundaries and the invalid border reach 3:1.
           borderColor: '{surface.500}',
@@ -106,18 +96,6 @@ export const wjNoirOnZinc = definePreset(aura, {
         error: { color: '{red.700}' },
       },
       dark: {
-        primary: {
-          color: '{zinc.50}',
-          contrastColor: '{zinc.950}',
-          hoverColor: '{zinc.100}',
-          activeColor: '{zinc.200}',
-        },
-        highlight: {
-          background: 'rgba(250, 250, 250, .16)',
-          focusBackground: 'rgba(250, 250, 250, .24)',
-          color: 'rgba(255, 255, 255, .87)',
-          focusColor: 'rgba(255, 255, 255, .87)',
-        },
         formField: {
           borderColor: '{surface.500}',
           hoverBorderColor: '{surface.400}',
@@ -147,13 +125,7 @@ export const wjNoirOnZinc = definePreset(aura, {
         },
       },
     },
-    tag: {
-      root: { borderRadius: '{border.radius.md}' },
-      colorScheme: {
-        light: { primary: { background: '{zinc.900}', color: '#ffffff' } },
-        dark: { primary: { background: '{zinc.50}', color: '{zinc.950}' } },
-      },
-    },
+    tag: { root: { borderRadius: '{border.radius.md}' } },
     checkbox: {
       root: { width: '1.5rem', height: '1.5rem' },
       icon: { size: '1rem' },
@@ -186,3 +158,54 @@ export const wjNoirOnZinc = definePreset(aura, {
     },
   },
 });
+
+/**
+ * The noir primary layer (22 Q1): ink primary, a zinc palette in both schemes, and the highlight
+ * and tag colours that follow it.
+ */
+const noirPrimary = {
+  semantic: {
+    primary: zinc,
+    colorScheme: {
+      light: {
+        primary: {
+          color: '{zinc.950}',
+          contrastColor: '#ffffff',
+          hoverColor: '{zinc.900}',
+          activeColor: '{zinc.800}',
+        },
+        highlight: {
+          background: '{zinc.950}',
+          focusBackground: '{zinc.700}',
+          color: '#ffffff',
+          focusColor: '#ffffff',
+        },
+      },
+      dark: {
+        primary: {
+          color: '{zinc.50}',
+          contrastColor: '{zinc.950}',
+          hoverColor: '{zinc.100}',
+          activeColor: '{zinc.200}',
+        },
+        highlight: {
+          background: 'rgba(250, 250, 250, .16)',
+          focusBackground: 'rgba(250, 250, 250, .24)',
+          color: 'rgba(255, 255, 255, .87)',
+          focusColor: 'rgba(255, 255, 255, .87)',
+        },
+      },
+    },
+  },
+  components: {
+    tag: {
+      colorScheme: {
+        light: { primary: { background: '{zinc.900}', color: '#ffffff' } },
+        dark: { primary: { background: '{zinc.50}', color: '{zinc.950}' } },
+      },
+    },
+  },
+};
+
+/** The default look: Aura, the always-on layer, then the noir primary. What `check:contrast` reads. */
+export const wjNoirOnZinc = definePreset(wjAlwaysOn, noirPrimary);
