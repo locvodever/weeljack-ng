@@ -1,4 +1,5 @@
 import { FieldGroupErrorExample } from '../../../examples/field/group-error';
+import { FieldInlineCheckboxExample } from '../../../examples/field/inline-checkbox';
 import { FieldRadioGroupExample } from '../../../examples/field/radio-group';
 import { FieldReactiveExample } from '../../../examples/field/reactive';
 import { FieldSignalFormsExample } from '../../../examples/field/signal-forms';
@@ -32,6 +33,13 @@ export const DOC: ComponentDoc = {
         'With `[formField]` you leave `error` empty: the field shows the first error message once the input is touched, and `submit()` touches every field, so Save shows all of them.',
       sourceKey: 'field/signal-forms',
       component: FieldSignalFormsExample,
+    },
+    {
+      title: 'Inline with a checkbox',
+      description:
+        'A `wj-checkbox` is an on/off control, so the field puts its label and hint beside the box, and a click on the label toggles it. The error is computed from the touched state, so the page loads clean.',
+      sourceKey: 'field/inline-checkbox',
+      component: FieldInlineCheckboxExample,
     },
     {
       title: 'Two inputs in one field',

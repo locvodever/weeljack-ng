@@ -18,3 +18,4 @@ export {
 export { _wjId } from './ids';
 export { _mergePartAttributes, type _PartAttributeValue } from './part-attributes';
 export { _WJ_EN } from './translation-en';
+export { _bridgeAccessor, type _AccessorHost } from './value-accessor';

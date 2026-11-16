@@ -1,4 +1,4 @@
-import { DestroyRef, InjectionToken, computed, inject, type Signal } from '@angular/core';
+import { DestroyRef, InjectionToken, inject, type Signal } from '@angular/core';
 import { _wjId } from './ids';
 
 /**
@@ -8,7 +8,7 @@ import { _wjId } from './ids';
  */
 export interface _WjFieldControl {
   /** The id of the focusable element: the consumer's own, or one generated inside a field. */
-  readonly id: Signal<string>;
+  readonly id: () => string;
   /** Whether the focusable element is labelable (`input`, `textarea`), so `<label for>` names it. */
   readonly labelable: boolean;
   /** An on/off control: the field puts its label and hint beside it. */
@@ -48,13 +48,13 @@ interface FieldRegistration {
   /** The entry name, the prefix of an id generated inside a field (`wj-<entry>-<n>`). */
   readonly entry: string;
   /** The consumer's own id (`inputId`, or the static `id` attribute of a directive). */
-  readonly id: Signal<string | undefined>;
+  readonly id: () => string | undefined;
   /** The consumer's own `aria-describedby` ids, space-separated. */
-  readonly describedBy: Signal<string | undefined>;
+  readonly describedBy: () => string | undefined;
   /** The consumer's own `aria-labelledby` ids. */
-  readonly labelledBy: Signal<string | undefined>;
+  readonly labelledBy: () => string | undefined;
   /** The control's own `invalid` state. */
-  readonly invalid: Signal<boolean>;
+  readonly invalid: () => boolean;
   /** Defaults to `true`. `false` when `<label for>` cannot name the focusable element. */
   readonly labelable?: boolean;
   /** Defaults to `false`. */
@@ -64,10 +64,10 @@ interface FieldRegistration {
 /** What {@link _registerWithField} resolves for a control to bind onto its focusable element. */
 interface FieldRegistered {
   readonly inField: boolean;
-  readonly id: Signal<string | undefined>;
-  readonly describedBy: Signal<string | undefined>;
-  readonly labelledBy: Signal<string | undefined>;
-  readonly invalid: Signal<boolean>;
+  readonly id: () => string | undefined;
+  readonly describedBy: () => string | undefined;
+  readonly labelledBy: () => string | undefined;
+  readonly invalid: () => boolean;
 }
 
 /**
@@ -127,24 +127,22 @@ export function _registerWithField(options: FieldRegistration): FieldRegistered 
     return { inField: false, id, describedBy, labelledBy, invalid };
   }
   const generated = _wjId(entry);
-  const resolvedId = computed(() => {
-    const own = id();
-    return own !== undefined && own !== '' ? own : generated;
-  });
+  // Plain functions, not `computed`: they only read signals, so any reactive context tracks them.
+  // `||` on purpose: an empty id or label id means "none", as `undefined` does.
+  /* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
+  const resolvedId = (): string => id() || generated;
   inject(DestroyRef).onDestroy(field.register({ id: resolvedId, labelable, inline }));
   return {
     inField: true,
     id: resolvedId,
-    describedBy: computed(() => {
-      const ids = [...(describedBy()?.split(/\s+/) ?? []), field.hintId(), field.errorId()].filter(
-        (value): value is string => value !== undefined && value !== '',
-      );
-      return ids.length > 0 ? [...new Set(ids)].join(' ') : undefined;
-    }),
-    labelledBy: computed(() => {
-      const own = labelledBy();
-      return own !== undefined && own !== '' ? own : labelable ? undefined : field.labelId;
-    }),
+    describedBy: () =>
+      [
+        ...new Set(
+          [...(describedBy()?.split(/\s+/) ?? []), field.hintId(), field.errorId()].filter(Boolean),
+        ),
+      ].join(' ') || undefined,
+    labelledBy: () => labelledBy() || (labelable ? undefined : field.labelId),
     invalid: field.invalid,
   };
+  /* eslint-enable @typescript-eslint/prefer-nullish-coalescing */
 }
