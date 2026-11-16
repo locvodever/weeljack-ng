@@ -1,0 +1,9 @@
+/* Host and Optimus's own element share one inline-flex box (the display of `.p-tag`), so the host
+   is exactly as tall as the tag and sits on the text baseline like an inline word. Everything else
+   is the preset. */
+@layer wj {
+  :host,
+  p-tag {
+    display: inline-flex;
+  }
+}
