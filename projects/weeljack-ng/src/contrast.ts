@@ -1,7 +1,7 @@
 /*
  * WCAG contrast math over an Optimus preset: the colour parser, the token flattener and `{a.b}`
  * resolver, and the ratio. One module, three readers: `scripts/check-contrast.mjs` (the gate),
- * the dev-mode brand warning in `brand.ts`, and `scripts/extract-theme.mjs` (the docs page).
+ * the dev-mode brand warning in `brand.ts`, and `scripts/extract-theme.mjs` (the docs page), through `scripts/contrast-rows.mjs`.
  *
  * Erasable TypeScript only, and no imports at all (not even relative ones), so Node's type
  * stripping loads it from a script. Nothing here touches the DOM or a browser global. Unused
@@ -142,17 +142,22 @@ function ratio(a: Rgba, b: Rgba): number {
   return (hi + 0.05) / (lo + 0.05);
 }
 
-/** A pair end is a literal `#rrggbb` or the dotted path of a preset token. */
-function colourOf(tokens: Tokens, end: string): Rgba {
+/**
+ * A pair end (a literal `#rrggbb` or the dotted path of a preset token) as a resolved CSS colour
+ * string. Also what the docs generator prints for a pair's colours.
+ */
+export function tokenValue(tokens: Tokens, end: string): string {
   if (end.startsWith('#')) {
-    return parseColour(end);
+    return end;
   }
   const raw = tokens.get(end);
   if (raw === undefined) {
     throw new Error(`contrast: no token '${end}' in the preset`);
   }
-  return parseColour(resolve(tokens, raw, [end]));
+  return resolve(tokens, raw, [end]);
 }
+
+const colourOf = (tokens: Tokens, end: string): Rgba => parseColour(tokenValue(tokens, end));
 
 /**
  * The contrast ratio of `foreground` on `background` (each a literal `#rrggbb` or a token path).

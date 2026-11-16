@@ -19,7 +19,7 @@
     "lint": "eslint . --max-warnings 0 && prettier --check .",
     "format": "prettier --write .",
     "check:contrast": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/check-contrast.mjs",
-    "generate": "node scripts/extract-api.mjs && node scripts/extract-examples.mjs && node scripts/generate-registries.mjs",
+    "generate": "node scripts/extract-api.mjs && node scripts/extract-examples.mjs && node scripts/generate-registries.mjs && node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/extract-theme.mjs",
     "build:docs": "npm run generate && ng build docs && node scripts/write-404.mjs",
     "check:ssr": "node scripts/check-ssr.mjs",
     "check:a11y": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/check-a11y.mjs",
