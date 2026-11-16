@@ -7,9 +7,10 @@ import {
 } from '@angular/core';
 import { Optimus, provideOptimus } from '@openng/optimus-ui/config';
 import { definePreset } from '@openng/optimus-ui-themes';
-import { _WJ0010, _WJ_PROVIDED, _warnOnce } from 'weeljack-ng/private';
+import { _WJ0010, _WJ_EN, _WJ_PROVIDED, _warnOnce } from 'weeljack-ng/private';
 import { brandContrastIssues, brandPreset, type WjColorScale } from './brand';
 import { wjLayerStyles } from './layer-styles';
+import type { WjTranslation } from './translation';
 
 /** The theme options `provideWeeljack` reads once at bootstrap (05 Q3). */
 export interface WjThemeOptions {
@@ -32,6 +33,12 @@ export interface WjThemeOptions {
    * - `'class'`: dark while `.wj-dark` is on `<html>`.
    */
   darkMode?: 'off' | 'system' | 'class';
+  /**
+   * The UI-chrome strings (`weeljack-ng/locale` ships `en` and `vi`). Merged one level deep over
+   * the English default, so a partial object keeps every other string. Read once; the language
+   * is not switched at runtime, and `LOCALE_ID` and `<html lang>` are left alone.
+   */
+  translation?: WjTranslation;
 }
 
 const DARK_MODE_SELECTORS = { off: 'none', system: 'system', class: '.wj-dark' } as const;
@@ -44,9 +51,16 @@ const DARK_MODE_SELECTORS = { off: 'none', system: 'system', class: '.wj-dark' }
  * attribute on the root element unless the app provides the token itself, so no option is added.
  */
 export function provideWeeljack(options: WjThemeOptions = {}): EnvironmentProviders {
-  const { darkMode = 'off', primary, surface } = options;
+  const { darkMode = 'off', primary, surface, translation } = options;
   const brand = brandPreset(primary, surface);
   const preset = definePreset(brand, { css: wjLayerStyles });
+  // Optimus's `setTranslation` is shallow, so `aria` is merged here and never passed partial.
+  const merged = {
+    ..._WJ_EN,
+    ...translation,
+    aria: { ..._WJ_EN.aria, ...translation?.aria },
+    wj: { ..._WJ_EN.wj, ...translation?.wj },
+  };
 
   return makeEnvironmentProviders([
     { provide: _WJ_PROVIDED, useValue: true },
@@ -80,6 +94,7 @@ export function provideWeeljack(options: WjThemeOptions = {}): EnvironmentProvid
       }
     }),
     provideOptimus({
+      translation: merged,
       theme: {
         preset,
         options: {
