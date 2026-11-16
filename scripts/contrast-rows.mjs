@@ -93,6 +93,22 @@ const PAIRS = {
     ['secondary button', 'button.secondary.color', 'button.secondary.background', TEXT],
     ['tag success', 'tag.success.color', 'tag.success.background', TEXT, 'content.background'],
     [
+      'toast success summary',
+      'toast.success.color',
+      'toast.success.background',
+      TEXT,
+      'content.background',
+    ],
+    [
+      'toast error summary',
+      'toast.error.color',
+      'toast.error.background',
+      TEXT,
+      'content.background',
+    ],
+    ['toast warn summary', 'toast.warn.color', 'toast.warn.background', TEXT, 'content.background'],
+    ['toast info summary', 'toast.info.color', 'toast.info.background', TEXT, 'content.background'],
+    [
       'selected option',
       'list.option.selected.color',
       'list.option.selected.background',

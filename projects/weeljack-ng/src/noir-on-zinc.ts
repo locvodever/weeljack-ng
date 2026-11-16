@@ -154,6 +154,12 @@ export const wjAlwaysOn = definePreset(aura, {
           warn: { color: '{yellow.800}' },
           error: { color: '{red.700}' },
         },
+        // Aura's 500 on its own 16% tint reads 3.96:1 (info) and 3.98:1 (error) over a zinc.900
+        // card: one step up the scale clears 4.5:1 (W1-display 9.4).
+        dark: {
+          info: { color: '{blue.400}' },
+          error: { color: '{red.400}' },
+        },
       },
     },
   },
