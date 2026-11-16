@@ -400,6 +400,16 @@ describe('WjTextarea', () => {
       expect(normal).toBeLessThan(large ?? 0);
     });
 
+    it('gets a 1.5 line height from the layer styles', async () => {
+      TestBed.configureTestingModule({ providers: [provideWeeljack()] });
+      const fixture = TestBed.createComponent(GalleryHost);
+      await fixture.whenStable();
+
+      const [area] = areasOf(fixture.nativeElement as HTMLElement);
+      const style = getComputedStyle(area as HTMLElement);
+      expect(parseFloat(style.lineHeight)).toBeCloseTo(parseFloat(style.fontSize) * 1.5, 1);
+    });
+
     it('size follows the bound value and writes no native size attribute', async () => {
       const { element, component, fixture } = await renderAs(SizeHost);
       const small = areaOf(element).getBoundingClientRect().height;

@@ -98,24 +98,10 @@ export class WjPassword implements ControlValueAccessor {
 
   /** `pt` forwarded as given, plus the ARIA attributes this wrapper routes to the `input`. */
   protected readonly partAttributes = computed<WjPasswordPt>(() => {
-    const merged = _mergePartAttributes(this.pt(), 'pcInputText.root', {
+    return _mergePartAttributes(this.pt(), 'pcInputText.root', {
       'aria-describedby': this.field.describedBy(),
       'aria-invalid': this.field.invalid() ? 'true' : undefined,
     });
-    // Optimus removes an attribute only for a key set to `undefined`, and the merge omits those
-    // keys: seed them, so a routed attribute that goes away is removed from the `input`.
-    return (context) => {
-      const pt = merged(context);
-      const input = typeof pt.pcInputText === 'object' ? pt.pcInputText : {};
-      const root = typeof input?.root === 'object' ? input.root : {};
-      return {
-        ...pt,
-        pcInputText: {
-          ...input,
-          root: { 'aria-describedby': undefined, 'aria-invalid': undefined, ...root },
-        },
-      };
-    };
   });
 
   declare registerOnChange: _AccessorHost<string | null>['registerOnChange'];

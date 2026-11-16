@@ -297,6 +297,19 @@ describe('provideWeeljack', () => {
     });
   });
 
+  describe('line-height rule', () => {
+    it('gives the input, textarea, select label and button a 1.5 line height', async () => {
+      await render();
+
+      const rule = allRules().find(
+        (r): r is CSSStyleRule => r instanceof CSSStyleRule && r.style.lineHeight === '1.5',
+      );
+      for (const selector of ['.p-inputtext', '.p-textarea', '.p-select-label', '.p-button']) {
+        expect(rule?.selectorText).toContain(selector);
+      }
+    });
+  });
+
   describe('44px controls', () => {
     it('renders default 44px, small 36px, large 52px and a square icon-only button', async () => {
       const fixture = await render();

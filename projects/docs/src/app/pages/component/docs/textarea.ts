@@ -69,7 +69,7 @@ export const DOC: ComponentDoc = {
     'The screen-reader pass (NVDA with Chrome) is recorded on this page before `0.1.0`.',
   ],
   stylingIntro:
-    'Colours, radius, padding and the focus ring come from the `--wj-*` variables that `provideWeeljack` emits. The text keeps the browser’s default line height, so set `line-height` in your own CSS to match the 1.5 of the text input. For anything else, `pt` reaches the part of the Optimus textarea underneath. It tracks Optimus 2.0: part names and attributes follow the installed `@openng/optimus-ui` minor and are outside the stable API of `wjTextarea`. Changes to them ship only in the release that takes a new Optimus minor, and are not breaking.',
+    'Colours, radius, padding and the focus ring come from the `--wj-*` variables that `provideWeeljack` emits. The textarea gets `line-height: 1.5` from the layer styles. For anything else, `pt` reaches the part of the Optimus textarea underneath. It tracks Optimus 2.0: part names and attributes follow the installed `@openng/optimus-ui` minor and are outside the stable API of `wjTextarea`. Changes to them ship only in the release that takes a new Optimus minor, and are not breaking.',
   parts: [
     {
       part: 'root',
