@@ -1,8 +1,8 @@
 {
   "limits": {
     "kb": 1024,
-    "ownKb": 3.2,
-    "wrapperFloorKb": 1.5,
+    "ownKb": 5,
+    "wrapperFloorKb": 2.5,
     "wrapperShareOfOptimus": 0.25
   },
   "entries": [

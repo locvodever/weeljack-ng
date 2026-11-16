@@ -11,8 +11,9 @@ import { ROOT, libraryEntries } from './entries.mjs';
  * wraps that entry); `size-budgets.json` rows cover the root, `private` and other own entries. Angular, Optimus and the other entries stay
  * external because the FESM is a module that only imports them; nothing is bundled. A wrapper's
  * limit is the larger of a floor and a share of the Optimus entry it wraps, measured the same way
- * from the pinned `node_modules`. `/testing` entries are not shipped to apps and are excluded. No
- * PR raises a limit.
+ * from the pinned `node_modules`. `/testing` entries are not shipped to apps and are excluded. The
+ * limits change only by Loc's call (21; on 2026-11-16 the floor went 1.5 -> 2.5 KB and own entries
+ * 3.2 -> 5 KB); no family PR raises one.
  *
  * @typedef {{ entry: string, optimus: string, note: string }} Row
  * @typedef {{ kb: number, ownKb: number, wrapperFloorKb: number, wrapperShareOfOptimus: number }} Limits

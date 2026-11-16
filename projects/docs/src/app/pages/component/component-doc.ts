@@ -1,4 +1,5 @@
 import type { Type } from '@angular/core';
+import type { ApiDocument } from '../../api/api-types';
 
 /** A live example. Its source panel shows `examples/<sourceKey>.ts`. */
 export interface ExampleDoc {
@@ -54,4 +55,13 @@ export interface ComponentDoc {
   optimusSelector?: string;
   /** The Optimus to WeeljackNg mapping (02). `[]` for an own component: the section is omitted. */
   mapping: MappingRow[];
+}
+
+/**
+ * What the `components/:entry` route resolves before the page renders: the entry's content and its
+ * generated API, each loaded from its own chunk (`COMPONENT_DOCS`, `API_DOCUMENTS`).
+ */
+export interface ComponentPageData {
+  doc: ComponentDoc;
+  api: ApiDocument;
 }

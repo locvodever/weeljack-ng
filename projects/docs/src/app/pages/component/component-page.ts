@@ -1,11 +1,10 @@
 import { NgComponentOutlet } from '@angular/common';
 import { Component, computed, input } from '@angular/core';
-import { COMPONENT_DOCS } from '../../../generated/component-docs';
 import exampleSources from '../../../generated/examples.json';
-import { API_DOCUMENTS } from '../../../generated/api-documents';
 import type { ApiClass, ApiMember } from '../../api/api-types';
 import { CodeBlock } from '../../code-block/code-block';
 import { DocsText } from '../../text/text';
+import type { ComponentPageData } from './component-doc';
 
 const SOURCES: ReadonlyMap<string, string> = new Map(Object.entries(exampleSources));
 
@@ -22,7 +21,10 @@ interface ClassApi {
 const isSlot = (item: ApiClass): boolean =>
   item.kind === 'directive' && item.selector.startsWith('ng-template[');
 
-/** `/components/<entry>` in the fixed order of 07 Q3: content from `COMPONENT_DOCS` + generated API. */
+/**
+ * `/components/<entry>` in the fixed order of 07 Q3: content from `COMPONENT_DOCS` + generated
+ * API, both resolved by the route (`page`) so neither sits in the initial bundle.
+ */
 @Component({
   selector: 'docs-component-page',
   imports: [NgComponentOutlet, CodeBlock, DocsText],
@@ -33,21 +35,12 @@ export class ComponentPage {
   /** The `:entry` route parameter. */
   readonly entry = input.required<string>();
 
-  protected readonly doc = computed(() => {
-    const doc = COMPONENT_DOCS.get(this.entry());
-    if (doc === undefined) {
-      throw new Error(`No docs page content for "${this.entry()}".`);
-    }
-    return doc;
-  });
+  /** The route's resolved content and API for `entry`. */
+  readonly page = input.required<ComponentPageData>();
 
-  protected readonly api = computed(() => {
-    const api = API_DOCUMENTS.get(this.entry());
-    if (api === undefined) {
-      throw new Error(`No generated API for "${this.entry()}". Run npm run build:docs.`);
-    }
-    return api;
-  });
+  protected readonly doc = computed(() => this.page().doc);
+
+  protected readonly api = computed(() => this.page().api);
 
   protected readonly importLine = computed(() => {
     const api = this.api();

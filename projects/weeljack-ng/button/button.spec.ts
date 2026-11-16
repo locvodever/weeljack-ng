@@ -275,6 +275,18 @@ describe('WjButton', () => {
       expect(parts(element).control.querySelector('svg[aria-hidden="true"]')).not.toBeNull();
     });
 
+    it('loading sets aria-busy on the button and removes it when loading ends', async () => {
+      const { fixture, host, element } = await render('light', (setup) => {
+        setup.loading.set(true);
+      });
+      expect(parts(element).control.getAttribute('aria-busy')).toBe('true');
+
+      host.loading.set(false);
+      await fixture.whenStable();
+
+      expect(parts(element).control.hasAttribute('aria-busy')).toBe(false);
+    });
+
     it('disabled makes the button inert without showing the spinner', async () => {
       const { button, element } = await render('light', (host) => {
         host.disabled.set(true);
