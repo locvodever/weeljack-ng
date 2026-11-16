@@ -6,13 +6,16 @@ import { ROOT, libraryEntries } from './entries.mjs';
 
 /**
  * `check:pack` (FR-32, D3). What `npm pack` would put in the tarball must carry the three package
- * files, one `exports` key per entry folder (`./button/testing` and `./private` included) and no
- * `@openng/*` in `dependencies`. ng-packagr also writes a `./package.json` key, which is allowed.
+ * files, one `exports` key per entry folder (`./button/testing` and `./private` included), no
+ * `@openng/*` in `dependencies`, and `@openng/optimus-ui-locale` (a devDependency the generator
+ * reads) in neither `dependencies` nor `peerDependencies`. ng-packagr also writes a
+ * `./package.json` key, which is allowed.
  * Run after `npm run build`. Never publishes anything: `--dry-run` only.
  *
  * @typedef {{ files: { path: string }[] }} PackResult
  */
 const DIST = join(ROOT, 'dist', 'weeljack-ng');
+const LOCALE_PACKAGE = '@openng/optimus-ui-locale';
 const REQUIRED_FILES = ['LICENSE', 'THIRD-PARTY-NOTICES.md', 'README.md'];
 /** @type {string[]} */
 const problems = [];
@@ -30,7 +33,7 @@ for (const file of REQUIRED_FILES) {
   if (!packed.has(file)) problems.push(`the tarball does not list ${file}`);
 }
 
-/** @type {{ exports?: Record<string, unknown>, dependencies?: Record<string, string> }} */
+/** @type {{ exports?: Record<string, unknown>, dependencies?: Record<string, string>, peerDependencies?: Record<string, string> }} */
 const manifest = JSON.parse(readFileSync(join(DIST, 'package.json'), 'utf8'));
 const expectedKeys = new Set([
   './package.json',
@@ -46,6 +49,14 @@ for (const key of actualKeys) {
 }
 for (const name of Object.keys(manifest.dependencies ?? {})) {
   if (name.startsWith('@openng/')) problems.push(`dependencies holds ${name}`);
+}
+
+if (!actualKeys.has('./locale')) problems.push('exports has no ./locale key');
+if (LOCALE_PACKAGE in (manifest.dependencies ?? {})) {
+  problems.push(`dependencies holds ${LOCALE_PACKAGE}`);
+}
+if (LOCALE_PACKAGE in (manifest.peerDependencies ?? {})) {
+  problems.push(`peerDependencies holds ${LOCALE_PACKAGE}`);
 }
 
 if (problems.length > 0) {

@@ -15,6 +15,11 @@
       "entry": "weeljack-ng/private",
       "optimus": "own",
       "note": "Shared helpers (_-prefixed, outside semver). Shipped to every consumer, so it gets an own-entry row."
+    },
+    {
+      "entry": "weeljack-ng/locale",
+      "optimus": "own",
+      "note": "Complete UI translations: vi's data, and en re-exported from private."
     }
   ]
 }

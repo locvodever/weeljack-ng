@@ -26,6 +26,11 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/component/component-page').then((m) => m.ComponentPage),
   },
   {
+    path: 'guides/theming',
+    title: `Theming · ${SITE}`,
+    loadComponent: () => import('./pages/theming/theming').then((m) => m.ThemingPage),
+  },
+  {
     path: '**',
     title: `No page here · ${SITE}`,
     loadComponent: () => import('./pages/not-found/not-found').then((m) => m.NotFoundPage),
