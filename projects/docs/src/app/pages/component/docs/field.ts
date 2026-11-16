@@ -1,5 +1,6 @@
 import { FieldGroupErrorExample } from '../../../examples/field/group-error';
 import { FieldInlineCheckboxExample } from '../../../examples/field/inline-checkbox';
+import { FieldInlineToggleSwitchExample } from '../../../examples/field/inline-toggleswitch';
 import { FieldRadioGroupExample } from '../../../examples/field/radio-group';
 import { FieldReactiveExample } from '../../../examples/field/reactive';
 import { FieldSignalFormsExample } from '../../../examples/field/signal-forms';
@@ -40,6 +41,13 @@ export const DOC: ComponentDoc = {
         'A `wj-checkbox` is an on/off control, so the field puts its label and hint beside the box, and a click on the label toggles it. The error is computed from the touched state, so the page loads clean.',
       sourceKey: 'field/inline-checkbox',
       component: FieldInlineCheckboxExample,
+    },
+    {
+      title: 'Inline with a toggle switch',
+      description:
+        'A `wj-toggleswitch` is an on/off control too, so the field puts its label and hint beside the switch, and a click on the label toggles it. The error is computed from the touched state, so the page loads clean.',
+      sourceKey: 'field/inline-toggleswitch',
+      component: FieldInlineToggleSwitchExample,
     },
     {
       title: 'Two inputs in one field',
