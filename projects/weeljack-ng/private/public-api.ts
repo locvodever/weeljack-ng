@@ -9,6 +9,12 @@ export {
   _WJ0010,
   _WJ_PROVIDED,
 } from './dev-warnings';
+export {
+  _registerWithField,
+  _WJ_FIELD_CONTEXT,
+  type _WjFieldContext,
+  type _WjFieldControl,
+} from './field-context';
 export { _wjId } from './ids';
 export { _mergePartAttributes, type _PartAttributeValue } from './part-attributes';
 export { _WJ_EN } from './translation-en';
