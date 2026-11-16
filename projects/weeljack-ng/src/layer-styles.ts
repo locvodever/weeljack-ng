@@ -7,11 +7,13 @@
  * cannot inline a loose `.css` file into an entry's TypeScript.
  *
  * Each entry that adds a control to the 44px family adds its Optimus class to the
- * `line-height` rule below; T0 has the button and the text input.
+ * `line-height` rule below; T0 has the button and the text input; textarea and the select label join it.
  */
 export const wjLayerStyles = `
 /* 44px controls (22 Q2): the form-field padding tokens assume a 1.5 line-height. */
 .p-inputtext,
+.p-textarea,
+.p-select-label,
 .p-button {
   line-height: 1.5;
 }

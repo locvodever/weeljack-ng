@@ -1,0 +1,59 @@
+/* One grid inside the block host, so a projected control fills the field's width. The two public
+   properties carry their defaults here because the root entry's layer styles are frozen. */
+@layer wj {
+  :host {
+    display: block;
+  }
+
+  .wj-field-box {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+    row-gap: var(--wj-field-gap, 4px);
+  }
+
+  /* Inline: the control, then label, hint and error stacked in the second column. */
+  .wj-field-inline {
+    grid-template-columns: auto minmax(0, 1fr);
+    column-gap: var(--wj-field-inline-gap, 8px);
+  }
+
+  .wj-field-inline > :where(.wj-field-label, .wj-field-hint, .wj-field-error) {
+    grid-column: 2;
+  }
+
+  .wj-field-label,
+  .wj-field-hint,
+  .wj-field-error {
+    margin: 0;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+  }
+
+  .wj-field-label {
+    justify-self: start;
+    font-weight: 600;
+    color: var(--wj-text-color);
+  }
+
+  .wj-field-inline > .wj-field-label {
+    font-size: 1rem;
+    font-weight: 400;
+  }
+
+  .wj-field-hint {
+    color: var(--wj-text-muted-color);
+  }
+
+  .wj-field-error {
+    display: grid;
+    grid-template-columns: 16px minmax(0, 1fr);
+    column-gap: 8px;
+    color: var(--wj-error-color);
+  }
+
+  .wj-field-error > svg {
+    margin-block-start: calc((1.5em - 16px) / 2);
+  }
+}

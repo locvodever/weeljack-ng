@@ -1,0 +1,14 @@
+/* The host is the box of the Optimus root inside (a 40 x 24 px track) and adds none of its own, so
+   a field's inline mode puts the track on the label's first line. */
+@layer wj {
+  :host {
+    display: inline-flex;
+  }
+
+  /* The root entry is frozen and its reduced-motion rule does not cover the handle's slide. */
+  @media (prefers-reduced-motion: reduce) {
+    :host {
+      --wj-toggleswitch-slide-duration: 0s;
+    }
+  }
+}

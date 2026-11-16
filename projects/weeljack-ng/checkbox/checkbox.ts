@@ -1,0 +1,86 @@
+import { Component, booleanAttribute, computed, input, model, viewChild } from '@angular/core';
+import { NG_VALUE_ACCESSOR, type ControlValueAccessor } from '@angular/forms';
+import { Checkbox } from '@openng/optimus-ui/checkbox';
+import {
+  _bridgeAccessor,
+  type _AccessorHost,
+  _mergePartAttributes,
+  _registerWithField,
+} from 'weeljack-ng/private';
+import type { WjCheckboxPt } from './checkbox-types';
+
+/**
+ * An on/off checkbox over Optimus's `p-checkbox`, 24 px square. Bind `[(checked)]`, or use
+ * `ngModel`, a `FormControl` or `[formField]`: it is its own value accessor, and `checked` is the
+ * value. Outside a `wj-field`, give it a visible `<label for>` that matches `inputId`, or `ariaLabel`.
+ *
+ * Inside a `wj-field` the label and hint sit beside the box, a click on the label toggles it, and
+ * the field names, describes and marks it invalid.
+ */
+@Component({
+  selector: 'wj-checkbox',
+  imports: [Checkbox],
+  providers: [{ provide: NG_VALUE_ACCESSOR, useExisting: WjCheckbox, multi: true }],
+  templateUrl: './checkbox.html',
+  styleUrl: './checkbox.css',
+})
+export class WjCheckbox implements ControlValueAccessor {
+  /** Whether the box is checked. Two-way: `[(checked)]`. */
+  readonly checked = model(false);
+  /** Makes the checkbox inert. A form can disable it too. */
+  readonly disabled = input(false, { transform: booleanAttribute });
+  /** Marks the checkbox as required. */
+  readonly required = input(false, { transform: booleanAttribute });
+  /**
+   * Shows the invalid look and `aria-invalid`. Inside a `wj-field` the field's error state is shown
+   * instead.
+   */
+  readonly invalid = input(false, { transform: booleanAttribute });
+  /** Id of the `input` element, for a `<label for>`. Inside a field one is generated. */
+  readonly inputId = input<string>();
+  /** Accessible name when there is no visible label. Set on the `input`. */
+  readonly ariaLabel = input<string>();
+  /** Id of the element that names the checkbox. Set on the `input`. */
+  readonly ariaLabelledBy = input<string>();
+  /** Id of the element that describes the checkbox. Set on the `input`. */
+  readonly ariaDescribedBy = input<string>();
+  /**
+   * Pass-through for the checkbox's parts. Tracks Optimus: its part names and attributes follow the
+   * installed `@openng/optimus-ui` minor and are outside this component's stable API; changes to
+   * them ship only in the release that takes a new Optimus minor and are not breaking.
+   */
+  readonly pt = input<WjCheckboxPt>();
+
+  private readonly inner = viewChild(Checkbox);
+  protected readonly isDisabled = _bridgeAccessor(
+    this,
+    'wj-checkbox',
+    this.checked,
+    this.inner,
+    this.disabled,
+  );
+  protected readonly field: ReturnType<typeof _registerWithField> = _registerWithField({
+    entry: 'checkbox',
+    id: this.inputId,
+    describedBy: this.ariaDescribedBy,
+    labelledBy: this.ariaLabelledBy,
+    invalid: this.invalid,
+    inline: true,
+  });
+
+  /** `pt` forwarded as given, plus the ARIA attributes this wrapper routes to the `input`. */
+  protected readonly partAttributes = computed<WjCheckboxPt>(() => {
+    return _mergePartAttributes(this.pt(), 'input', {
+      'aria-describedby': this.field.describedBy(),
+      'aria-invalid': this.field.invalid() ? 'true' : undefined,
+    });
+  });
+
+  declare registerOnChange: _AccessorHost<boolean>['registerOnChange'];
+  declare registerOnTouched: _AccessorHost<boolean>['registerOnTouched'];
+  declare setDisabledState: _AccessorHost<boolean>['setDisabledState'];
+
+  writeValue(value: boolean | null): void {
+    this.checked.set(value === true);
+  }
+}
