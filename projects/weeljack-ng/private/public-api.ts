@@ -16,6 +16,18 @@ export {
   type _WjFieldControl,
 } from './field-context';
 export { _wjId } from './ids';
+export {
+  _drawerPassThrough,
+  _focusIntoOverlay,
+  _OVERLAY_CLOSE_BUTTON,
+  _OVERLAY_MOTION,
+  _overlayCloseLabel,
+  _overlayDrawer,
+  _overlayEscapeGate,
+  _overlayLifecycle,
+  type _OverlayLifecycle,
+  type _OverlayRegion,
+} from './overlay';
 export { _mergePartAttributes, type _PartAttributeValue } from './part-attributes';
 export { _WJ_EN } from './translation-en';
 export { _bridgeAccessor, type _AccessorHost } from './value-accessor';

@@ -1,0 +1,80 @@
+/* The host is a block with nothing in it while the sheet is closed. Optimus renders the dialog
+   inside the host and the drawer's panel too, so a `--wj-*` property set on the host reaches both.
+   Both modes draw the dialog and drawer frame of ui-spec §A: the header, title and footer values
+   of `wj-dialog` and `wj-drawer`, set here for whichever overlay is active. The body padding is
+   the sheet's own (`--wj-sheet-body-padding`), so Optimus's content padding is zeroed and the
+   body wrapper carries it; header and footer keep their insets. The footer region exists only
+   while an element marked `wjSheetFooter` is projected into it: with none, Optimus's empty footer
+   part is hidden. Optimus's own parts carry no `wj` attribute, so they are reached with
+   `::ng-deep` scoped to the host. */
+@layer wj {
+  :host {
+    display: block;
+    --wj-dialog-header-padding: 12px 12px 8px 20px;
+    --wj-dialog-content-padding: 0;
+    --wj-drawer-header-padding: 12px 12px 8px 20px;
+    --wj-drawer-title-font-size: 1.25rem;
+    --wj-drawer-content-padding: 0;
+    --wj-drawer-footer-padding: 0 20px 20px;
+  }
+
+  .wj-sheet-body {
+    padding: var(--wj-sheet-body-padding, 0 1.25rem 1.25rem);
+  }
+
+  :host ::ng-deep .p-dialog {
+    inline-size: var(--wj-sheet-width, min(32rem, 100vw - 2rem));
+    max-inline-size: calc(100vw - 2rem);
+  }
+
+  :host ::ng-deep .p-drawer-bottom {
+    block-size: auto;
+    max-block-size: 90dvh;
+    border-start-start-radius: var(--wj-overlay-modal-border-radius, 12px);
+    border-start-end-radius: var(--wj-overlay-modal-border-radius, 12px);
+  }
+
+  :host ::ng-deep .p-drawer-bottom .p-drawer-footer {
+    padding-block-end: calc(20px + env(safe-area-inset-bottom, 0px));
+  }
+
+  :host ::ng-deep .p-drawer-bottom:not(:has([wjSheetFooter])) .p-drawer-content {
+    padding-block-end: env(safe-area-inset-bottom, 0px);
+  }
+
+  :host ::ng-deep .p-dialog-header,
+  :host ::ng-deep .p-drawer-header {
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  :host ::ng-deep .p-dialog-title,
+  :host ::ng-deep .p-drawer-title {
+    min-inline-size: 0;
+    overflow-wrap: anywhere;
+    line-height: 1.5;
+    padding-block: calc((44px - 1.5em) / 2);
+  }
+
+  :host ::ng-deep .p-dialog-header-actions {
+    flex-shrink: 0;
+    min-block-size: 44px;
+  }
+
+  :host ::ng-deep .p-drawer-close-button {
+    flex-shrink: 0;
+  }
+
+  :host ::ng-deep .p-dialog-footer,
+  :host ::ng-deep .p-drawer-footer {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+
+  :host ::ng-deep .p-dialog-footer:not(:has([wjSheetFooter])),
+  :host ::ng-deep .p-drawer-footer:not(:has([wjSheetFooter])) {
+    display: none;
+  }
+}

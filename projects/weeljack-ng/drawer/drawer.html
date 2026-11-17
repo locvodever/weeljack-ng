@@ -1,0 +1,22 @@
+<p-drawer
+  [(visible)]="visible"
+  [header]="header()"
+  [position]="position()"
+  [closable]="closable()"
+  [dismissible]="closable()"
+  [closeOnEscape]="closable()"
+  [modal]="true"
+  [blockScroll]="true"
+  [ariaCloseLabel]="closeLabel"
+  [closeButtonProps]="closeButtonProps"
+  [motionOptions]="motion"
+  [pt]="partAttributes()"
+  (onShow)="entered()"
+>
+  @if (footer(); as slot) {
+    <ng-template #footer>
+      <ng-container [ngTemplateOutlet]="slot.template" />
+    </ng-template>
+  }
+  <ng-content />
+</p-drawer>
