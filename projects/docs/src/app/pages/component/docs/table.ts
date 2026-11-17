@@ -16,7 +16,7 @@ import type { ComponentDoc, MappingRow } from '../component-doc';
 const droppedAlways = 'Never exposed on any wrapper (ADR 0002).';
 const droppedIcon = 'Icon slots are not exposed (02 Q6).';
 const useAPaginator =
-  'Use a `wj-paginator` beside the table, with `paginator` off and `[(first)]` and `[(rows)]` bound on both.';
+  'Use a `wj-paginator` beside the table: turn the table’s `paginator` off, give the table the current page from a `computed` slice, and bind `[(first)]` and `[(rows)]` on the `wj-paginator` only. Sorting then covers the shown page only. See the paginator page’s “Beside a table” example.';
 
 const dropped = (optimus: string, note: string): MappingRow => ({
   optimus,
@@ -55,7 +55,7 @@ export const DOC: ComponentDoc = {
     {
       title: 'Paging',
       description:
-        "Turn `paginator` on to show a pager under the rows: `rows` is the page size (10 when you give none), `first` is the index of the first row of the page, and both are two-way. `rowsPerPageOptions` adds a select for the page size, `paginatorPosition` moves the pager to `top` or `both` (`WjPaginatorPosition`, imported `from 'weeljack-ng'`), and `totalRecords` sets the row count when it is not the length of `value`. `pageChange` emits a `WjPageEvent` (`{ first, rows }`, imported `from 'weeljack-ng'`) after `first` and `rows` have been written. This table has 23 rows, five to a page. For a page report or page links, turn `paginator` off and put a `wj-paginator` beside the table.",
+        "Turn `paginator` on to show a pager under the rows: `rows` is the page size (10 when you give none), `first` is the index of the first row of the page, and both are two-way. `rowsPerPageOptions` adds a select for the page size, `paginatorPosition` moves the pager to `top` or `both` (`WjPaginatorPosition`, imported `from 'weeljack-ng'`), and `totalRecords` sets the row count when it is not the length of `value`. `pageChange` emits a `WjPageEvent` (`{ first, rows }`, imported `from 'weeljack-ng'`) after `first` and `rows` have been written. This table has 23 rows, five to a page. For a page report or page links, turn `paginator` off and put a `wj-paginator` beside the table: the table does not slice its rows when its own pager is off, so give it the current page from a `computed` slice of `first` and `rows`, bound on the `wj-paginator` only (sorting then covers the shown page only). The paginator page’s “Beside a table” example shows it.",
       sourceKey: 'table/paging',
       component: TablePagingExample,
     },

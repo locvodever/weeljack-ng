@@ -1,0 +1,27 @@
+/* The list the view writes: no bullets, margin or padding, and no look for an item (the item
+   template owns padding, borders and fills). A list is a plain stack; a grid is equal tracks whose
+   minimum never exceeds the container, 16 px apart, and its items stretch to the row's height. */
+@layer wj {
+  :host {
+    display: block;
+  }
+
+  ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  li {
+    min-inline-size: 0;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(
+      auto-fill,
+      minmax(min(var(--wj-dataview-grid-item-min-width, 16rem), 100%), 1fr)
+    );
+    gap: 16px;
+  }
+}
