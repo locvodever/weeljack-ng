@@ -37,7 +37,7 @@ export const DOC: ComponentDoc = {
     {
       title: 'Initially expanded',
       description:
-        '`expanded: true` on a root item opens its panel at first render, and on a nested parent opens its items: here Components is open and so is the Data group inside it. The open state is kept on copies of your items, so toggling never changes your objects, and it holds while you keep passing the same array. Pass a new array and every panel goes back to its items’ own `expanded` value.',
+        '`expanded: true` on a root item opens its panel at first render (on a nested parent it would open its items too): here Components is open and its Form and Data groups are left closed to open. The open state is kept on copies of your items, so toggling never changes your objects, and it holds while you keep passing the same array. Pass a new array and every panel goes back to its items’ own `expanded` value.',
       sourceKey: 'panelmenu/initially-expanded',
       component: PanelmenuInitiallyExpandedExample,
     },
@@ -97,7 +97,8 @@ export const DOC: ComponentDoc = {
     'Optimus gap, fixed here: Optimus draws a separator as `role="separator"` inside a `role="tree"`, which ARIA does not allow there (axe `aria-required-children`). `wj-panelmenu` makes it presentational (`role="none"`) through the `separator` part of `pt`, and that value wins over a `pt` value of the same name.',
     'Optimus gap, fixed here: a disabled nested item has no `aria-disabled`, so a screen reader would not know it is inert (axe flags its contrast, which a disabled item is exempt from). `wj-panelmenu` sets `aria-disabled="true"` on it through the `item` part of `pt`, beside any `pt` you give that part. Optimus also runs the command of a disabled item when a click reaches it, which a pointer cannot do but a screen reader’s click can, so the command of a disabled item is removed and it runs nothing.',
     'Optimus gap: Arrow Right and Arrow Left on a nested parent change its `aria-expanded` but do not show or hide its items, so the visible state and the announced state disagree. Use Enter or Space on the parent, which work. Home and End on a panel header do nothing.',
-    'Optimus gap: Optimus puts a `ul` directly inside the `ul` that wraps each open panel’s tree, which axe reports as “`<ul>` and `<ol>` must only directly contain `<li>`” (`list`), and an expanded nested parent keeps its own label as its accessible name while its visible text includes its items (`label-content-name-mismatch`). Neither is reachable through `pt`, so the spec tolerates only those two findings, on those nodes.',
+    'Optimus gap, fixed here: Optimus puts a `ul` directly inside the `ul` that wraps each open panel’s tree, which axe reports as “`<ul>` and `<ol>` must only directly contain `<li>`” (`list`). That wrapper has no `pt` part, so `wj-panelmenu` sets `role="none"` on it after each render and the tree inside keeps its `role="tree"`.',
+    'Optimus gap: an expanded nested parent keeps its own label as its accessible name while its visible text includes its items (`label-content-name-mismatch`). It is not reachable through `pt`, so the spec tolerates only that finding, on those nodes.',
     'Optimus gap: the active item is shown only by a faint fill, about 1.1:1 against the panel in light and 1.2:1 in dark, under the 3:1 a focus indicator needs. It is listed here until the shared styles draw a ring.',
     'Optimus gap: in the light scheme the chevron is under 3:1 against the panel. A slotted item draws its own mark: give it 3:1.',
     'Optimus gap: nothing marks the current page. Optimus adds a class to a matching `routerLink`, which this menu does not take, and sets no `aria-current`. Mark it yourself in a slot or with `pt`.',

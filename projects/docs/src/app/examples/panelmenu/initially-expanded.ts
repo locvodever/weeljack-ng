@@ -34,7 +34,7 @@ export class PanelmenuInitiallyExpandedExample {
 
   private readonly page = (label: string): WjMenuItem => ({ label, command: this.open });
 
-  /** `expanded: true` opens a panel, or a nested parent, at first render. */
+  /** `expanded: true` opens a panel at first render (and would open a nested parent the same way). */
   protected readonly items: WjMenuItem[] = [
     {
       label: 'Components',
@@ -46,7 +46,6 @@ export class PanelmenuInitiallyExpandedExample {
         },
         {
           label: 'Data',
-          expanded: true,
           items: [this.page('Table'), this.page('Paginator'), this.page('Data view')],
         },
       ],

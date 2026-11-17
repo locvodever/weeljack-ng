@@ -1,5 +1,14 @@
 import { NgTemplateOutlet } from '@angular/common';
-import { Component, booleanAttribute, computed, contentChild, input } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  afterEveryRender,
+  booleanAttribute,
+  computed,
+  contentChild,
+  inject,
+  input,
+} from '@angular/core';
 import type { MenuItem } from '@openng/optimus-ui/api';
 import { PanelMenu } from '@openng/optimus-ui/panelmenu';
 import type { WjMenuItem } from 'weeljack-ng';
@@ -108,6 +117,16 @@ export class WjPanelMenu {
   });
 
   constructor() {
+    const host = inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;
+    // Optimus 2.0.2 wraps each open panel's `role="tree"` in a bare `ul` it gives no `pt` part and no
+    // role, and a `ul` holding a `ul` fails axe `list`. The panels open, close and re-render without
+    // Optimus ever setting a role there, so every render pass marks the ones that have none.
+    // Browser only: `afterEveryRender` never runs on the server.
+    afterEveryRender(() => {
+      for (const list of host.querySelectorAll('ul[ppanelmenulist]:not([role])')) {
+        list.setAttribute('role', 'none');
+      }
+    });
     _checkWeeljackSetup('wj-panelmenu');
     _checkAriaOnHost('wj-panelmenu', 'Wrap the menu in your own <nav aria-label="..."> instead');
   }

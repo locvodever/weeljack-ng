@@ -90,17 +90,15 @@ class UnprovidedHost {
 }
 
 /**
- * What axe reports of Optimus's own structure, listed on the docs page, and where. Optimus puts a
- * `ul` directly inside the `ul` it wraps each panel's tree in, which fails `list` on that wrapper,
- * and a parent that is expanded keeps `aria-label` = its own label while its visible text includes
- * the items nested in it (`label-content-name-mismatch`). Neither is reachable through `pt`.
+ * What axe reports of Optimus's own structure, listed on the docs page, and where: a parent that is
+ * expanded keeps `aria-label` = its own label while its visible text includes the items nested in
+ * it (`label-content-name-mismatch`). It is not reachable through `pt`.
  */
 const OPTIMUS_STRUCTURE: Readonly<Record<string, (html: string) => boolean>> = {
-  list: (html) => html.startsWith('<ul ppanelmenulist'),
   'label-content-name-mismatch': (html) => html.includes('aria-expanded="true"'),
 };
 
-/** Fails on any axe violation but those two findings, and on those anywhere else. */
+/** Fails on any axe violation but that finding, and on that anywhere else. */
 async function expectOnlyOptimusStructure(): Promise<void> {
   const untolerated = (await runAxe()).flatMap(({ id, nodes }) =>
     nodes
@@ -501,6 +499,32 @@ describe('WjPanelMenu', () => {
       expect(headerEl('Start').getAttribute('aria-expanded')).toBe('true');
       expect(find(document, '[role="tree"]', HTMLElement)).toBeInstanceOf(HTMLElement);
       expect(itemEl('Install').getAttribute('role')).toBe('treeitem');
+    });
+
+    it('makes the bare list around each open panel’s tree presentational, and keeps it so', async () => {
+      const { fixture, component } = await render();
+      const menu = await harnessOf(fixture);
+      const lists = (): HTMLElement[] => [
+        ...document.querySelectorAll<HTMLElement>('ul[ppanelmenulist]'),
+      ];
+      const expectAllPresentational = (): void => {
+        expect(lists().length).toBeGreaterThan(0);
+        expect(lists().map((list) => list.getAttribute('role'))).toEqual(lists().map(() => 'none'));
+      };
+
+      const [start, components] = await menu.getPanels();
+      await start?.toggle();
+      expectAllPresentational();
+      expect(find(lists()[0] ?? document, '[role="tree"]', HTMLElement)).toBeInstanceOf(
+        HTMLElement,
+      );
+
+      await components?.toggle();
+      expectAllPresentational();
+
+      component.model.set([{ label: 'New', expanded: true, items: [{ label: 'One' }] }]);
+      await fixture.whenStable();
+      expectAllPresentational();
     });
 
     it('has no aria attribute on the host and no input for one', async () => {
