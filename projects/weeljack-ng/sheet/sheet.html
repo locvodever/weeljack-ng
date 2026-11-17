@@ -1,0 +1,46 @@
+<ng-template #body>
+  <div class="wj-sheet-body"><ng-content /></div>
+</ng-template>
+<ng-template #actions><ng-content select="[wjSheetFooter]" /></ng-template>
+
+@if (wide()) {
+  <p-dialog
+    [(visible)]="visible"
+    [header]="header()"
+    [closable]="closable()"
+    [modal]="true"
+    [draggable]="false"
+    [resizable]="false"
+    [focusOnShow]="false"
+    [closeAriaLabel]="closeLabel"
+    [closeButtonProps]="closeButtonProps"
+    [footerTemplate]="actions"
+    [motionOptions]="motion()"
+    [maskMotionOptions]="motion()"
+    (onShow)="dialogEntered()"
+    (onHide)="lifecycle.left()"
+  >
+    <ng-container [ngTemplateOutlet]="body" />
+  </p-dialog>
+} @else {
+  <p-drawer
+    [(visible)]="visible"
+    [header]="header()"
+    position="bottom"
+    [closable]="closable()"
+    [dismissible]="closable()"
+    [closeOnEscape]="closable()"
+    [modal]="true"
+    [blockScroll]="true"
+    [ariaCloseLabel]="closeLabel"
+    [closeButtonProps]="closeButtonProps"
+    [motionOptions]="motion()"
+    [pt]="drawerPt"
+    (onShow)="drawerEntered()"
+  >
+    <ng-template #footer>
+      <ng-container [ngTemplateOutlet]="actions" />
+    </ng-template>
+    <ng-container [ngTemplateOutlet]="body" />
+  </p-drawer>
+}
