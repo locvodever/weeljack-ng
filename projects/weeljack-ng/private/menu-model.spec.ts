@@ -1,5 +1,10 @@
-import type { MenuItem } from '@openng/optimus-ui/api';
-import { _toOptimusMenuModel, type _MenuItemShape } from './menu-model';
+import type { MegaMenuItem, MenuItem } from '@openng/optimus-ui/api';
+import {
+  _toOptimusMegaMenuModel,
+  _toOptimusMenuModel,
+  type _MegaMenuItemShape,
+  type _MenuItemShape,
+} from './menu-model';
 
 /** An app item type of its own, wider than the shape, as an app's might be. */
 interface AppItem extends _MenuItemShape<AppItem> {
@@ -186,5 +191,148 @@ describe('_toOptimusMenuModel', () => {
 
   it('returns an empty model for no items', () => {
     expect(_toOptimusMenuModel<AppItem>([]).items).toEqual([]);
+  });
+});
+
+/** A megamenu's own item types, wider than the shapes, as an app's might be. */
+interface AppEntry extends _MenuItemShape<AppEntry> {
+  id?: number;
+}
+interface AppRoot extends _MegaMenuItemShape<AppRoot, AppEntry> {
+  id?: number;
+}
+
+describe('_toOptimusMegaMenuModel', () => {
+  const map = (items: AppRoot[]): ReturnType<typeof _toOptimusMegaMenuModel<AppRoot, AppEntry>> =>
+    _toOptimusMegaMenuModel<AppRoot, AppEntry>(items);
+
+  it('copies the root items with the allow-list and escape: true, and nothing else', () => {
+    const wider = { label: 'Docs', url: '/docs', escape: false, styleClass: 'x', id: 3 };
+    const items: AppRoot[] = [wider];
+
+    const [root] = map(items).items;
+
+    expect(root).toStrictEqual({ escape: true, label: 'Docs', url: '/docs' });
+  });
+
+  it('turns items into columns of groups of entries, each with escape: true', () => {
+    const { items } = map([
+      {
+        label: 'Components',
+        items: [
+          [{ label: 'Form', items: [{ label: 'Button' }, { separator: true }] }],
+          [{ label: 'Data', items: [{ label: 'Table' }] }, { label: 'Menus' }],
+        ],
+      },
+    ]);
+
+    const [root] = items;
+    expect(root).toHaveProperty('escape', true);
+    expect(root?.items).toHaveLength(2);
+    expect(root?.items?.[0]).toStrictEqual([
+      {
+        escape: true,
+        label: 'Form',
+        items: [
+          { escape: true, label: 'Button' },
+          { escape: true, separator: true },
+        ],
+      },
+    ]);
+    expect(root?.items?.[1]?.map((group) => group.label)).toEqual(['Data', 'Menus']);
+    expect(root?.items?.[1]?.[0]?.items?.[0]).toStrictEqual({ escape: true, label: 'Table' });
+  });
+
+  it('never copies an escape: false or a style field at a group or an entry either', () => {
+    const smuggled = { label: 'Entry', escape: false, styleClass: 'x', tooltipOptions: {} };
+    const group = { label: 'Group', escape: false, items: [smuggled] };
+    const [root] = map([{ label: 'Root', escape: false, items: [[group]] } as AppRoot]).items;
+
+    expect(root).toStrictEqual({
+      escape: true,
+      label: 'Root',
+      items: [[{ escape: true, label: 'Group', items: [{ escape: true, label: 'Entry' }] }]],
+    });
+  });
+
+  it('wraps a root command, and a group’s and an entry’s, with the app’s own object', () => {
+    const received: unknown[] = [];
+    const click = new Event('click');
+    const entry: AppEntry = {
+      label: 'Entry',
+      command: ({ item }) => {
+        received.push(item);
+      },
+    };
+    const root: AppRoot = {
+      label: 'Root',
+      command: ({ item }) => {
+        received.push(item);
+      },
+      items: [[{ label: 'Group', items: [entry] }]],
+    };
+
+    const [copy] = map([root]).items;
+    copy?.command?.({ originalEvent: click, item: copy });
+    const entryCopy = copy?.items?.[0]?.[0]?.items?.[0];
+    entryCopy?.command?.({ originalEvent: click, item: entryCopy });
+
+    expect(received).toEqual([root, entry]);
+    expect(received[0]).toBe(root);
+    expect(received[1]).toBe(entry);
+  });
+
+  it('gives a disabled root item, and a disabled entry, no command', () => {
+    const { items } = map([
+      {
+        label: 'Off',
+        disabled: true,
+        command: () => undefined,
+        items: [
+          [{ label: 'G', items: [{ label: 'E', disabled: true, command: () => undefined }] }],
+        ],
+      },
+      { label: 'On', command: () => undefined },
+    ]);
+
+    expect('command' in (items[0] ?? {})).toBe(false);
+    expect('command' in (items[0]?.items?.[0]?.[0]?.items?.[0] ?? {})).toBe(false);
+    expect('command' in (items[1] ?? {})).toBe(true);
+  });
+
+  it('finds the app’s item from a copy at both levels, and nothing for a stranger', () => {
+    const entry: AppEntry = { label: 'Entry' };
+    const group: AppEntry = { label: 'Group', items: [entry] };
+    const root: AppRoot = { label: 'Root', items: [[group]] };
+
+    const model = map([root]);
+    const rootCopy: MegaMenuItem | undefined = model.items[0];
+    const groupCopy: MenuItem | undefined = rootCopy?.items?.[0]?.[0];
+
+    expect(model.source(rootCopy ?? {})).toBe(root);
+    expect(model.source(groupCopy ?? {})).toBe(group);
+    expect(model.source(groupCopy?.items?.[0] ?? {})).toBe(entry);
+    expect(model.source({ label: 'Entry' })).toBeUndefined();
+  });
+
+  it('does not change the app’s objects, even when Optimus writes to the copies', () => {
+    const items: AppRoot[] = [
+      { label: 'Root', expanded: false, items: [[{ label: 'G', items: [{ label: 'E' }] }]] },
+    ];
+    const before = structuredClone(items);
+
+    const [copy] = map(items).items;
+    if (copy) copy.expanded = true;
+    const group = copy?.items?.[0]?.[0];
+    if (group) group.label = 'Changed';
+
+    expect(items).toEqual(before);
+  });
+
+  it('writes no key for a field a root item does not have, and returns an empty model for none', () => {
+    const [root] = map([{ label: 'Root' }]).items;
+
+    expect(Object.keys(root ?? {}).sort()).toEqual(['escape', 'label']);
+    expect(map([]).items).toEqual([]);
   });
 });
