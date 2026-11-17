@@ -1,0 +1,88 @@
+<p-table
+  [value]="data()"
+  [sortField]="sortField()"
+  [sortOrder]="sortOrder()"
+  [paginator]="paginator()"
+  [first]="first()"
+  [rows]="pageRows()"
+  [totalRecords]="totalRecords()"
+  [rowsPerPageOptions]="rowsPerPageOptions()"
+  [paginatorPosition]="paginatorPosition()"
+  [size]="size()"
+  [showGridlines]="showGridlines()"
+  [stripedRows]="stripedRows()"
+  [rowHover]="rowHover()"
+  [pt]="partAttributes()"
+  (onSort)="sorted($event)"
+  (onPage)="paged($event)"
+  (firstChange)="first.set($event)"
+  (rowsChange)="rows.set($event)"
+>
+  <ng-template #header>
+    <tr>
+      @for (column of columns(); track column) {
+        @let sortKey = column.sortKey();
+        <!-- Optimus's sortable-column directive cannot be switched off per column: it leaves
+             tabindex="0" on a header that is not sortable. So only a sortable column gets it. -->
+        @if (sortKey) {
+          <th [pSortableColumn]="sortKey">
+            <ng-container
+              *ngTemplateOutlet="headerContent; context: { $implicit: column, sortKey: sortKey }"
+            />
+          </th>
+        } @else {
+          <th>
+            <ng-container *ngTemplateOutlet="headerContent; context: { $implicit: column }" />
+          </th>
+        }
+      }
+    </tr>
+  </ng-template>
+  <ng-template #body let-row let-rowIndex="rowIndex">
+    <tr data-wj-row>
+      @for (column of columns(); track column) {
+        @let cell = column.cell();
+        @let field = column.field();
+        <td>
+          @if (cell) {
+            <ng-container
+              *ngTemplateOutlet="
+                cell.template;
+                context: {
+                  $implicit: row,
+                  value: cellValue(row, field),
+                  field: field,
+                  rowIndex: rowIndex,
+                }
+              "
+            />
+          } @else {
+            {{ cellValue(row, field) }}
+          }
+        </td>
+      }
+    </tr>
+  </ng-template>
+  <!-- Declared inside p-table so its injector reaches Optimus's Table, which p-sortIcon needs. -->
+  <ng-template #headerContent let-column let-sortKey="sortKey">
+    <div class="p-datatable-column-header-content">
+      <span class="p-datatable-column-title">
+        @let headerCell = column.headerCell();
+        @if (headerCell) {
+          <ng-container
+            *ngTemplateOutlet="
+              headerCell.template;
+              context: { $implicit: column.header(), field: column.field() }
+            "
+          />
+        } @else {
+          {{ column.header() }}
+        }
+      </span>
+      @if (sortKey) {
+        <p-sortIcon [field]="sortKey" />
+      }
+    </div>
+  </ng-template>
+</p-table>
+<ng-content select="wj-column" />

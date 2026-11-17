@@ -1,0 +1,13 @@
+/* The host and Optimus's element are blocks, so the table fills the host's width and its
+   container scrolls sideways inside the host when the columns do not fit. Everything else is the
+   preset. */
+@layer wj {
+  :host,
+  p-table {
+    display: block;
+  }
+
+  :host {
+    min-inline-size: 0;
+  }
+}
