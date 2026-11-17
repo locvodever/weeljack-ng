@@ -7,7 +7,10 @@ import {
   inject,
   untracked,
 } from '@angular/core';
+import type { ButtonProps } from '@openng/optimus-ui/button';
 import { Optimus } from '@openng/optimus-ui/config';
+import type { Drawer } from '@openng/optimus-ui/drawer';
+import { _mergePartAttributes } from './part-attributes';
 import { _WJ_EN } from './translation-en';
 
 /*
@@ -26,6 +29,20 @@ import { _WJ_EN } from './translation-en';
  * @docs-private
  */
 export const _OVERLAY_MOTION = { safe: true } as const;
+
+/**
+ * An overlay's close button as Optimus draws it by default, plus `autofocus: false`. With neither
+ * `autofocus` nor `buttonProps.autofocus` set, Optimus 2.0.2 writes `autofocus="true"` on it and
+ * the browser focuses it on load. Bind it to `closeButtonProps`.
+ *
+ * @docs-private
+ */
+export const _OVERLAY_CLOSE_BUTTON: ButtonProps = {
+  severity: 'secondary',
+  variant: 'text',
+  rounded: true,
+  autofocus: false,
+};
 
 /**
  * The name of an overlay's close button: the translation's `aria.close` that `provideWeeljack`
@@ -206,5 +223,95 @@ export function _overlayEscapeGate(open: () => boolean, closable: () => boolean)
       host.removeEventListener('keydown', inside);
       document.removeEventListener('keydown', onPage, { capture: true });
     });
+  });
+}
+
+/**
+ * The drawer's accessibility pass-through (FR-21): Optimus Drawer renders `role="complementary"`
+ * with no name, so the root becomes a modal dialog named by its title part (`titleId`, which the
+ * title gets) and, when given, described by `describedBy`. The consumer's `pt` is kept, and these
+ * attributes win over theirs. Returns the function form, ready to bind to `[pt]`.
+ *
+ * @docs-private
+ */
+export function _drawerPassThrough<C, T extends object>(
+  pt: T | ((context: C) => T) | null | undefined,
+  titleId: string,
+  describedBy: string | undefined,
+): (context: C) => T {
+  return _mergePartAttributes(_mergePartAttributes(pt, 'title', { id: titleId }), 'root', {
+    role: 'dialog',
+    'aria-modal': 'true',
+    'aria-labelledby': titleId,
+    'aria-describedby': describedBy,
+  });
+}
+
+/**
+ * Brings an Optimus Drawer in line with `closable` and with the overlay seam (FR-21, FR-2, FR-7).
+ * Optimus gives Drawer no way to do these, so this reaches its public members once, when the
+ * instance exists:
+ * - Drawer's container keydown handler runs `hide(false)` on any Escape, which drops the backdrop
+ *   and the scroll lock while the drawer stays open. While not `closable` it is skipped, and
+ *   nothing else is: a control inside the body still gets Escape first. `_overlayEscapeGate` keeps
+ *   the keydown from reaching Optimus's document listener.
+ * - Drawer binds its Escape and backdrop-click listeners when it opens. A `closable` that turns
+ *   true while open (a failed save) binds the ones that are missing.
+ * - Drawer's `onHide` fires only for a close by the user, but its leave handler runs for every
+ *   cause, the app setting `visible` to `false` included, so `left` is called from there.
+ *
+ * `closable` must also be bound to Drawer's `dismissible` and `closeOnEscape`. Must run in an
+ * injection context.
+ *
+ * @docs-private
+ */
+export function _overlayDrawer(
+  drawer: () => Drawer | undefined,
+  visible: () => boolean,
+  closable: () => boolean,
+  left: () => void,
+): void {
+  _overlayEscapeGate(visible, closable);
+  const patched = new WeakSet<Drawer>();
+
+  effect(() => {
+    const inner = drawer();
+    if (!inner || patched.has(inner)) {
+      return;
+    }
+    patched.add(inner);
+    const keydown = inner.onKeyDown.bind(inner);
+    const afterLeave = inner.onAfterLeave.bind(inner);
+    inner.onKeyDown = (event) => {
+      if (event.code !== 'Escape' || closable()) {
+        keydown(event);
+      }
+    };
+    inner.onAfterLeave = () => {
+      afterLeave();
+      left();
+    };
+  });
+
+  effect(() => {
+    const inner = drawer();
+    if (!closable() || !inner) {
+      return;
+    }
+    if (inner.container && !inner.documentEscapeListener) {
+      inner.bindDocumentEscapeListener();
+    }
+    const mask = inner.mask;
+    if (mask && !inner.maskClickListener) {
+      const onClick = (event: Event): void => {
+        if (inner.dismissible) {
+          inner.close(event);
+        }
+      };
+      mask.addEventListener('click', onClick);
+      inner.maskClickListener = () => {
+        mask.removeEventListener('click', onClick);
+      };
+    }
   });
 }

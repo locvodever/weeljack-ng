@@ -17,9 +17,12 @@ export {
 } from './field-context';
 export { _wjId } from './ids';
 export {
+  _drawerPassThrough,
   _focusIntoOverlay,
+  _OVERLAY_CLOSE_BUTTON,
   _OVERLAY_MOTION,
   _overlayCloseLabel,
+  _overlayDrawer,
   _overlayEscapeGate,
   _overlayLifecycle,
   type _OverlayLifecycle,

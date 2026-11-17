@@ -4,7 +4,9 @@ import type { Translation } from '@openng/optimus-ui/api';
 import { provideOptimus } from '@openng/optimus-ui/config';
 import { _WJ_EN } from './translation-en';
 import {
+  _OVERLAY_CLOSE_BUTTON,
   _OVERLAY_MOTION,
+  _drawerPassThrough,
   _focusIntoOverlay,
   _overlayCloseLabel,
   _overlayEscapeGate,
@@ -342,5 +344,61 @@ describe('_overlayEscapeGate', () => {
     press(document.body);
 
     expect(reachedDocument).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('_OVERLAY_CLOSE_BUTTON', () => {
+  it('is the default close button without autofocus', () => {
+    expect(_OVERLAY_CLOSE_BUTTON).toEqual({
+      severity: 'secondary',
+      variant: 'text',
+      rounded: true,
+      autofocus: false,
+    });
+  });
+});
+
+describe('_drawerPassThrough', () => {
+  const resolve = (pt: ReturnType<typeof _drawerPassThrough>): Record<string, unknown> =>
+    // type-escape: the merged bag is read back by key; its Optimus type is not what is under test
+    pt(undefined) as unknown as Record<string, unknown>;
+
+  it('makes the root a modal dialog named by the title, and gives the title the id', () => {
+    const pt = resolve(_drawerPassThrough({}, 'wj-drawer-title-1', 'about'));
+
+    expect(pt['root']).toEqual({
+      role: 'dialog',
+      'aria-modal': 'true',
+      'aria-labelledby': 'wj-drawer-title-1',
+      'aria-describedby': 'about',
+    });
+    expect(pt['title']).toEqual({ id: 'wj-drawer-title-1' });
+  });
+
+  it('clears the description when there is none, and keeps the consumer pt', () => {
+    const pt = resolve(
+      _drawerPassThrough(
+        { root: { 'data-root': 'r', role: 'region' }, content: { class: 'c' } },
+        'wj-drawer-title-2',
+        undefined,
+      ),
+    );
+
+    expect(pt['root']).toEqual({
+      'data-root': 'r',
+      role: 'dialog',
+      'aria-modal': 'true',
+      'aria-labelledby': 'wj-drawer-title-2',
+      'aria-describedby': undefined,
+    });
+    expect(pt['content']).toEqual({ class: 'c' });
+  });
+
+  it('takes the function form of pt', () => {
+    const pt = resolve(
+      _drawerPassThrough(() => ({ title: { class: 't' } }), 'wj-drawer-title-3', ''),
+    );
+
+    expect(pt['title']).toEqual({ class: 't', id: 'wj-drawer-title-3' });
   });
 });

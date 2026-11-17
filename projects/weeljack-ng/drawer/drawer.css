@@ -1,0 +1,70 @@
+/* The host is a block with nothing in it while the drawer is closed. Optimus renders the panel
+   inside the host, so a `--wj-*` property set on the host reaches it. Header: the title lines up
+   with the body's 20px inset and the close button sits 12px from the corner; the row is never
+   shorter than the 44px button, so removing the button (`closable` false) moves nothing below it.
+   The drawer's own title is 1.5rem and its footer padding is all-round: both are brought to the
+   dialog's values so one family reads the same. A long title wraps and the button stays in the top
+   corner; a crowded footer wraps onto further end-aligned rows. Side drawers keep 3rem of backdrop
+   visible (WCAG 1.4.10); top and bottom drawers fit their content up to 90dvh, round the edge
+   that faces the page, and the bottom one clears a home indicator. Optimus's own parts carry no
+   `wj` attribute, so they are reached with `::ng-deep` scoped to the host. */
+@layer wj {
+  :host {
+    display: block;
+    --wj-drawer-header-padding: 12px 12px 8px 20px;
+    --wj-drawer-title-font-size: 1.25rem;
+    --wj-drawer-footer-padding: 0 20px 20px;
+  }
+
+  :host ::ng-deep .p-drawer-left,
+  :host ::ng-deep .p-drawer-right {
+    max-inline-size: calc(100vw - 3rem);
+  }
+
+  :host ::ng-deep .p-drawer-top,
+  :host ::ng-deep .p-drawer-bottom {
+    block-size: auto;
+    max-block-size: 90dvh;
+  }
+
+  :host ::ng-deep .p-drawer-top {
+    border-end-start-radius: var(--wj-overlay-modal-border-radius, 12px);
+    border-end-end-radius: var(--wj-overlay-modal-border-radius, 12px);
+  }
+
+  :host ::ng-deep .p-drawer-bottom {
+    border-start-start-radius: var(--wj-overlay-modal-border-radius, 12px);
+    border-start-end-radius: var(--wj-overlay-modal-border-radius, 12px);
+  }
+
+  :host ::ng-deep .p-drawer-bottom .p-drawer-footer {
+    padding-block-end: calc(20px + env(safe-area-inset-bottom, 0px));
+  }
+
+  :host ::ng-deep .p-drawer-bottom:not(:has(.p-drawer-footer)) .p-drawer-content {
+    padding-block-end: calc(20px + env(safe-area-inset-bottom, 0px));
+  }
+
+  :host ::ng-deep .p-drawer-header {
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  :host ::ng-deep .p-drawer-title {
+    min-inline-size: 0;
+    overflow-wrap: anywhere;
+    line-height: 1.5;
+    padding-block: calc((44px - 1.5em) / 2);
+  }
+
+  :host ::ng-deep .p-drawer-close-button {
+    flex-shrink: 0;
+  }
+
+  :host ::ng-deep .p-drawer-footer {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+}

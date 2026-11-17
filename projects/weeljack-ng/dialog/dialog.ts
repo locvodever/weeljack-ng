@@ -9,9 +9,9 @@ import {
   output,
   viewChild,
 } from '@angular/core';
-import type { ButtonProps } from '@openng/optimus-ui/button';
 import { Dialog } from '@openng/optimus-ui/dialog';
 import {
+  _OVERLAY_CLOSE_BUTTON,
   _OVERLAY_MOTION,
   _checkAriaOnHost,
   _checkWeeljackSetup,
@@ -68,17 +68,7 @@ export class WjDialog {
   protected readonly footer = contentChild(WjDialogFooterSlot);
   protected readonly motion = _OVERLAY_MOTION;
   protected readonly closeLabel = _overlayCloseLabel();
-  /**
-   * Optimus's close button as it looks by default, plus `autofocus: false`. With neither
-   * `autofocus` nor `buttonProps.autofocus` set, Optimus 2.0.2 writes `autofocus="true"` on it
-   * and the browser focuses it on load.
-   */
-  protected readonly closeButtonProps: ButtonProps = {
-    severity: 'secondary',
-    variant: 'text',
-    rounded: true,
-    autofocus: false,
-  };
+  protected readonly closeButtonProps = _OVERLAY_CLOSE_BUTTON;
   protected readonly lifecycle = _overlayLifecycle(this.visible, () => {
     this.closed.emit();
   });
