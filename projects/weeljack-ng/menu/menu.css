@@ -1,0 +1,8 @@
+/* The host and Optimus's own element are blocks. A popup that is closed renders nothing, so its
+   host has no height. Everything else is the preset. */
+@layer wj {
+  :host,
+  p-menu {
+    display: block;
+  }
+}

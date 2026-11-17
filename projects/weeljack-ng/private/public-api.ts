@@ -16,6 +16,7 @@ export {
   type _WjFieldControl,
 } from './field-context';
 export { _wjId } from './ids';
+export { _toOptimusMenuModel, type _MenuItemShape, type _OptimusMenuModel } from './menu-model';
 export {
   _drawerPassThrough,
   _focusIntoOverlay,
