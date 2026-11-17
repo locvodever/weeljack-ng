@@ -1,6 +1,7 @@
 /* The host and Optimus's element are blocks, so the table fills the host's width and its
-   container scrolls sideways inside the host when the columns do not fit. Everything else is the
-   preset. */
+   container scrolls sideways inside the host when the columns do not fit. The rest is what the
+   wrapper writes itself: utility columns, the row buttons' column, the empty row and the group
+   header. Everything else is the preset. */
 @layer wj {
   :host,
   p-table {
@@ -9,5 +10,28 @@
 
   :host {
     min-inline-size: 0;
+  }
+
+  /* The toggle, checkbox and actions columns are as wide as their content, never wider. */
+  .wj-fit {
+    inline-size: 1%;
+    white-space: nowrap;
+  }
+
+  /* End-aligned, and wide enough for Cancel and Save, so entering edit mode moves nothing. */
+  .wj-table-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    min-inline-size: calc(2 * var(--wj-datatable-row-toggle-button-size, 1.75rem) + 0.5rem);
+  }
+
+  .wj-table-empty > td {
+    color: var(--wj-text-muted-color);
+  }
+
+  .p-datatable-row-group-header > td {
+    font-weight: 600;
+    color: var(--wj-text-color);
   }
 }

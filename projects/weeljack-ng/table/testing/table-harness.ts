@@ -1,4 +1,9 @@
-import { ComponentHarness, HarnessPredicate, type BaseHarnessFilters } from '@angular/cdk/testing';
+import {
+  ComponentHarness,
+  HarnessPredicate,
+  TestKey,
+  type BaseHarnessFilters,
+} from '@angular/cdk/testing';
 
 /** The sort state of a column header. */
 export type WjTableSortOrder = 'ascending' | 'descending' | 'none';
@@ -18,9 +23,9 @@ export interface WjTableCellHarnessFilters extends BaseHarnessFilters {
   text?: string | RegExp;
 }
 
-/** Test harness for one cell of a `wj-table`. */
+/** Test harness for one data cell of a `wj-table`: never a checkbox, toggle or actions cell. */
 export class WjTableCellHarness extends ComponentHarness {
-  static hostSelector = 'wj-table td';
+  static hostSelector = 'wj-table td:not(.wj-fit)';
 
   /** Finds the cells whose text matches `options.text`. */
   static with(options: WjTableCellHarnessFilters = {}): HarnessPredicate<WjTableCellHarness> {
@@ -41,33 +46,90 @@ export class WjTableCellHarness extends ComponentHarness {
 export class WjTableRowHarness extends ComponentHarness {
   static hostSelector = 'wj-table tr[data-wj-row]';
 
-  /** The cells of the row, in column order. */
+  /** The data cells of the row, in column order. */
   async getCells(filter: WjTableCellHarnessFilters = {}): Promise<WjTableCellHarness[]> {
     return this.locatorForAll(WjTableCellHarness.with(filter))();
   }
 
-  /** The text of each cell of the row, in column order. */
+  /** The text of each data cell of the row, in column order. */
   async getCellTexts(): Promise<string[]> {
     const cells = await this.getCells();
     return Promise.all(cells.map((cell) => cell.getText()));
+  }
+
+  /** Whether the row is selected. */
+  async isSelected(): Promise<boolean> {
+    return (await this.host()).hasClass('p-datatable-row-selected');
+  }
+
+  /** Whether the row is expanded; `false` in a table without row expansion. */
+  async isExpanded(): Promise<boolean> {
+    const toggle = await this.locatorForOptional('button[aria-expanded]')();
+    return toggle !== null && (await toggle.getAttribute('aria-expanded')) === 'true';
+  }
+
+  /** Selects the row as a user does: with its checkbox, else by clicking its first data cell. */
+  async select(): Promise<void> {
+    const checkbox = await this.locatorForOptional('p-tablecheckbox input')();
+    const cell = (await this.getCells())[0];
+    await (checkbox ?? (await cell?.host()) ?? (await this.host())).click();
+  }
+
+  /** Clicks the row's expansion toggle. */
+  async toggleExpansion(): Promise<void> {
+    await this.press('button[aria-expanded]', 'expansion toggle');
+  }
+
+  /** Clicks the row's Edit button. */
+  async edit(): Promise<void> {
+    await this.press('.p-datatable-row-editor-init', 'Edit button');
+  }
+
+  /** Clicks the Save button of a row in edit mode. */
+  async save(): Promise<void> {
+    await this.press('.p-datatable-row-editor-save', 'Save button');
+  }
+
+  /** Clicks the Cancel button of a row in edit mode. */
+  async cancel(): Promise<void> {
+    await this.press('.p-datatable-row-editor-cancel', 'Cancel button');
+  }
+
+  private async press(selector: string, name: string): Promise<void> {
+    const button = await this.locatorForOptional(selector)();
+    if (button === null) {
+      throw new Error(`wj-table row has no ${name}`);
+    }
+    await button.click();
   }
 }
 
 /**
  * Test harness for `wj-table`. Describes the table as a user meets it: header texts, rows and
- * cells, the sort state of a column, and the current page. It never names an Optimus class.
+ * cells, the sort state of a column, the current page, and the table's features: selection, row
+ * expansion, row editing, groups, filters and the empty, loading, caption and summary states. It
+ * never names an Optimus class.
  */
 export class WjTableHarness extends ComponentHarness {
   static hostSelector = 'wj-table';
 
   private readonly table = this.locatorFor('table');
-  private readonly headers = this.locatorForAll('thead th');
+  private readonly headers = this.locatorForAll('thead tr:first-child th:not(.wj-fit)');
+  private readonly allHeaders = this.locatorForAll('thead tr:first-child th');
   private readonly pageLinks = this.locatorForAll('.p-paginator-page');
   private readonly currentPageLink = this.locatorForOptional(
     '.p-paginator-page[aria-current="page"]',
   );
   private readonly previousButton = this.locatorForOptional('.p-paginator-prev');
   private readonly nextButton = this.locatorForOptional('.p-paginator-next');
+  private readonly rowsAndExpansions = this.locatorForAll(
+    'tr[data-wj-row], tr.p-datatable-row-expansion',
+  );
+  private readonly groupHeaders = this.locatorForAll('tr.p-datatable-row-group-header');
+  private readonly emptyRow = this.locatorForOptional('tr.wj-table-empty');
+  private readonly caption = this.locatorForOptional('.p-datatable-header');
+  private readonly summary = this.locatorForOptional('div.p-datatable-tfoot');
+  private readonly selectAll = this.locatorForOptional('thead p-tableheadercheckbox input');
 
   /** Finds the tables whose name matches `options.caption`. */
   static with(options: WjTableHarnessFilters = {}): HarnessPredicate<WjTableHarness> {
@@ -96,17 +158,17 @@ export class WjTableHarness extends ComponentHarness {
     return named === null ? '' : named.text();
   }
 
-  /** The text of each column header, in column order. */
+  /** The text of each data column header, in column order. */
   async getHeaderTexts(): Promise<string[]> {
     return Promise.all((await this.headers()).map((header) => header.text()));
   }
 
-  /** The rows of the current page, in order. */
+  /** The rows of the current page, in order. Group headers and expansions are not rows. */
   async getRows(): Promise<WjTableRowHarness[]> {
     return this.locatorForAll(WjTableRowHarness)();
   }
 
-  /** The text of every cell of the current page: one array per row, one string per column. */
+  /** The text of every data cell of the current page: one array per row, one string per column. */
   async getCellTexts(): Promise<string[][]> {
     const rows = await this.getRows();
     return Promise.all(rows.map((row) => row.getCellTexts()));
@@ -161,10 +223,156 @@ export class WjTableHarness extends ComponentHarness {
     }
   }
 
+  /** Selects the row at `index` of the current page, or unselects it if it is selected. */
+  async selectRow(index: number): Promise<void> {
+    await (await this.rowAt(index)).select();
+  }
+
+  /** The indexes, in the current page, of the selected rows. */
+  async getSelectedRowIndexes(): Promise<number[]> {
+    const selected = await Promise.all((await this.getRows()).map((row) => row.isSelected()));
+    return selected.flatMap((isSelected, index) => (isSelected ? [index] : []));
+  }
+
+  /** Clicks the select-all checkbox of a table in `multiple` selection mode. */
+  async toggleAllRows(): Promise<void> {
+    const checkbox = await this.selectAll();
+    if (checkbox === null) {
+      throw new Error('wj-table has no select-all checkbox: is selectionMode "multiple"?');
+    }
+    await checkbox.click();
+  }
+
+  /** Expands the row at `index` if it is collapsed, and collapses it if it is expanded. */
+  async toggleRowExpansion(index: number): Promise<void> {
+    await (await this.rowAt(index)).toggleExpansion();
+  }
+
+  /** Whether the row at `index` is expanded. */
+  async isRowExpanded(index: number): Promise<boolean> {
+    return (await this.rowAt(index)).isExpanded();
+  }
+
+  /** The text of the expansion shown under the row at `index`; `''` when it is collapsed. */
+  async getExpansionText(index: number): Promise<string> {
+    const items = await this.rowsAndExpansions();
+    let rowIndex = -1;
+    for (const [position, item] of items.entries()) {
+      if (await item.matchesSelector('[data-wj-row]')) {
+        rowIndex++;
+        const next = items[position + 1];
+        if (
+          rowIndex === index &&
+          next !== undefined &&
+          !(await next.matchesSelector('[data-wj-row]'))
+        ) {
+          return next.text();
+        }
+      }
+    }
+    return '';
+  }
+
+  /** Puts the row at `index` into edit mode with its Edit button. */
+  async editRow(index: number): Promise<void> {
+    await (await this.rowAt(index)).edit();
+  }
+
+  /** Saves the row at `index` with its Save button. */
+  async saveRowEdit(index: number): Promise<void> {
+    await (await this.rowAt(index)).save();
+  }
+
+  /** Cancels the edit of the row at `index` with its Cancel button. */
+  async cancelRowEdit(index: number): Promise<void> {
+    await (await this.rowAt(index)).cancel();
+  }
+
+  /**
+   * Types `text` into the filter of the column whose header text is `header` and applies it, as a
+   * user does: Enter in a row filter, and Apply in a `display="menu"` filter's menu.
+   */
+  async filterColumn(header: string | RegExp, text: string): Promise<void> {
+    const position = await this.headerPosition(header);
+    const inline = await this.locatorForOptional(
+      `thead tr:nth-child(2) th:nth-child(${String(position)}) input`,
+    )();
+    if (inline !== null) {
+      // Clearing an input that is empty already would apply the filter once more.
+      if ((await inline.getProperty<string>('value')) !== '') {
+        await inline.clear();
+      }
+      await inline.sendKeys(text, TestKey.ENTER);
+    } else {
+      const button = await this.locatorFor(
+        `thead tr:first-child th:nth-child(${String(position)}) .p-datatable-column-filter-button`,
+      )();
+      await button.click();
+      const overlay = this.documentRootLocatorFactory();
+      const input = await overlay.locatorFor('.p-datatable-filter-overlay input')();
+      await input.clear();
+      await input.sendKeys(text);
+      await (
+        await overlay.locatorFor('.p-datatable-filter-buttonbar p-button:last-child button')()
+      ).click();
+    }
+  }
+
+  /** The text of each group header, in order. */
+  async getGroupHeaderTexts(): Promise<string[]> {
+    return Promise.all((await this.groupHeaders()).map((header) => header.text()));
+  }
+
+  /** Whether the table shows no rows. */
+  async isEmpty(): Promise<boolean> {
+    return (await this.getRows()).length === 0;
+  }
+
+  /** The text of the empty row; `''` when there is none, or while the table is loading. */
+  async getEmptyText(): Promise<string> {
+    const row = await this.emptyRow();
+    return row === null ? '' : row.text();
+  }
+
+  /** Whether the table is loading (`aria-busy`). */
+  async isLoading(): Promise<boolean> {
+    return (await (await this.table()).getAttribute('aria-busy')) === 'true';
+  }
+
+  /** The text of the band above the table; `''` when there is none. */
+  async getCaptionText(): Promise<string> {
+    const caption = await this.caption();
+    return caption === null ? '' : caption.text();
+  }
+
+  /** The text of the band below the table; `''` when there is none. */
+  async getSummaryText(): Promise<string> {
+    const summary = await this.summary();
+    return summary === null ? '' : summary.text();
+  }
+
+  private async rowAt(index: number): Promise<WjTableRowHarness> {
+    const row = (await this.getRows())[index];
+    if (row === undefined) {
+      throw new Error(`wj-table has no row at index ${String(index)}`);
+    }
+    return row;
+  }
+
   private async headerOf(header: string | RegExp) {
     for (const candidate of await this.headers()) {
       if (await HarnessPredicate.stringMatches(candidate.text(), header)) {
         return candidate;
+      }
+    }
+    throw new Error(`wj-table has no column header matching ${String(header)}`);
+  }
+
+  /** The 1-based position of the header among all header cells, for `:nth-child`. */
+  private async headerPosition(header: string | RegExp): Promise<number> {
+    for (const [position, candidate] of (await this.allHeaders()).entries()) {
+      if (await HarnessPredicate.stringMatches(candidate.text(), header)) {
+        return position + 1;
       }
     }
     throw new Error(`wj-table has no column header matching ${String(header)}`);

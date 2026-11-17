@@ -17,3 +17,27 @@ export async function openSecondPage(loader: HarnessLoader): Promise<number> {
   await table.goToNextPage();
   return table.getCurrentPage();
 }
+
+/** Selects the first two rows of the table named "Orders, many can be selected". */
+export async function selectFirstTwo(loader: HarnessLoader): Promise<number[]> {
+  const table = await loader.getHarness(
+    WjTableHarness.with({ caption: 'Orders, many can be selected' }),
+  );
+  await table.selectRow(0);
+  await table.selectRow(1);
+  return table.getSelectedRowIndexes(); // [0, 1]
+}
+
+/** Expands the first row of the table named "Orders with details" and reads what it shows. */
+export async function readFirstDetails(loader: HarnessLoader): Promise<string> {
+  const table = await loader.getHarness(WjTableHarness.with({ caption: 'Orders with details' }));
+  await table.toggleRowExpansion(0);
+  return (await table.isRowExpanded(0)) ? table.getExpansionText(0) : '';
+}
+
+/** Filters the customer column of the row-filtered table, and reads what is left. */
+export async function filterCustomers(loader: HarnessLoader, text: string): Promise<string[][]> {
+  const table = await loader.getHarness(WjTableHarness.with({ caption: /filtered in a row/ }));
+  await table.filterColumn('Customer', text);
+  return (await table.isEmpty()) ? [] : table.getCellTexts();
+}

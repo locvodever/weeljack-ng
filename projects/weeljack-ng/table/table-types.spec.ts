@@ -1,8 +1,15 @@
-import type { Table, TablePassThrough } from '@openng/optimus-ui/table';
+import type { ColumnFilter, Table, TablePassThrough } from '@openng/optimus-ui/table';
 import type {
   WjTableCellContext,
+  WjTableFilterDisplay,
+  WjTableGroupHeaderContext,
   WjTableHeaderCellContext,
   WjTablePt,
+  WjTableRowEditEvent,
+  WjTableRowExpandMode,
+  WjTableRowExpansionContext,
+  WjTableRowToggleEvent,
+  WjTableSelectionMode,
   WjTableSize,
 } from 'weeljack-ng/table';
 
@@ -14,6 +21,9 @@ import type {
 describe('WjTable types', () => {
   it('keeps each input-direction type assignable to the Optimus type it feeds', () => {
     expectTypeOf<WjTableSize>().toExtend<NonNullable<Table['size']>>();
+    expectTypeOf<WjTableSelectionMode>().toExtend<NonNullable<Table['selectionMode']>>();
+    expectTypeOf<WjTableRowExpandMode>().toExtend<Table['rowExpandMode']>();
+    expectTypeOf<WjTableFilterDisplay>().toExtend<NonNullable<ColumnFilter['display']>>();
     expectTypeOf<WjTablePt>().toEqualTypeOf<TablePassThrough>();
 
     const size: Table['size'] = 'small' satisfies WjTableSize;
@@ -25,5 +35,23 @@ describe('WjTable types', () => {
     expectTypeOf<WjTableCellContext['$implicit']>().toBeUnknown();
     expectTypeOf<WjTableCellContext['rowIndex']>().toBeNumber();
     expectTypeOf<WjTableHeaderCellContext['$implicit']>().toEqualTypeOf<string | undefined>();
+    expectTypeOf<WjTableRowExpansionContext<{ id: number }>>().toEqualTypeOf<{
+      $implicit: { id: number };
+      rowIndex: number;
+    }>();
+    expectTypeOf<WjTableGroupHeaderContext<{ id: number }>>().toEqualTypeOf<{
+      $implicit: { id: number };
+      group: unknown;
+      rowIndex: number;
+    }>();
+  });
+
+  it('types the events by the row type', () => {
+    expectTypeOf<WjTableRowToggleEvent<{ id: number }>>().toEqualTypeOf<{ row: { id: number } }>();
+    expectTypeOf<WjTableRowEditEvent<{ id: number }>>().toEqualTypeOf<{
+      row: { id: number };
+      index: number;
+    }>();
+    expectTypeOf<WjTableRowToggleEvent['row']>().toBeUnknown();
   });
 });
