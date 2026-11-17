@@ -1,0 +1,12 @@
+<p-timeline [value]="value()" [align]="align()" [layout]="orientation()" [pt]="partAttributes()">
+  @if (contentSlot(); as slot) {
+    <ng-template #content let-event>
+      <ng-container *ngTemplateOutlet="slot.template; context: { $implicit: event }" />
+    </ng-template>
+  }
+  @if (oppositeSlot(); as slot) {
+    <ng-template #opposite let-event>
+      <ng-container *ngTemplateOutlet="slot.template; context: { $implicit: event }" />
+    </ng-template>
+  }
+</p-timeline>

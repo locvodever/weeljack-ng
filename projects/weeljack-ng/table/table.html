@@ -1,0 +1,414 @@
+<p-table
+  [value]="rowsToShow()"
+  [sortField]="sortField()"
+  [sortOrder]="sortOrder()"
+  [paginator]="paginator()"
+  [first]="first()"
+  [rows]="pageRows()"
+  [totalRecords]="totalRecords()"
+  [rowsPerPageOptions]="rowsPerPageOptions()"
+  [paginatorPosition]="paginatorPosition()"
+  [size]="size()"
+  [showGridlines]="showGridlines()"
+  [stripedRows]="stripedRows()"
+  [rowHover]="rowHover()"
+  [selectionMode]="selectionMode()"
+  [selection]="selected()"
+  [dataKey]="dataKey()"
+  [expandedRowKeys]="expanded()"
+  [editingRowKeys]="editing()"
+  [rowExpandMode]="rowExpandMode()"
+  editMode="row"
+  [groupRowsBy]="groupRowsBy()"
+  [rowGroupMode]="groupRowsBy() ? 'subheader' : undefined"
+  [scrollable]="scrolls()"
+  [scrollHeight]="scrollHeight()"
+  [filters]="initialFilters()"
+  [globalFilterFields]="globalFilterFields()"
+  [lazy]="lazy()"
+  [loading]="loading()"
+  [showLoader]="!loadingSlot()"
+  [pt]="partAttributes()"
+  (onSort)="sorted()"
+  (onPage)="paged($event)"
+  (onFilter)="filtered($event)"
+  (onLazyLoad)="lazyLoaded($event)"
+  (onRowExpand)="toggled($event.data, true)"
+  (onRowCollapse)="toggled($event.data, false)"
+  (selectionChange)="selectionChanged($event)"
+  (firstChange)="first.set($event)"
+  (rowsChange)="rows.set($event)"
+>
+  <ng-template #header>
+    <tr>
+      @if (multiple()) {
+        <ng-container
+          *ngTemplateOutlet="
+            th;
+            context: { frozen: frozenLeft(), align: 'left', fit: true, body: checkAll }
+          "
+        />
+      }
+      @if (expansion()) {
+        <ng-container
+          *ngTemplateOutlet="th; context: { frozen: frozenLeft(), align: 'left', fit: true }"
+        />
+      }
+      @for (column of columns(); track column) {
+        @let sortKey = column.sortKey();
+        @let frozen = column.frozen();
+        @if (sortKey && frozen) {
+          <th pFrozenColumn [alignFrozen]="column.alignFrozen()" [pSortableColumn]="sortKey">
+            <ng-container
+              *ngTemplateOutlet="headerContent; context: { $implicit: column, sortKey: sortKey }"
+            />
+          </th>
+        } @else if (sortKey) {
+          <th [pSortableColumn]="sortKey">
+            <ng-container
+              *ngTemplateOutlet="headerContent; context: { $implicit: column, sortKey: sortKey }"
+            />
+          </th>
+        } @else {
+          <ng-container
+            *ngTemplateOutlet="
+              th;
+              context: {
+                frozen: frozen,
+                align: column.alignFrozen(),
+                body: headerContent,
+                ctx: { $implicit: column },
+              }
+            "
+          />
+        }
+      }
+      @if (editable()) {
+        <ng-container
+          *ngTemplateOutlet="th; context: { frozen: frozenRight(), align: 'right', fit: true }"
+        />
+      }
+    </tr>
+    @if (filterRow()) {
+      <tr>
+        @if (multiple()) {
+          <ng-container
+            *ngTemplateOutlet="th; context: { frozen: frozenLeft(), align: 'left', fit: true }"
+          />
+        }
+        @if (expansion()) {
+          <ng-container
+            *ngTemplateOutlet="th; context: { frozen: frozenLeft(), align: 'left', fit: true }"
+          />
+        }
+        @for (column of columns(); track column) {
+          <ng-container
+            *ngTemplateOutlet="
+              th;
+              context: {
+                frozen: column.frozen(),
+                align: column.alignFrozen(),
+                body: filter,
+                ctx: { $implicit: column },
+              }
+            "
+          />
+        }
+        @if (editable()) {
+          <ng-container
+            *ngTemplateOutlet="th; context: { frozen: frozenRight(), align: 'right', fit: true }"
+          />
+        }
+      </tr>
+    }
+  </ng-template>
+  <ng-template #body let-row let-rowIndex="rowIndex" let-editing="editing" let-expanded="expanded">
+    @if (selectionMode()) {
+      <tr data-wj-row [pSelectableRow]="row" [pSelectableRowIndex]="rowIndex">
+        <ng-container
+          *ngTemplateOutlet="
+            cells;
+            context: { $implicit: row, rowIndex: rowIndex, editing: editing, expanded: expanded }
+          "
+        />
+      </tr>
+    } @else {
+      <tr data-wj-row>
+        <ng-container
+          *ngTemplateOutlet="
+            cells;
+            context: { $implicit: row, rowIndex: rowIndex, editing: editing, expanded: expanded }
+          "
+        />
+      </tr>
+    }
+  </ng-template>
+  <ng-template #emptymessage>
+    <tr class="wj-table-empty">
+      <td [attr.colspan]="colspan()">
+        @if (emptySlot(); as slot) {
+          <ng-container *ngTemplateOutlet="slot.template" />
+        } @else {
+          {{ emptyText() }}
+        }
+      </td>
+    </tr>
+  </ng-template>
+  <ng-template #loadingbody>
+    @if (loadingSlot(); as slot) {
+      <tr>
+        <td [attr.colspan]="colspan()"><ng-container *ngTemplateOutlet="slot.template" /></td>
+      </tr>
+    } @else if (!value().length) {
+      <tr class="wj-table-empty">
+        <td [attr.colspan]="colspan()">&nbsp;</td>
+      </tr>
+    }
+  </ng-template>
+  @if (expansion(); as slot) {
+    <ng-template #expandedrow let-row let-rowIndex="rowIndex">
+      <tr class="p-datatable-row-expansion">
+        <td [attr.colspan]="colspan()">
+          <ng-container
+            *ngTemplateOutlet="slot.template; context: { $implicit: row, rowIndex: rowIndex }"
+          />
+        </td>
+      </tr>
+    </ng-template>
+  }
+  @if (groupRowsBy()) {
+    <ng-template #groupheader let-row let-rowIndex="rowIndex">
+      <tr pRowGroupHeader>
+        <td [attr.colspan]="colspan()">
+          @let group = cellValue(row, groupRowsBy());
+          @if (groupSlot(); as slot) {
+            <ng-container
+              *ngTemplateOutlet="
+                slot.template;
+                context: { $implicit: row, group: group, rowIndex: rowIndex }
+              "
+            />
+          } @else {
+            {{ group }}
+          }
+        </td>
+      </tr>
+    </ng-template>
+  }
+  @if (captionSlot(); as slot) {
+    <ng-template #caption><ng-container *ngTemplateOutlet="slot.template" /></ng-template>
+  }
+  @if (summarySlot(); as slot) {
+    <ng-template #summary><ng-container *ngTemplateOutlet="slot.template" /></ng-template>
+  }
+
+  <ng-template
+    #th
+    let-frozen="frozen"
+    let-align="align"
+    let-fit="fit"
+    let-body="body"
+    let-ctx="ctx"
+  >
+    @if (frozen) {
+      <th pFrozenColumn [alignFrozen]="align" [class.wj-fit]="fit">
+        <ng-container *ngTemplateOutlet="body; context: ctx" />
+      </th>
+    } @else {
+      <th [class.wj-fit]="fit"><ng-container *ngTemplateOutlet="body; context: ctx" /></th>
+    }
+  </ng-template>
+  <ng-template
+    #td
+    let-frozen="frozen"
+    let-align="align"
+    let-fit="fit"
+    let-body="body"
+    let-ctx="ctx"
+  >
+    @if (frozen) {
+      <td
+        pFrozenColumn
+        [alignFrozen]="align"
+        [class.wj-fit]="fit"
+        [attr.data-wj-editor]="ctx?.editor ? '' : null"
+      >
+        <ng-container *ngTemplateOutlet="body; context: ctx" />
+      </td>
+    } @else {
+      <td [class.wj-fit]="fit" [attr.data-wj-editor]="ctx?.editor ? '' : null">
+        <ng-container *ngTemplateOutlet="body; context: ctx" />
+      </td>
+    }
+  </ng-template>
+  <ng-template #cells let-row let-rowIndex="rowIndex" let-editing="editing" let-expanded="expanded">
+    @if (multiple()) {
+      <ng-container
+        *ngTemplateOutlet="
+          td;
+          context: {
+            frozen: frozenLeft(),
+            align: 'left',
+            fit: true,
+            body: check,
+            ctx: { $implicit: row, rowIndex: rowIndex },
+          }
+        "
+      />
+    }
+    @if (expansion()) {
+      <ng-container
+        *ngTemplateOutlet="
+          td;
+          context: {
+            frozen: frozenLeft(),
+            align: 'left',
+            fit: true,
+            body: toggle,
+            ctx: { $implicit: row, expanded: expanded },
+          }
+        "
+      />
+    }
+    @for (column of columns(); track column) {
+      <ng-container
+        *ngTemplateOutlet="
+          td;
+          context: {
+            frozen: column.frozen(),
+            align: column.alignFrozen(),
+            body: cellBody,
+            ctx: {
+              $implicit: column,
+              row: row,
+              rowIndex: rowIndex,
+              editor: editing ? column.editor() : undefined,
+            },
+          }
+        "
+      />
+    }
+    @if (editable()) {
+      <ng-container
+        *ngTemplateOutlet="
+          td;
+          context: {
+            frozen: frozenRight(),
+            align: 'right',
+            fit: true,
+            body: actions,
+            ctx: { $implicit: row, rowIndex: rowIndex, editing: editing },
+          }
+        "
+      />
+    }
+  </ng-template>
+  <ng-template #cellBody let-column let-row="row" let-rowIndex="rowIndex" let-editor="editor">
+    @let field = column.field();
+    @let value = cellValue(row, field);
+    @let slot = editor || column.cell();
+    @if (slot) {
+      <ng-container
+        *ngTemplateOutlet="
+          slot.template;
+          context: { $implicit: row, value: value, field: field, rowIndex: rowIndex }
+        "
+      />
+    } @else {
+      {{ value }}
+    }
+  </ng-template>
+  <ng-template #check let-row let-rowIndex="rowIndex">
+    <p-tableCheckbox [value]="row" [index]="rowIndex" [ariaLabel]="rowLabel(row)" />
+  </ng-template>
+  <ng-template #checkAll><p-tableHeaderCheckbox [ariaLabel]="allLabel()" /></ng-template>
+  <ng-template #toggle let-row let-expanded="expanded">
+    <button
+      type="button"
+      class="p-datatable-row-toggle-button"
+      [pRowToggler]="row"
+      [attr.aria-expanded]="expanded"
+      [attr.aria-label]="label('expandRow')"
+    >
+      @if (expanded) {
+        <svg data-p-icon="chevron-down" class="p-datatable-row-toggle-icon" />
+      } @else {
+        <svg data-p-icon="chevron-right" class="p-datatable-row-toggle-icon" />
+      }
+    </button>
+  </ng-template>
+  <ng-template #actions let-row let-rowIndex="rowIndex" let-editing="editing">
+    <div class="wj-table-actions">
+      @if (editing) {
+        <button
+          type="button"
+          class="p-datatable-row-toggle-button p-datatable-row-editor-cancel"
+          [attr.aria-label]="label('cancelEdit')"
+          (click)="edited('cancel', row, rowIndex, $event)"
+        >
+          <svg data-p-icon="times" />
+        </button>
+        <button
+          type="button"
+          class="p-datatable-row-toggle-button p-datatable-row-editor-save"
+          [attr.aria-label]="label('saveEdit')"
+          (click)="edited('save', row, rowIndex, $event)"
+        >
+          <svg data-p-icon="check" />
+        </button>
+      } @else {
+        <button
+          type="button"
+          class="p-datatable-row-toggle-button p-datatable-row-editor-init"
+          [attr.aria-label]="label('editRow')"
+          (click)="edited('init', row, rowIndex, $event)"
+        >
+          <svg data-p-icon="pencil" />
+        </button>
+      }
+    </div>
+  </ng-template>
+  <ng-template #filter let-column>
+    @if (column.filterType()) {
+      <p-columnFilter
+        #columnFilter
+        [field]="column.field()"
+        [type]="column.filterType()"
+        [display]="filterDisplay()"
+        [ariaLabel]="column.header()"
+        [pt]="{
+          pcFilterInputText: { root: { 'aria-label': column.header() } },
+          pcFilterInputNumber: { pcInputText: { root: { 'aria-label': column.header() } } },
+        }"
+        [showAddButton]="false"
+        [showOperator]="false"
+        [motionOptions]="{ safe: true }"
+        (onHide)="filterClosed(columnFilter)"
+      />
+    }
+  </ng-template>
+  <ng-template #headerContent let-column let-sortKey="sortKey">
+    <div class="p-datatable-column-header-content">
+      <span class="p-datatable-column-title">
+        @let headerCell = column.headerCell();
+        @if (headerCell) {
+          <ng-container
+            *ngTemplateOutlet="
+              headerCell.template;
+              context: { $implicit: column.header(), field: column.field() }
+            "
+          />
+        } @else {
+          {{ column.header() }}
+        }
+      </span>
+      @if (sortKey) {
+        <p-sortIcon [field]="sortKey" />
+      }
+      @if (filterDisplay() === 'menu') {
+        <ng-container *ngTemplateOutlet="filter; context: { $implicit: column }" />
+      }
+    </div>
+  </ng-template>
+</p-table>
+<ng-content select="wj-column" />
