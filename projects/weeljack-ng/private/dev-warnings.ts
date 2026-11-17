@@ -108,9 +108,15 @@ export function _checkWeeljackSetup(selector: string): void {
  * because host `aria-*` is not forwarded. Must run in an injection context. A no-op in production.
  * Attributes added after the first render are not seen.
  *
+ * `instead` replaces the default advice (the sentence after "what is wrong"), for a component
+ * whose ARIA inputs differ: write it as a sentence without the closing period.
+ *
  * @docs-private
  */
-export function _checkAriaOnHost(selector: string): void {
+export function _checkAriaOnHost(
+  selector: string,
+  instead = 'Use the ariaLabel, ariaLabelledBy or ariaDescribedBy input instead',
+): void {
   if (!ngDevMode) {
     return;
   }
@@ -124,7 +130,7 @@ export function _checkAriaOnHost(selector: string): void {
         WJ0003,
         selector,
         `${names.join(', ')} is set on the host, where it is not forwarded to the focusable element`,
-        'Use the ariaLabel, ariaLabelledBy or ariaDescribedBy input instead',
+        instead,
       );
     }
   });
