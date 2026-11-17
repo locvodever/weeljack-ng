@@ -1,0 +1,6 @@
+/* The host is a block; Optimus lays out the two lists and the buttons itself. */
+@layer wj {
+  :host {
+    display: block;
+  }
+}
