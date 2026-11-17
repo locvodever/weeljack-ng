@@ -608,7 +608,10 @@ describe('WjInputText', () => {
       component.error.set('Enter a name.');
       await fixture.whenStable();
       expect(await input.isInvalid()).toBe(true);
-      expect(getComputedStyle(inputOf(element)).borderTopColor).toBe(INVALID_BORDER);
+      // Polled: the border colour can still be on its way under a loaded suite.
+      await expect
+        .poll(() => getComputedStyle(inputOf(element)).borderTopColor)
+        .toBe(INVALID_BORDER);
 
       component.error.set('');
       await fixture.whenStable();

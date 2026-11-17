@@ -312,13 +312,17 @@ const fieldOf = (fixture: ComponentFixture<unknown>): Promise<WjFieldHarness> =>
   TestbedHarnessEnvironment.loader(fixture).getHarness(WjFieldHarness);
 
 /**
- * Waits until the overlay is fully open: its enter has started and is over. Optimus marks the
- * motion with classes on `p-motion`, which sits bare before the enter starts and after it ends.
+ * Waits until the overlay is fully open: shown, with its enter over. Optimus keeps `p-motion`
+ * hidden (`display: none`) while closed, and shows it and starts the enter in the same frame, so a
+ * shown `p-motion` with no motion class left means the enter has ended. This also holds when the
+ * enter was already over before the first sample (a slow keystroke under load).
  */
 async function overlayOpen(element: HTMLElement): Promise<void> {
-  const motion = (): string | undefined => element.querySelector('p-motion')?.className;
-  await expect.poll(motion).toContain('-enter-');
-  await expect.poll(motion).toBe('p-motion');
+  const open = (): boolean => {
+    const motion = element.querySelector<HTMLElement>('p-motion');
+    return motion !== null && motion.style.display !== 'none' && motion.className === 'p-motion';
+  };
+  await expect.poll(open).toBe(true);
 }
 
 /** Closes an open list and waits for its leave to end, so nothing is left open at teardown. */
@@ -1390,6 +1394,7 @@ describe('WjSelect', () => {
       await userEvent.keyboard('{Escape}');
       await expect.poll(() => select.isOpen()).toBe(false);
       await userEvent.keyboard('da');
+      await overlayOpen(element);
       await expect.poll(() => activeLabel(element)).toBe('Date');
       await userEvent.keyboard('{Enter}');
       await fixture.whenStable();
