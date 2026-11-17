@@ -19,8 +19,9 @@ import type { WjOrderListControlsPosition, WjOrderListPt } from './orderlist-typ
  * inside the size budget.
  * - Optimus splices the array it is given in place, and sorts its selection in place. It is handed
  *   copies (`items`, `picked`), and every reorder or selection change writes a new array to the
- *   model, so the app's arrays keep their reference and order (FR-9). After a reorder `items()` is
- *   the array Optimus changed, so the new model value is a copy of it.
+ *   model, so the app's arrays keep their reference and order (FR-9). The new model value is a copy
+ *   of the array Optimus holds at that moment (read from `ol`, not from `items`, which is already a
+ *   step ahead after an earlier write, so two reorders before change detection lost the second).
  * - Optimus 2.0.2 never draws its `header` input, so the string goes in through the listbox's
  *   `#header` template, as text. `[header]` is bound anyway: its change marks Optimus's OnPush
  *   component dirty, so a header set or cleared later is drawn or removed.
@@ -53,7 +54,7 @@ function message(optimus: Optimus, key: string): string {
   selector: 'wj-orderlist',
   imports: [OrderList, NgTemplateOutlet],
   // prettier-ignore
-  template: `<p-orderlist [value]="items()" [selection]="picked()" [header]="header()" [filterBy]="filterBy()" [filterPlaceholder]="filterPlaceholder()" [dragdrop]="dragdrop()" [controlsPosition]="controlsPosition()" [stripedRows]="stripedRows()" [disabled]="disabled()" [scrollHeight]="scrollHeight()" [dataKey]="dataKey()" [ariaLabel]="ariaLabel()" [responsive]="true" [pt]="partAttributes()" (selectionChange)="selection.set($event.slice())" (onReorder)="value.set(items().slice())">@if (header(); as h) {<ng-template #header>{{ h }}</ng-template>}@if (itemSlot(); as s) {<ng-template #item let-item let-selected="selected" let-index="index"><ng-container *ngTemplateOutlet="s.template; context: { $implicit: item, index, selected }" /></ng-template>}@if (emptySlot(); as s) {<ng-template #empty><ng-container *ngTemplateOutlet="s.template; context: { filtered: false }" /></ng-template><ng-template #emptyfilter><ng-container *ngTemplateOutlet="s.template; context: { filtered: true }" /></ng-template>} @else {<ng-template #empty>{{ messages.empty }}</ng-template><ng-template #emptyfilter>{{ messages.filtered }}</ng-template>}</p-orderlist>`,
+  template: `<p-orderlist #ol [value]="items()" [selection]="picked()" [header]="header()" [filterBy]="filterBy()" [filterPlaceholder]="filterPlaceholder()" [dragdrop]="dragdrop()" [controlsPosition]="controlsPosition()" [stripedRows]="stripedRows()" [disabled]="disabled()" [scrollHeight]="scrollHeight()" [dataKey]="dataKey()" [ariaLabel]="ariaLabel()" [responsive]="true" [pt]="partAttributes()" (selectionChange)="selection.set($event.slice())" (onReorder)="value.set(ol.value?.slice() ?? [])">@if (header(); as h) {<ng-template #header>{{ h }}</ng-template>}@if (itemSlot(); as s) {<ng-template #item let-item let-selected="selected" let-index="index"><ng-container *ngTemplateOutlet="s.template; context: { $implicit: item, index, selected }" /></ng-template>}@if (emptySlot(); as s) {<ng-template #empty><ng-container *ngTemplateOutlet="s.template; context: { filtered: false }" /></ng-template><ng-template #emptyfilter><ng-container *ngTemplateOutlet="s.template; context: { filtered: true }" /></ng-template>} @else {<ng-template #empty>{{ messages.empty }}</ng-template><ng-template #emptyfilter>{{ messages.filtered }}</ng-template>}</p-orderlist>`,
   styleUrl: './orderlist.css',
 })
 export class WjOrderList<T = unknown> {

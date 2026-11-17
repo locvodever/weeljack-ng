@@ -577,6 +577,29 @@ describe('WjOrderList', () => {
       expect(names(host.tasks())).toEqual([NAMES[0], NAMES[1], NAMES[2], NAMES[4], NAMES[3]]);
     });
 
+    it('keeps both of two moves made before change detection runs, and leaves the app’s array alone', async () => {
+      const original = makeTasks();
+      Object.freeze(original);
+      const { element, host, list } = await render('light', (h) => {
+        h.tasks.set(original);
+      });
+      await list.selectItem('Order food');
+      const [moveUp] = buttons(element);
+      if (moveUp === undefined) {
+        throw new Error('the list has no move buttons');
+      }
+
+      // Two synchronous clicks: no change detection runs between them.
+      moveUp.click();
+      moveUp.click();
+
+      expect(names(host.tasks())).toEqual([NAMES[0], NAMES[1], NAMES[4], NAMES[2], NAMES[3]]);
+      expect(host.tasks()).not.toBe(original);
+      expect(names(original)).toEqual(NAMES);
+      expect(Object.isFrozen(original)).toBe(true);
+      await expect.poll(() => list.getItemTexts()).toEqual(host.tasks().map((task) => task.name));
+    });
+
     it('reorders by dragging with dragdrop, writing a new array and leaving the app’s one alone', async () => {
       const original = makeTasks();
       Object.freeze(original);
