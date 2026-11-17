@@ -1,0 +1,7 @@
+/* The host is a block, so the pager (Optimus's own element, a centred, wrapping flex row) fills its
+   width. Everything else is the preset. */
+@layer wj {
+  :host {
+    display: block;
+  }
+}
