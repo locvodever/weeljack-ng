@@ -118,6 +118,27 @@ describe('_toOptimusMenuModel', () => {
     expect(functions(without)).toEqual([]);
   });
 
+  it('gives a disabled item no command, at any depth, and an enabled sibling keeps its own', () => {
+    const { items } = _toOptimusMenuModel<AppItem>([
+      {
+        label: 'Parent',
+        command: () => undefined,
+        items: [
+          { label: 'Off', disabled: true, command: () => undefined },
+          { label: 'On', disabled: false, command: () => undefined },
+        ],
+      },
+      { label: 'Off too', disabled: true, command: () => undefined },
+    ]);
+
+    const hasCommand = (item: MenuItem | undefined): boolean =>
+      item !== undefined && 'command' in item;
+    expect(hasCommand(items[0])).toBe(true);
+    expect(hasCommand(items[0]?.items?.[0])).toBe(false);
+    expect(hasCommand(items[0]?.items?.[1])).toBe(true);
+    expect(hasCommand(items[1])).toBe(false);
+  });
+
   it('lets an error from the app’s command reach the caller unchanged', () => {
     const boom = new Error('boom');
     const [copy] = _toOptimusMenuModel<AppItem>([

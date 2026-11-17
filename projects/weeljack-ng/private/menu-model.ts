@@ -39,7 +39,8 @@ export interface _OptimusMenuModel<T> {
 /**
  * One item as an Optimus `MenuItem`: the allow-listed fields that are present, field by field (no
  * spread, no `undefined` written), `escape: true` as the literal, and `command` as the only
- * function, because Optimus calls every function-valued item field.
+ * function, because Optimus calls every function-valued item field. A disabled item gets none:
+ * Optimus runs a command on any click that reaches the item, and a screen reader's click does.
  */
 function copy<T extends _MenuItemShape<T>>(item: T, sources: WeakMap<MenuItem, T>): MenuItem {
   const out: MenuItem = { escape: true };
@@ -55,7 +56,7 @@ function copy<T extends _MenuItemShape<T>>(item: T, sources: WeakMap<MenuItem, T
   if (item.fragment !== undefined) out.fragment = item.fragment;
   if (item.items !== undefined) out.items = item.items.map((child) => copy(child, sources));
   const { command } = item;
-  if (command !== undefined) {
+  if (command !== undefined && !item.disabled) {
     out.command = ({ originalEvent }) => {
       if (originalEvent !== undefined) command({ originalEvent, item });
     };

@@ -1,0 +1,32 @@
+@let model = mapped();
+<p-menubar
+  [model]="model.items"
+  [ariaLabel]="ariaLabel()"
+  [ariaLabelledBy]="ariaLabelledBy()"
+  [pt]="partAttributes()"
+>
+  @if (startSlot(); as slot) {
+    <ng-template #start><ng-container *ngTemplateOutlet="slot.template" /></ng-template>
+  }
+  @if (endSlot(); as slot) {
+    <ng-template #end><ng-container *ngTemplateOutlet="slot.template" /></ng-template>
+  }
+  @if (itemSlot(); as slot) {
+    <ng-template #item let-item let-root="root">
+      @let entry = model.source(item);
+      @if (entry) {
+        <a
+          class="p-menubar-item-link"
+          data-pc-section="itemlink"
+          tabindex="-1"
+          [attr.href]="entry.url"
+          [attr.target]="entry.url ? entry.target : null"
+        >
+          <ng-container
+            *ngTemplateOutlet="slot.template; context: { $implicit: entry, root: !!root }"
+          />
+        </a>
+      }
+    </ng-template>
+  }
+</p-menubar>

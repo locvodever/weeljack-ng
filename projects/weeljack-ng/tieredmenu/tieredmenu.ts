@@ -10,7 +10,6 @@ import {
   output,
   viewChild,
 } from '@angular/core';
-import type { MenuItem } from '@openng/optimus-ui/api';
 import { TieredMenu } from '@openng/optimus-ui/tieredmenu';
 import type { WjMenuItem } from 'weeljack-ng';
 import {
@@ -22,21 +21,6 @@ import {
 } from 'weeljack-ng/private';
 import { WjTieredMenuItemSlot } from './tieredmenu-slots';
 import type { WjTieredMenuPt } from './tieredmenu-types';
-
-/**
- * Optimus runs an item's command on any click that reaches it, a disabled item's included (a screen
- * reader's click does: the theme only stops a pointer). Take the command off a disabled item.
- */
-function silenceDisabled(items: MenuItem[]): void {
-  for (const item of items) {
-    if (item.disabled) {
-      delete item.command;
-    }
-    if (item.items) {
-      silenceDisabled(item.items);
-    }
-  }
-}
 
 /**
  * Nested commands over Optimus's `p-tieredMenu`, inline or as a popup. Describe it as `WjMenuItem`
@@ -87,11 +71,7 @@ export class WjTieredMenu {
   protected readonly motion = _OVERLAY_MOTION;
 
   /** The model as Optimus items, rebuilt only when the app passes a new array. */
-  protected readonly mapped = computed(() => {
-    const model = _toOptimusMenuModel(this.model());
-    silenceDisabled(model.items);
-    return model;
-  });
+  protected readonly mapped = computed(() => _toOptimusMenuModel(this.model()));
 
   /** `pt` forwarded as given, plus the description routed to the list. */
   protected readonly partAttributes = computed<WjTieredMenuPt>(() =>
