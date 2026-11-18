@@ -178,5 +178,6 @@ export const _WJ_EN = {
     hidePassword: 'Hide Password',
     breadcrumb: 'Breadcrumb',
     home: 'Home',
+    moreActions: 'More actions',
   },
 };

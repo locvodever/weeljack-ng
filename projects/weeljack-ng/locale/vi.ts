@@ -176,5 +176,6 @@ export const vi: WjTranslation = {
     hidePassword: 'Ẩn mật khẩu',
     breadcrumb: 'Đường dẫn',
     home: 'Trang chủ',
+    moreActions: 'Thêm thao tác',
   },
 };

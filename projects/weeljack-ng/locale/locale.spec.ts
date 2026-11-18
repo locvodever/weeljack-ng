@@ -8,6 +8,7 @@ const OWN_KEYS = [
   'hidePassword',
   'breadcrumb',
   'home',
+  'moreActions',
 ] as const satisfies readonly (keyof WjOwnStrings)[];
 
 function keys(value: object | undefined): string[] {
@@ -38,6 +39,7 @@ describe('weeljack-ng/locale', () => {
       hidePassword: 'Ẩn mật khẩu',
       breadcrumb: 'Đường dẫn',
       home: 'Trang chủ',
+      moreActions: 'Thêm thao tác',
     });
   });
 

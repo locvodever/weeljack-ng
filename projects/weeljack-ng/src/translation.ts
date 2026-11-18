@@ -11,6 +11,8 @@ export interface WjOwnStrings {
   breadcrumb?: string;
   /** The breadcrumb's home link name, when the home item has no label. */
   home?: string;
+  /** The split button's menu button name, when the app sets no `expandAriaLabel`. */
+  moreActions?: string;
 }
 
 /**
