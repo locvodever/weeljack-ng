@@ -1,0 +1,10 @@
+<p-fieldset
+  [legend]="legend()"
+  [toggleable]="toggleable()"
+  [collapsed]="toggleable() && collapsed()"
+  (collapsedChange)="collapsed.set($event)"
+  [motionOptions]="motion"
+  [pt]="partAttributes()"
+>
+  <ng-content />
+</p-fieldset>

@@ -1,0 +1,12 @@
+<p-toolbar [ariaLabelledBy]="ariaLabelledBy()" [pt]="partAttributes()">
+  @if (startSlot(); as slot) {
+    <ng-template #start><ng-container [ngTemplateOutlet]="slot.template" /></ng-template>
+  }
+  @if (centerSlot(); as slot) {
+    <ng-template #center><ng-container [ngTemplateOutlet]="slot.template" /></ng-template>
+  }
+  @if (endSlot(); as slot) {
+    <ng-template #end><ng-container [ngTemplateOutlet]="slot.template" /></ng-template>
+  }
+  <ng-content />
+</p-toolbar>
