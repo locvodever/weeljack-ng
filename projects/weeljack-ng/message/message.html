@@ -1,0 +1,12 @@
+<p-message
+  [severity]="severity()"
+  [closable]="closable()"
+  [size]="size()"
+  [variant]="variant()"
+  [pt]="partAttributes()"
+  [motionOptions]="motion"
+  (onClose)="close()"
+  (animationend)="hideOnceClosed($event)"
+>
+  <ng-content />
+</p-message>

@@ -31,6 +31,19 @@ function severity700(colour: string) {
   };
 }
 
+/**
+ * A message severity's text colour step: the text, the outlined text and edge, the simple text and
+ * the close-button ring move together, so every variant stays AA on its tint (FR-9).
+ */
+function messageText(colour: string) {
+  return {
+    color: colour,
+    outlined: { color: colour, borderColor: colour },
+    simple: { color: colour },
+    closeButton: { focusRing: { color: colour } },
+  };
+}
+
 const zinc = {
   50: '{zinc.50}',
   100: '{zinc.100}',
@@ -159,6 +172,22 @@ export const wjAlwaysOn = definePreset(aura, {
         dark: {
           info: { color: '{blue.400}' },
           error: { color: '{red.400}' },
+        },
+      },
+    },
+    // The toast's steps, on the message's own tokens (W5a-feedback FR-9). Aura's 600 text on its
+    // 5% tint reads 3.16:1 (success), 2.85:1 (warn) and 4.43:1 (error) over white, and its dark 500
+    // text on the 16% tint 3.96:1 (info) and 3.98:1 (error) over a zinc.900 card.
+    message: {
+      colorScheme: {
+        light: {
+          success: messageText('{green.700}'),
+          warn: messageText('{yellow.800}'),
+          error: messageText('{red.700}'),
+        },
+        dark: {
+          info: messageText('{blue.400}'),
+          error: messageText('{red.400}'),
         },
       },
     },

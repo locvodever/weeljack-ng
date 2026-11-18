@@ -1,0 +1,27 @@
+/* Optimus's message is a block grid box, so the host is one too. The host's own `display` beats
+   the UA's `[hidden]`, so the closed state (the host is `hidden` once the leave animation has
+   ended) needs its own rule. The text part may shrink below its longest word and breaks an
+   unbroken string, so a long URL never pushes the close button out of the box. Reduced motion
+   runs Optimus's enter and leave at `0s`, not `none`: the leave keeps its `forwards` end state and
+   still ends, which is what hides the closed message. The encapsulated `p-message[…]` selector
+   out-specifies Optimus's enter and leave classes, which come after this sheet inside the layer. */
+@layer wj {
+  :host {
+    display: block;
+  }
+
+  :host([hidden]) {
+    display: none;
+  }
+
+  :host ::ng-deep .p-message-text {
+    min-inline-size: 0;
+    overflow-wrap: anywhere;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    p-message {
+      animation-duration: 0s;
+    }
+  }
+}
