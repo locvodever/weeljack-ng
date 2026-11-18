@@ -1,0 +1,32 @@
+/* One unencapsulated stylesheet (FR-12; ui-spec E1, E3), every rule rooted at `wj-buttongroup`.
+   Optimus's joined-look rules select `.p-button` by `:last-child`, `:first-of-type` and
+   `:only-of-type`, but each button now sits alone inside its `wj-button`, so those rules never match:
+   they are restated here for `wj-button` hosts. Logical properties, so RTL mirrors. The focused
+   button on top is Optimus's `.p-buttongroup .p-button:focus` rule, a descendant rule that still
+   reaches each inner button (the spec pins it). The group adds no seam or colour of its own.
+   Nothing wraps or squashes: Optimus's labels do not wrap, so the row overflows a narrow container
+   (the spec pins it). */
+@layer wj {
+  wj-buttongroup,
+  wj-buttongroup p-buttongroup {
+    display: inline-flex;
+  }
+
+  wj-buttongroup wj-button:not(:last-child) .p-button {
+    border-inline-end-width: 0;
+  }
+
+  wj-buttongroup wj-button:not(:first-of-type):not(:last-of-type) .p-button {
+    border-radius: 0;
+  }
+
+  wj-buttongroup wj-button:first-of-type:not(:only-of-type) .p-button {
+    border-start-end-radius: 0;
+    border-end-end-radius: 0;
+  }
+
+  wj-buttongroup wj-button:last-of-type:not(:only-of-type) .p-button {
+    border-start-start-radius: 0;
+    border-end-start-radius: 0;
+  }
+}
