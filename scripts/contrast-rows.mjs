@@ -136,6 +136,21 @@ const PAIRS = {
       'treetable.row.selected.background',
       TEXT,
     ],
+    ['breadcrumb link text', 'breadcrumb.item.color', 'content.background', TEXT],
+    ['breadcrumb link text on hover', 'breadcrumb.item.hover.color', 'content.background', TEXT],
+    ['breadcrumb home glyph', 'breadcrumb.item.icon.color', 'content.background', NON_TEXT],
+    [
+      'breadcrumb home glyph on hover',
+      'breadcrumb.item.icon.hover.color',
+      'content.background',
+      NON_TEXT,
+    ],
+    ['steps label', 'steps.item.label.color', 'content.background', TEXT],
+    ['steps label, current', 'steps.item.label.active.color', 'content.background', TEXT],
+    ['steps number', 'steps.item.number.color', 'steps.item.number.background', TEXT],
+    // The current number is filled with the primary (steps.css), so this is the pair drawn: the
+    // preset's own active-number colour on the content background is no longer on screen.
+    ['steps number, current (filled)', 'primary.contrast.color', 'primary.color', TEXT],
   ],
   dark: [
     ['body text', 'text.color', 'content.background', TEXT],
@@ -284,6 +299,21 @@ const PAIRS = {
       TEXT,
       'content.background',
     ],
+    ['breadcrumb link text', 'breadcrumb.item.color', 'content.background', TEXT],
+    ['breadcrumb link text on hover', 'breadcrumb.item.hover.color', 'content.background', TEXT],
+    ['breadcrumb home glyph', 'breadcrumb.item.icon.color', 'content.background', NON_TEXT],
+    [
+      'breadcrumb home glyph on hover',
+      'breadcrumb.item.icon.hover.color',
+      'content.background',
+      NON_TEXT,
+    ],
+    ['steps label', 'steps.item.label.color', 'content.background', TEXT],
+    ['steps label, current', 'steps.item.label.active.color', 'content.background', TEXT],
+    ['steps number', 'steps.item.number.color', 'steps.item.number.background', TEXT],
+    // The current number is filled with the primary (steps.css), so this is the pair drawn: the
+    // preset's own active-number colour on the content background is no longer on screen.
+    ['steps number, current (filled)', 'primary.contrast.color', 'primary.color', TEXT],
   ],
 };
 

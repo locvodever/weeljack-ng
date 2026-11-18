@@ -1,0 +1,23 @@
+<p-splitbutton
+  [model]="mapped().items"
+  [label]="label()"
+  [severity]="severity()"
+  [size]="size()"
+  [text]="variant() === 'text'"
+  [outlined]="variant() === 'outlined'"
+  [disabled]="disabled()"
+  [menuButtonDisabled]="menuDisabled()"
+  [appendTo]="appendTo()"
+  [expandAriaLabel]="menuName()"
+  [buttonProps]="buttonProps()"
+  [autofocus]="false"
+  [motionOptions]="motion"
+  [pt]="partAttributes()"
+  (onClick)="buttonClick.emit($event)"
+  (onMenuShow)="entered()"
+  (onMenuHide)="left()"
+>
+  @if (contentSlot(); as slot) {
+    <ng-template #content><ng-container *ngTemplateOutlet="slot.template" /></ng-template>
+  }
+</p-splitbutton>

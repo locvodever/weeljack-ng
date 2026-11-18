@@ -116,7 +116,11 @@ describe('provideWeeljack translation', () => {
     it('passes the English default, with the wj group, when no translation is given', async () => {
       await setup();
 
-      expect(read('wj')).toEqual({ showPassword: 'Show Password', hidePassword: 'Hide Password' });
+      // `toMatchObject`: every family adds its own `wj` keys, so the group is not an exact list.
+      expect(read('wj')).toMatchObject({
+        showPassword: 'Show Password',
+        hidePassword: 'Hide Password',
+      });
       expect(read('weak')).toBe('Weak');
       expect(read('aria')).toMatchObject({ close: 'Close', listLabel: 'Option List' });
     });
@@ -143,7 +147,7 @@ describe('provideWeeljack translation', () => {
     it('keeps the other own key when wj is partial', async () => {
       await setup({ translation: { wj: { showPassword: 'Hiện' } } });
 
-      expect(read('wj')).toEqual({ showPassword: 'Hiện', hidePassword: 'Hide Password' });
+      expect(read('wj')).toMatchObject({ showPassword: 'Hiện', hidePassword: 'Hide Password' });
     });
 
     it('passes an extra key through', async () => {

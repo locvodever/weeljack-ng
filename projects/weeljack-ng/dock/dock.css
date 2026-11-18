@@ -1,0 +1,19 @@
+/* The host is a block that takes no space: Optimus's own element is positioned absolutely against
+   the nearest positioned ancestor, so the app puts the dock in a container with `position:
+   relative`. Optimus sets `cursor: default` on a tile's link and `transition: all 0.2s` on each
+   tile; the rules below beat them by specificity inside the same layer. */
+@layer wj {
+  :host {
+    display: block;
+  }
+
+  :host ::ng-deep .p-dock-item:not(.p-disabled) .p-dock-item-link {
+    cursor: pointer;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    :host ::ng-deep .p-dock-item {
+      transition: none;
+    }
+  }
+}

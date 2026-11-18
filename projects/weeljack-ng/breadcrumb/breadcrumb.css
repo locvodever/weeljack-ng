@@ -1,0 +1,15 @@
+/* The host and Optimus's own element are blocks with no box of their own. Every link, the home
+   glyph's included, is at least 24 x 24 px with its content centred (22 Q3). Everything else is the
+   preset. */
+@layer wj {
+  :host,
+  p-breadcrumb {
+    display: block;
+  }
+
+  :host ::ng-deep .p-breadcrumb-item-link {
+    min-block-size: 1.5rem;
+    min-inline-size: 1.5rem;
+    justify-content: center;
+  }
+}

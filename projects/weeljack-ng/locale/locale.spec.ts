@@ -6,6 +6,10 @@ import { en, vi } from './public-api';
 const OWN_KEYS = [
   'showPassword',
   'hidePassword',
+  'breadcrumb',
+  'home',
+  'moreActions',
+  'actions',
 ] as const satisfies readonly (keyof WjOwnStrings)[];
 
 function keys(value: object | undefined): string[] {
@@ -30,7 +34,15 @@ describe('weeljack-ng/locale', () => {
         expect(locale.wj?.[key]).toBeTruthy();
       }
     }
-    expect(vi.wj).toEqual({ showPassword: 'Hiện mật khẩu', hidePassword: 'Ẩn mật khẩu' });
+    // `toMatchObject`: every family adds its own `wj` keys, so the group is not an exact list.
+    expect(vi.wj).toMatchObject({
+      showPassword: 'Hiện mật khẩu',
+      hidePassword: 'Ẩn mật khẩu',
+      breadcrumb: 'Đường dẫn',
+      home: 'Trang chủ',
+      moreActions: 'Thêm thao tác',
+      actions: 'Thao tác',
+    });
   });
 
   it('reads Vietnamese for the keys the library components use', () => {

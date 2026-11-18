@@ -1,0 +1,9 @@
+@let items = shown();
+@if (items.length > 0) {
+  <p-steps
+    [model]="items"
+    [activeIndex]="activeIndex()"
+    [readonly]="readonly()"
+    (activeIndexChange)="activeIndex.set($event)"
+  />
+}

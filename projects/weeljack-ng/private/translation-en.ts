@@ -173,5 +173,12 @@ export const _WJ_EN = {
     zoomIn: 'Zoom In',
     zoomOut: 'Zoom Out',
   },
-  wj: { showPassword: 'Show Password', hidePassword: 'Hide Password' },
+  wj: {
+    showPassword: 'Show Password',
+    hidePassword: 'Hide Password',
+    breadcrumb: 'Breadcrumb',
+    home: 'Home',
+    moreActions: 'More actions',
+    actions: 'Actions',
+  },
 };

@@ -171,5 +171,12 @@ export const vi: WjTranslation = {
     zoomIn: 'Phóng to',
     zoomOut: 'Thu nhỏ',
   },
-  wj: { showPassword: 'Hiện mật khẩu', hidePassword: 'Ẩn mật khẩu' },
+  wj: {
+    showPassword: 'Hiện mật khẩu',
+    hidePassword: 'Ẩn mật khẩu',
+    breadcrumb: 'Đường dẫn',
+    home: 'Trang chủ',
+    moreActions: 'Thêm thao tác',
+    actions: 'Thao tác',
+  },
 };
