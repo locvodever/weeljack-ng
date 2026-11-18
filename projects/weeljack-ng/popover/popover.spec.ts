@@ -786,6 +786,11 @@ describe('WjPopover', () => {
       const fixture = TestBed.createComponent(LowerHost);
       await fixture.whenStable();
       await expect.poll(() => document.querySelector('#lower-opener') !== null).toBe(true);
+      // Optimus Dialog moves focus in on a timer after it shows. Wait for that to land, or under
+      // load it lands after the overlay above has opened and pulls focus out of it.
+      await expect
+        .poll(() => document.querySelector('[role="dialog"]')?.contains(document.activeElement))
+        .toBe(true);
       return fixture;
     }
 
