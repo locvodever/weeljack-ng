@@ -122,6 +122,13 @@ const PAIRS = {
       NON_TEXT,
     ],
     ['progress label on the fill', 'progressbar.label.color', 'progressbar.value.background', TEXT],
+    ['badge primary', 'badge.primary.color', 'badge.primary.background', TEXT],
+    ['badge secondary', 'badge.secondary.color', 'badge.secondary.background', TEXT],
+    ['badge success', 'badge.success.color', 'badge.success.background', TEXT],
+    ['badge info', 'badge.info.color', 'badge.info.background', TEXT],
+    ['badge warn', 'badge.warn.color', 'badge.warn.background', TEXT],
+    ['badge danger', 'badge.danger.color', 'badge.danger.background', TEXT],
+    ['badge contrast', 'badge.contrast.color', 'badge.contrast.background', TEXT],
   ],
   dark: [
     ['body text', 'text.color', 'content.background', TEXT],
@@ -249,6 +256,13 @@ const PAIRS = {
       NON_TEXT,
     ],
     ['progress label on the fill', 'progressbar.label.color', 'progressbar.value.background', TEXT],
+    ['badge primary', 'badge.primary.color', 'badge.primary.background', TEXT],
+    ['badge secondary', 'badge.secondary.color', 'badge.secondary.background', TEXT],
+    ['badge success', 'badge.success.color', 'badge.success.background', TEXT],
+    ['badge info', 'badge.info.color', 'badge.info.background', TEXT],
+    ['badge warn', 'badge.warn.color', 'badge.warn.background', TEXT],
+    ['badge danger', 'badge.danger.color', 'badge.danger.background', TEXT],
+    ['badge contrast', 'badge.contrast.color', 'badge.contrast.background', TEXT],
   ],
 };
 

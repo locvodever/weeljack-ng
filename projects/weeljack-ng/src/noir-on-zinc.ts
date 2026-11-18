@@ -199,6 +199,19 @@ export const wjAlwaysOn = definePreset(aura, {
         light: { root: { colorThree: '{green.600}', colorFour: '{yellow.700}' } },
       },
     },
+    // White on Aura's light 500 fills reads 2.28:1 (success), 2.77:1 (info), 2.80:1 (warn) and
+    // 3.76:1 (danger). The button's 700 steps clear 4.5:1 with the text left as Aura has it; the
+    // primary, secondary and contrast fills and every dark badge already pass (W5a-feedback FR-9).
+    badge: {
+      colorScheme: {
+        light: {
+          success: { background: '{green.700}' },
+          info: { background: '{sky.700}' },
+          warn: { background: '{orange.700}' },
+          danger: { background: '{red.700}' },
+        },
+      },
+    },
   },
 });
 
