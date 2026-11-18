@@ -1,0 +1,25 @@
+<p-tree
+  [value]="copy().nodes"
+  [trackBy]="trackBy"
+  [selectionMode]="selectionMode()"
+  [selection]="picked()"
+  [loading]="loading()"
+  [ariaLabel]="ariaLabel()"
+  [ariaLabelledBy]="ariaLabelledBy()"
+  [pt]="partAttributes()"
+  (selectionChange)="pick()"
+  (onNodeExpand)="toggled($event.node, true)"
+  (onNodeCollapse)="toggled($event.node, false)"
+>
+  @if (nodeSlot(); as slot) {
+    <ng-template pTemplate="default" let-node>
+      <ng-container
+        [ngTemplateOutlet]="slot.template"
+        [ngTemplateOutletContext]="{ $implicit: copy().original(node) }"
+      />
+    </ng-template>
+  }
+  @if (emptySlot(); as slot) {
+    <ng-template #empty><ng-container [ngTemplateOutlet]="slot.template" /></ng-template>
+  }
+</p-tree>

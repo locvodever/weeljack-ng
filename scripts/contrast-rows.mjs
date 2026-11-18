@@ -129,6 +129,7 @@ const PAIRS = {
     ['badge warn', 'badge.warn.color', 'badge.warn.background', TEXT],
     ['badge danger', 'badge.danger.color', 'badge.danger.background', TEXT],
     ['badge contrast', 'badge.contrast.color', 'badge.contrast.background', TEXT],
+    ['selected tree node', 'tree.node.selected.color', 'tree.node.selected.background', TEXT],
   ],
   dark: [
     ['body text', 'text.color', 'content.background', TEXT],
@@ -263,6 +264,13 @@ const PAIRS = {
     ['badge warn', 'badge.warn.color', 'badge.warn.background', TEXT],
     ['badge danger', 'badge.danger.color', 'badge.danger.background', TEXT],
     ['badge contrast', 'badge.contrast.color', 'badge.contrast.background', TEXT],
+    [
+      'selected tree node',
+      'tree.node.selected.color',
+      'tree.node.selected.background',
+      TEXT,
+      'content.background',
+    ],
   ],
 };
 
