@@ -758,6 +758,10 @@ describe('WjTreeSelect', () => {
       await select.selectNode('Data');
       await fixture.whenStable();
       expect(component.value()[0]).toBe(dept('data', next));
+      // A single-mode pick closes the panel. The harness's `open()` skips its click while
+      // `aria-expanded` is still true, so the reopen below waits for that close to end.
+      await expect.poll(() => select.isOpen()).toBe(false);
+      await expect.poll(() => element.querySelector('[role="tree"]')).toBeNull();
 
       component.options.set([{ key: 'solo', label: 'Solo' }]);
       await fixture.whenStable();
