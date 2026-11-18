@@ -115,6 +115,13 @@ const PAIRS = {
     ['spinner colour blue', 'progressspinner.color.two', 'surface.0', NON_TEXT],
     ['spinner colour green', 'progressspinner.color.three', 'surface.0', NON_TEXT],
     ['spinner colour yellow', 'progressspinner.color.four', 'surface.0', NON_TEXT],
+    [
+      'progress fill on the track',
+      'progressbar.value.background',
+      'progressbar.background',
+      NON_TEXT,
+    ],
+    ['progress label on the fill', 'progressbar.label.color', 'progressbar.value.background', TEXT],
   ],
   dark: [
     ['body text', 'text.color', 'content.background', TEXT],
@@ -235,6 +242,13 @@ const PAIRS = {
     ['spinner colour blue', 'progressspinner.color.two', 'content.background', NON_TEXT],
     ['spinner colour green', 'progressspinner.color.three', 'content.background', NON_TEXT],
     ['spinner colour yellow', 'progressspinner.color.four', 'content.background', NON_TEXT],
+    [
+      'progress fill on the track',
+      'progressbar.value.background',
+      'progressbar.background',
+      NON_TEXT,
+    ],
+    ['progress label on the fill', 'progressbar.label.color', 'progressbar.value.background', TEXT],
   ],
 };
 
