@@ -1,0 +1,71 @@
+import { Component, computed, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
+import { WjButton, type WjButtonPt } from 'weeljack-ng/button';
+import { WjOverlay } from 'weeljack-ng/overlay';
+
+@Component({
+  selector: 'docs-overlay-basic-example',
+  imports: [RouterLink, WjButton, WjOverlay],
+  template: `
+    <div class="anchor">
+      <wj-button
+        label="Resources"
+        severity="secondary"
+        variant="outlined"
+        [pt]="triggerPt()"
+        (click)="open.set(!open())"
+      >
+        <svg
+          aria-hidden="true"
+          width="16"
+          height="16"
+          viewBox="0 0 16 16"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+        >
+          <path d="m4 6 4 4 4-4" />
+        </svg>
+      </wj-button>
+      <wj-overlay [(visible)]="open">
+        <ul id="overlay-basic-links" class="links">
+          <li><a routerLink="/">Home</a></li>
+          <li><a routerLink="/components/popover">Popover</a></li>
+          <li><a routerLink="/components/tooltip">Tooltip</a></li>
+        </ul>
+      </wj-overlay>
+    </div>
+  `,
+  styles: `
+    .links {
+      display: grid;
+      gap: 4px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .links a {
+      display: block;
+      box-sizing: border-box;
+      min-block-size: 32px;
+      padding: 4px 12px;
+      border-radius: 8px;
+      color: var(--wj-text-color);
+      line-height: 24px;
+      text-decoration: none;
+    }
+
+    .links a:hover {
+      background: var(--wj-content-hover-background);
+    }
+  `,
+})
+export class OverlayBasicExample {
+  protected readonly open = signal(false);
+
+  /** `wj-button` has no ARIA inputs for a disclosure trigger yet: set them on its button through `pt`. */
+  protected readonly triggerPt = computed<WjButtonPt>(() => ({
+    root: { 'aria-expanded': String(this.open()), 'aria-controls': 'overlay-basic-links' },
+  }));
+}

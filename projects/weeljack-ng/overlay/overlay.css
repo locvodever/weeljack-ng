@@ -1,0 +1,20 @@
+/* The host is a block with no height: Optimus's root is absolutely positioned, so the panel never
+   pushes the page. The host is positioned too, so it is the panel's containing block (`shown()`
+   moves it onto the target). Optimus's content has no look of its own, so it gets the anchored
+   surface of the popover, with a 4px inset for the app's rows. An app's unlayered CSS, or a class
+   through `pt.content`, overrides it. */
+@layer wj {
+  :host {
+    display: block;
+    position: relative;
+  }
+
+  :host ::ng-deep .p-overlay-content {
+    background: var(--wj-overlay-popover-background);
+    border: 1px solid var(--wj-overlay-popover-border-color);
+    border-radius: var(--wj-overlay-popover-border-radius);
+    box-shadow: var(--wj-overlay-popover-shadow);
+    color: var(--wj-overlay-popover-color);
+    padding: 4px;
+  }
+}
