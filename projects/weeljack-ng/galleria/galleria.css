@@ -1,0 +1,19 @@
+/* One unencapsulated stylesheet (ui-spec A7, I5): the rules reach Optimus's own elements, so each is
+   rooted at `wj-galleria`. The item navigators, Close and the caption take the photo scrim through
+   the component's own variables, set on the host so the full screen, which renders inside it,
+   inherits them. The full screen takes a width of its own (`containerStyle` is dropped). */
+@layer wj {
+  wj-galleria {
+    display: block;
+    --wj-galleria-scrim: color-mix(in srgb, var(--wj-surface-900) 70%, transparent);
+    --wj-galleria-nav-button-background: var(--wj-galleria-scrim);
+    --wj-galleria-close-button-background: var(--wj-galleria-scrim);
+    --wj-galleria-caption-background: var(--wj-galleria-scrim);
+    --wj-galleria-nav-button-hover-background: var(--wj-surface-900);
+    --wj-galleria-close-button-hover-background: var(--wj-surface-900);
+  }
+
+  wj-galleria .p-galleria-fullscreen {
+    inline-size: min(48rem, 90vw);
+  }
+}
