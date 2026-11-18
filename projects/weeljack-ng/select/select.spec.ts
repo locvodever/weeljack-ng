@@ -26,6 +26,23 @@ const ROOT = document.documentElement;
 /** `--wj-form-field-invalid-border-color` in the light scheme. */
 const INVALID_BORDER = 'rgb(220, 38, 38)';
 
+/**
+ * Parks the pointer in the viewport's bottom-right corner before a border read. The pointer is
+ * page-wide in browser mode, so an earlier test can leave it over the control, and Optimus's hover
+ * border outranks the invalid one. The host renders only the select, so a throwaway fixed target
+ * stands in for a neutral element; the pointer stays there after it is removed.
+ */
+async function pointerAway(): Promise<void> {
+  const park = document.createElement('div');
+  park.style.cssText = 'position: fixed; right: 0; bottom: 0; width: 8px; height: 8px';
+  document.body.append(park);
+  try {
+    await userEvent.hover(park);
+  } finally {
+    park.remove();
+  }
+}
+
 /** Five fruits; the third is disabled, so keyboard navigation has something to skip. */
 const FRUIT: WjSelectOption<string>[] = [
   { label: 'Apple', value: 'apple' },
@@ -543,6 +560,7 @@ describe('WjSelect', () => {
       await fixture.whenStable();
       expect(await select.isRequired()).toBe(true);
       expect(await select.isInvalid()).toBe(true);
+      await pointerAway();
       expect(getComputedStyle(rootOf(element)).borderTopColor).toBe(INVALID_BORDER);
 
       component.disabled.set(true);
@@ -984,6 +1002,7 @@ describe('WjSelect', () => {
       component.error.set('Pick a fruit.');
       await fixture.whenStable();
       expect(await select.isInvalid()).toBe(true);
+      await pointerAway();
       expect(getComputedStyle(rootOf(element)).borderTopColor).toBe(INVALID_BORDER);
 
       component.error.set('');

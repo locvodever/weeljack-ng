@@ -19,6 +19,17 @@ const ROOT = document.documentElement;
 /** `--wj-form-field-invalid-border-color` in the light scheme. */
 const INVALID_BORDER = 'rgb(220, 38, 38)';
 
+/**
+ * Parks the pointer on the host's "After" button before a border read. The pointer is page-wide in
+ * browser mode, so an earlier test can leave it over the control, and Optimus's hover border
+ * outranks the invalid one.
+ */
+async function pointerAway(element: HTMLElement): Promise<void> {
+  const after = element.querySelector<HTMLElement>('#after');
+  if (after === null) throw new Error('The host has no #after button.');
+  await userEvent.hover(after);
+}
+
 /** A consumer's template: one bare password, or the same password inside a field. */
 @Component({
   selector: 'wj-password-host',
@@ -384,6 +395,7 @@ describe('WjPassword', () => {
       await fixture.whenStable();
       expect(await password.isRequired()).toBe(true);
       expect(await password.isInvalid()).toBe(true);
+      await pointerAway(element);
       expect(getComputedStyle(inputOf(element)).borderTopColor).toBe(INVALID_BORDER);
 
       component.disabled.set(true);
@@ -942,6 +954,7 @@ describe('WjPassword', () => {
       component.error.set('Enter a password.');
       await fixture.whenStable();
       expect(await password.isInvalid()).toBe(true);
+      await pointerAway(element);
       expect(getComputedStyle(inputOf(element)).borderTopColor).toBe(INVALID_BORDER);
 
       component.error.set('');
