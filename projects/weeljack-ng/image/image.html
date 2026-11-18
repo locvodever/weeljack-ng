@@ -1,0 +1,17 @@
+<p-image
+  [src]="src()"
+  [alt]="alt()"
+  [srcSet]="srcSet()"
+  [sizes]="sizes()"
+  [width]="width()"
+  [height]="height()"
+  [loading]="loading()"
+  [preview]="preview()"
+  [previewImageSrc]="previewImageSrc()"
+  [motionOptions]="motion"
+  [maskMotionOptions]="motion"
+  [pt]="partAttributes()"
+  (onShow)="opened.emit()"
+  (onHide)="hidden()"
+  (onImageError)="imageError.emit($event)"
+/>

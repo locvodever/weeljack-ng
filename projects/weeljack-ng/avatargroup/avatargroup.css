@@ -1,0 +1,25 @@
+/* One unencapsulated stylesheet (FR-12; ui-spec C1, C2), every rule rooted at `wj-avatargroup`.
+   Optimus's group rules select sibling `.p-avatar`s, but each one now sits alone inside its
+   `wj-avatar`, so the overlap never applies: it is restated here for `wj-avatar + wj-avatar`, keyed
+   on the host's `data-wj-size`. A mixed pair takes the default offset, as in Optimus. Logical
+   properties, so RTL mirrors; later avatars paint over earlier ones in DOM order. The 2px ring is
+   not restated: Optimus's `.p-avatar-group .p-avatar` is a descendant rule and still reaches each
+   inner `p-avatar` (the spec pins it). Nothing wraps or
+   squashes: a flex item cannot shrink below its fixed-width avatar, so the stack overflows. */
+@layer wj {
+  wj-avatargroup {
+    display: flex;
+  }
+
+  wj-avatargroup wj-avatar + wj-avatar {
+    margin-inline-start: var(--wj-avatar-group-offset);
+  }
+
+  wj-avatargroup wj-avatar[data-wj-size='large'] + wj-avatar[data-wj-size='large'] {
+    margin-inline-start: var(--wj-avatar-lg-group-offset);
+  }
+
+  wj-avatargroup wj-avatar[data-wj-size='xlarge'] + wj-avatar[data-wj-size='xlarge'] {
+    margin-inline-start: var(--wj-avatar-xl-group-offset);
+  }
+}

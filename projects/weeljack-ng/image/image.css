@@ -1,0 +1,25 @@
+/* One unencapsulated stylesheet (ui-spec A2, A7, F2, F3): the rules reach Optimus's own elements, so
+   each is rooted at `wj-image`. The enlarge wash and the toolbar pill take the photo scrim, set on
+   the host so the overlay, which renders inside it, inherits it. Optimus removes the outline of the
+   enlarge button: keyboard focus draws the preset ring outside the image (the selector is as
+   specific as Optimus's hover rule, which also clears it). Under reduced motion the enlarged
+   image's hard-coded 300 ms transform transition is off. */
+@layer wj {
+  wj-image {
+    display: inline-block;
+    line-height: 0;
+    --wj-image-preview-mask-background: color-mix(in srgb, var(--wj-surface-900) 70%, transparent);
+    --wj-image-toolbar-background: color-mix(in srgb, var(--wj-surface-900) 70%, transparent);
+  }
+
+  wj-image .p-image-preview > .p-image-preview-mask:focus-visible {
+    outline: var(--wj-focus-ring-width) var(--wj-focus-ring-style) var(--wj-focus-ring-color);
+    outline-offset: var(--wj-focus-ring-offset, 2px);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    wj-image .p-image-original {
+      transition: none;
+    }
+  }
+}
