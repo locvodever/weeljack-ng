@@ -19,7 +19,11 @@ const PACKAGE = join(ROOT, 'node_modules', '@openng', 'optimus-ui-locale');
 const LIBRARY = join(ROOT, 'projects', 'weeljack-ng');
 
 /** WeeljackNg's own `wj` keys taken from an upstream `aria` key. */
-const OWN_FROM_UPSTREAM = { showPassword: 'passwordShow', hidePassword: 'passwordHide' };
+const OWN_FROM_UPSTREAM = {
+  showPassword: 'passwordShow',
+  hidePassword: 'passwordHide',
+  otpCharacter: 'otpLabel',
+};
 
 /** Own `wj` keys with no upstream equivalent: one row per language. */
 /** @type {Record<string, Record<string, string>>} */

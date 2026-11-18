@@ -1,0 +1,32 @@
+<p-inputotp
+  [length]="length()"
+  [integerOnly]="integerOnly()"
+  [mask]="mask()"
+  [size]="size()"
+  [disabled]="isDisabled()"
+  [required]="required()"
+  [invalid]="field.invalid()"
+  [pt]="rootPt()"
+>
+  <ng-template #input let-token let-events="events" let-index="index">
+    <input
+      #box
+      pInputText
+      class="p-inputotp-input"
+      [value]="token ?? ''"
+      [attr.type]="mask() ? 'password' : 'text'"
+      [attr.inputmode]="integerOnly() ? 'numeric' : 'text'"
+      [attr.maxlength]="index === 1 ? length() : 1"
+      [attr.required]="required() ? '' : undefined"
+      [attr.disabled]="isDisabled() ? '' : undefined"
+      [pSize]="size()"
+      [invalid]="field.invalid()"
+      [pt]="boxes()[index - 1]"
+      (input)="events.input($event, index - 1)"
+      (keydown)="keydown($event, events.keydown)"
+      (paste)="events.paste($event)"
+      (focus)="box.select(); events.focus($event)"
+      (blur)="events.blur($event)"
+    />
+  </ng-template>
+</p-inputotp>

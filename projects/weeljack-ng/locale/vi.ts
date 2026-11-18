@@ -174,6 +174,7 @@ export const vi: WjTranslation = {
   wj: {
     showPassword: 'Hiện mật khẩu',
     hidePassword: 'Ẩn mật khẩu',
+    otpCharacter: 'Vui lòng nhập ký tự OTP {0}',
     breadcrumb: 'Đường dẫn',
     home: 'Trang chủ',
     moreActions: 'Thêm thao tác',

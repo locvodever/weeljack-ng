@@ -10,6 +10,7 @@ const OWN_KEYS = [
   'home',
   'moreActions',
   'actions',
+  'otpCharacter',
 ] as const satisfies readonly (keyof WjOwnStrings)[];
 
 function keys(value: object | undefined): string[] {
@@ -42,6 +43,7 @@ describe('weeljack-ng/locale', () => {
       home: 'Trang chủ',
       moreActions: 'Thêm thao tác',
       actions: 'Thao tác',
+      otpCharacter: 'Vui lòng nhập ký tự OTP {0}',
     });
   });
 
