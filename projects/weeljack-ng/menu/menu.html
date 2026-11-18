@@ -1,0 +1,31 @@
+@let model = mapped();
+@if (model.items.length > 0) {
+  <p-menu
+    [model]="model.items"
+    [popup]="popup()"
+    [appendTo]="appendTo()"
+    [ariaLabel]="ariaLabel()"
+    [ariaLabelledBy]="ariaLabelledBy()"
+    [motionOptions]="motion"
+    [pt]="partAttributes()"
+    (onShow)="opened.emit()"
+    (onHide)="left()"
+  >
+    @if (itemSlot(); as slot) {
+      <ng-template #item let-item>
+        @let entry = model.source(item);
+        @if (entry) {
+          <a
+            class="p-menu-item-link"
+            data-pc-section="itemlink"
+            tabindex="-1"
+            [attr.href]="entry.url"
+            [attr.target]="entry.url ? entry.target : null"
+          >
+            <ng-container *ngTemplateOutlet="slot.template; context: { $implicit: entry }" />
+          </a>
+        }
+      </ng-template>
+    }
+  </p-menu>
+}

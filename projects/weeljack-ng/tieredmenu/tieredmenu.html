@@ -1,0 +1,36 @@
+@let model = mapped();
+@if (model.items.length > 0) {
+  <p-tieredmenu
+    [model]="model.items"
+    [popup]="popup()"
+    [appendTo]="appendTo()"
+    [ariaLabel]="ariaLabel()"
+    [ariaLabelledBy]="ariaLabelledBy()"
+    [motionOptions]="motion"
+    [pt]="partAttributes()"
+    (onShow)="entered()"
+    (onHide)="left()"
+  >
+    @if (itemSlot(); as slot) {
+      <ng-template #item let-item>
+        @let entry = model.source(item);
+        @if (entry) {
+          <a
+            class="p-tieredmenu-item-link"
+            data-pc-section="itemlink"
+            tabindex="-1"
+            [attr.href]="entry.url"
+            [attr.target]="entry.url ? entry.target : null"
+          >
+            <ng-container
+              *ngTemplateOutlet="
+                slot.template;
+                context: { $implicit: entry, hasSubmenu: (entry.items?.length ?? 0) > 0 }
+              "
+            />
+          </a>
+        }
+      </ng-template>
+    }
+  </p-tieredmenu>
+}

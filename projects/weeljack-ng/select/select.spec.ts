@@ -26,6 +26,23 @@ const ROOT = document.documentElement;
 /** `--wj-form-field-invalid-border-color` in the light scheme. */
 const INVALID_BORDER = 'rgb(220, 38, 38)';
 
+/**
+ * Parks the pointer in the viewport's bottom-right corner before a border read. The pointer is
+ * page-wide in browser mode, so an earlier test can leave it over the control, and Optimus's hover
+ * border outranks the invalid one. The host renders only the select, so a throwaway fixed target
+ * stands in for a neutral element; the pointer stays there after it is removed.
+ */
+async function pointerAway(): Promise<void> {
+  const park = document.createElement('div');
+  park.style.cssText = 'position: fixed; right: 0; bottom: 0; width: 8px; height: 8px';
+  document.body.append(park);
+  try {
+    await userEvent.hover(park);
+  } finally {
+    park.remove();
+  }
+}
+
 /** Five fruits; the third is disabled, so keyboard navigation has something to skip. */
 const FRUIT: WjSelectOption<string>[] = [
   { label: 'Apple', value: 'apple' },
@@ -312,13 +329,17 @@ const fieldOf = (fixture: ComponentFixture<unknown>): Promise<WjFieldHarness> =>
   TestbedHarnessEnvironment.loader(fixture).getHarness(WjFieldHarness);
 
 /**
- * Waits until the overlay is fully open: its enter has started and is over. Optimus marks the
- * motion with classes on `p-motion`, which sits bare before the enter starts and after it ends.
+ * Waits until the overlay is fully open: shown, with its enter over. Optimus keeps `p-motion`
+ * hidden (`display: none`) while closed, and shows it and starts the enter in the same frame, so a
+ * shown `p-motion` with no motion class left means the enter has ended. This also holds when the
+ * enter was already over before the first sample (a slow keystroke under load).
  */
 async function overlayOpen(element: HTMLElement): Promise<void> {
-  const motion = (): string | undefined => element.querySelector('p-motion')?.className;
-  await expect.poll(motion).toContain('-enter-');
-  await expect.poll(motion).toBe('p-motion');
+  const open = (): boolean => {
+    const motion = element.querySelector<HTMLElement>('p-motion');
+    return motion !== null && motion.style.display !== 'none' && motion.className === 'p-motion';
+  };
+  await expect.poll(open).toBe(true);
 }
 
 /** Closes an open list and waits for its leave to end, so nothing is left open at teardown. */
@@ -539,6 +560,7 @@ describe('WjSelect', () => {
       await fixture.whenStable();
       expect(await select.isRequired()).toBe(true);
       expect(await select.isInvalid()).toBe(true);
+      await pointerAway();
       expect(getComputedStyle(rootOf(element)).borderTopColor).toBe(INVALID_BORDER);
 
       component.disabled.set(true);
@@ -980,6 +1002,7 @@ describe('WjSelect', () => {
       component.error.set('Pick a fruit.');
       await fixture.whenStable();
       expect(await select.isInvalid()).toBe(true);
+      await pointerAway();
       expect(getComputedStyle(rootOf(element)).borderTopColor).toBe(INVALID_BORDER);
 
       component.error.set('');
@@ -1390,6 +1413,7 @@ describe('WjSelect', () => {
       await userEvent.keyboard('{Escape}');
       await expect.poll(() => select.isOpen()).toBe(false);
       await userEvent.keyboard('da');
+      await overlayOpen(element);
       await expect.poll(() => activeLabel(element)).toBe('Date');
       await userEvent.keyboard('{Enter}');
       await fixture.whenStable();

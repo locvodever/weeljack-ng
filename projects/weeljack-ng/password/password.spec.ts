@@ -19,6 +19,17 @@ const ROOT = document.documentElement;
 /** `--wj-form-field-invalid-border-color` in the light scheme. */
 const INVALID_BORDER = 'rgb(220, 38, 38)';
 
+/**
+ * Parks the pointer on the host's "After" button before a border read. The pointer is page-wide in
+ * browser mode, so an earlier test can leave it over the control, and Optimus's hover border
+ * outranks the invalid one.
+ */
+async function pointerAway(element: HTMLElement): Promise<void> {
+  const after = element.querySelector<HTMLElement>('#after');
+  if (after === null) throw new Error('The host has no #after button.');
+  await userEvent.hover(after);
+}
+
 /** A consumer's template: one bare password, or the same password inside a field. */
 @Component({
   selector: 'wj-password-host',
@@ -253,13 +264,17 @@ const fieldOf = (fixture: ComponentFixture<unknown>): Promise<WjFieldHarness> =>
   TestbedHarnessEnvironment.loader(fixture).getHarness(WjFieldHarness);
 
 /**
- * Waits until the overlay is fully open: its enter has started and is over. Optimus marks the
- * motion with classes on `p-motion`, which sits bare before the enter starts and after it ends.
+ * Waits until the overlay is fully open: shown, with its enter over. Optimus keeps `p-motion`
+ * hidden (`display: none`) while closed, and shows it and starts the enter in the same frame, so a
+ * shown `p-motion` with no motion class left means the enter has ended. This also holds when the
+ * enter was already over before the first sample (a slow keystroke under load).
  */
 async function overlayOpen(element: HTMLElement): Promise<void> {
-  const motion = (): string | undefined => element.querySelector('p-motion')?.className;
-  await expect.poll(motion).toContain('-enter-');
-  await expect.poll(motion).toBe('p-motion');
+  const open = (): boolean => {
+    const motion = element.querySelector<HTMLElement>('p-motion');
+    return motion !== null && motion.style.display !== 'none' && motion.className === 'p-motion';
+  };
+  await expect.poll(open).toBe(true);
 }
 
 /** Emulates the user's reduced-motion preference, or clears it. */
@@ -380,6 +395,7 @@ describe('WjPassword', () => {
       await fixture.whenStable();
       expect(await password.isRequired()).toBe(true);
       expect(await password.isInvalid()).toBe(true);
+      await pointerAway(element);
       expect(getComputedStyle(inputOf(element)).borderTopColor).toBe(INVALID_BORDER);
 
       component.disabled.set(true);
@@ -938,6 +954,7 @@ describe('WjPassword', () => {
       component.error.set('Enter a password.');
       await fixture.whenStable();
       expect(await password.isInvalid()).toBe(true);
+      await pointerAway(element);
       expect(getComputedStyle(inputOf(element)).borderTopColor).toBe(INVALID_BORDER);
 
       component.error.set('');

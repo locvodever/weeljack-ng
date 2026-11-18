@@ -1,0 +1,9 @@
+/* The host is a block; Optimus's own element keeps its layout. The narrow layout's Navigation
+   button is 44 x 44: an existing Optimus variable, so it replaces Aura's 28 px. Everything else is
+   the preset. */
+@layer wj {
+  :host {
+    display: block;
+    --wj-megamenu-mobile-button-size: 2.75rem;
+  }
+}

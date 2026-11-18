@@ -17,6 +17,17 @@ const ROOT = document.documentElement;
 /** `--wj-form-field-invalid-border-color` in the light scheme. */
 const INVALID_BORDER = 'rgb(220, 38, 38)';
 
+/**
+ * Parks the pointer on the host's "After" button before a border read. The pointer is page-wide in
+ * browser mode, so an earlier test can leave it over the control, and Optimus's hover border
+ * outranks the invalid one.
+ */
+async function pointerAway(element: HTMLElement): Promise<void> {
+  const after = element.querySelector<HTMLElement>('#after');
+  if (after === null) throw new Error('The host has no #after button.');
+  await userEvent.hover(after);
+}
+
 /** A consumer's template: one bare checkbox, or the same checkbox inside a field. */
 @Component({
   selector: 'wj-checkbox-host',
@@ -333,6 +344,7 @@ describe('WjCheckbox', () => {
 
       expect(await checkbox.isRequired()).toBe(true);
       expect(await checkbox.isInvalid()).toBe(true);
+      await pointerAway(element);
       expect(getComputedStyle(boxOf(element)).borderTopColor).toBe(INVALID_BORDER);
 
       component.disabled.set(true);
@@ -604,6 +616,7 @@ describe('WjCheckbox', () => {
       component.error.set('Accept the terms to continue.');
       await fixture.whenStable();
       expect(await checkbox.isInvalid()).toBe(true);
+      await pointerAway(element);
       expect(getComputedStyle(boxOf(element)).borderTopColor).toBe(INVALID_BORDER);
 
       component.error.set('');

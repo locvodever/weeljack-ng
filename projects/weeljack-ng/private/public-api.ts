@@ -17,6 +17,13 @@ export {
 } from './field-context';
 export { _wjId } from './ids';
 export {
+  _toOptimusMegaMenuModel,
+  _toOptimusMenuModel,
+  type _MegaMenuItemShape,
+  type _MenuItemShape,
+  type _OptimusMenuModel,
+} from './menu-model';
+export {
   _drawerPassThrough,
   _focusIntoOverlay,
   _OVERLAY_CLOSE_BUTTON,
