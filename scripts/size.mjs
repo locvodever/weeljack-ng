@@ -13,9 +13,10 @@ import { ROOT, libraryEntries } from './entries.mjs';
  * limit is the larger of a floor and a share of the Optimus entry it wraps, measured the same way
  * from the pinned `node_modules`. `/testing` entries are not shipped to apps and are excluded. The
  * limits change only by Loc's call (21; on 2026-11-16 the floor went 1.5 -> 2.5 KB and own entries
- * 3.2 -> 5 KB); no family PR raises one.
+ * 3.2 -> 5 KB; on 2026-11-18 `private` alone went 5 -> 7 KB); no family PR raises one. An own row may
+ * set `kb` to override `ownKb` for that entry only.
  *
- * @typedef {{ entry: string, optimus: string, note: string }} Row
+ * @typedef {{ entry: string, optimus: string, note: string, kb?: number }} Row
  * @typedef {{ kb: number, ownKb: number, wrapperFloorKb: number, wrapperShareOfOptimus: number }} Limits
  */
 
@@ -95,7 +96,7 @@ const kb = (/** @type {number} */ bytes) => (bytes / limits.kb).toFixed(2);
 const results = budgeted.map((row) => {
   const bytes = measure(libraryFesm(row.entry));
   if (row.optimus === 'own') {
-    return { row, bytes, optimusBytes: undefined, limit: limits.ownKb * limits.kb };
+    return { row, bytes, optimusBytes: undefined, limit: (row.kb ?? limits.ownKb) * limits.kb };
   }
   const optimusBytes = measure(optimusFesm(row.optimus));
   const limit = Math.max(

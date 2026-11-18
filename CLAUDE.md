@@ -148,7 +148,9 @@ a family's own:
 **Budget, SSR and errors (21):**
 - A wrapper entry weighs at most the larger of 2.5 KB or 25% of the Optimus entry it wraps; an own
   entry at most 5 KB (esbuild minify + gzip-6). Loc raised both on 2026-11-16, from 1.5 KB and
-  3.2 KB, after the form controls hit them. A wrapper entry needs no row: `size` defaults
+  3.2 KB, after the form controls hit them. `private` alone is 7 KB (Loc, 2026-11-18): it is
+  measured as one module, so every family's helpers and `wj` strings add up there; its row in
+  `size-budgets.json` sets `kb: 7`. A wrapper entry needs no row: `size` defaults
   `weeljack-ng/<x>` to `@openng/optimus-ui/<x>`, and only the root, `private` and own entries have
   a row in `size-budgets.json`. No family PR raises a limit.
 - SSR is claimed; hydration is not, in v1.
@@ -408,7 +410,8 @@ Copied from the roadmap's engineering baseline (one line per area that applies).
   - Source: ticket 20.
 - **B14 NFRs and failure modes:**
   - each wrapper entry ≤ max(2.5 KB, 25% of the Optimus entry it wraps), and own entries ≤ 5 KB,
-    esbuild + gzip-6 (raised from 1.5 KB and 3.2 KB by Loc, 2026-11-16); no family PR raises a limit;
+    esbuild + gzip-6 (raised from 1.5 KB and 3.2 KB by Loc, 2026-11-16), except `private` ≤ 7 KB
+    (Loc, 2026-11-18); no family PR raises a limit;
   - no app-level budget;
   - OnPush and zoneless as hard rules;
   - SSR claimed, hydration not in v1;
