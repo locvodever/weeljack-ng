@@ -1,0 +1,14 @@
+/* The host is the box of the Optimus root inside (block), and adds none of its own. The root lays
+   its in-flow children in one full-width column, as wj-field's box does, so a text input with no
+   width of its own fills it and a trailing icon sits at the input's end. The icons are absolutely
+   positioned, so they are not grid items and keep Optimus's place. */
+@layer wj {
+  :host {
+    display: block;
+  }
+
+  p-iconfield {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
