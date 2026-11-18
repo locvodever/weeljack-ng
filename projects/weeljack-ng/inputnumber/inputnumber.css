@@ -1,0 +1,28 @@
+/* The host is the box: the Optimus root and its input stretch to the host's width, so an app sizes
+   the control with host `class`/`style`. The focused input sits above the buttons beside it, so its
+   2px ring is drawn whole. The spin glyphs take the muted text colour, which clears 3:1 on the box. */
+@layer wj {
+  :host {
+    display: inline-flex;
+    --wj-inputnumber-button-color: var(--wj-text-muted-color);
+  }
+
+  p-inputnumber {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  :host ::ng-deep .p-inputnumber-input {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  :host ::ng-deep .p-inputnumber-input:focus {
+    z-index: 1;
+  }
+
+  :host ::ng-deep .p-inputnumber-button:disabled {
+    background: var(--wj-form-field-disabled-background);
+    color: var(--wj-form-field-disabled-color);
+  }
+}

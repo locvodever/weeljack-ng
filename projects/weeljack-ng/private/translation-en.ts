@@ -176,6 +176,7 @@ export const _WJ_EN = {
   wj: {
     showPassword: 'Show Password',
     hidePassword: 'Hide Password',
+    otpCharacter: 'Please enter one time password character {0}',
     breadcrumb: 'Breadcrumb',
     home: 'Home',
     moreActions: 'More actions',

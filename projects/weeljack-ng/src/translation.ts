@@ -15,6 +15,11 @@ export interface WjOwnStrings {
   moreActions?: string;
   /** The speed dial's toggle name, when the app sets no `ariaLabel`. */
   actions?: string;
+  /**
+   * The name of each `wj-inputotp` input; `{0}` is replaced by the input's position, counting from
+   * 1.
+   */
+  otpCharacter?: string;
 }
 
 /**
