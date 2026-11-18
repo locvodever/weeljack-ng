@@ -1,7 +1,7 @@
 import { DOCUMENT } from '@angular/common';
 import { Component, Injector, afterNextRender, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router';
+import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { filter, skip } from 'rxjs';
 import apiIndex from '../generated/api/index.json';
 
@@ -9,7 +9,7 @@ import apiIndex from '../generated/api/index.json';
 const DARK_CLASS = 'wj-dark';
 
 @Component({
-  imports: [RouterLink, RouterOutlet],
+  imports: [RouterLink, RouterLinkActive, RouterOutlet],
   selector: 'docs-root',
   templateUrl: './app.html',
   styleUrl: './app.css',

@@ -48,6 +48,12 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/home/home').then((m) => m.HomePage),
   },
   {
+    path: 'components',
+    pathMatch: 'full',
+    title: `Components · ${SITE}`,
+    loadComponent: () => import('./pages/components/components').then((m) => m.ComponentsPage),
+  },
+  {
     path: 'components/:entry',
     canMatch: [hasComponentPage],
     title: componentTitle,
@@ -58,6 +64,11 @@ export const routes: Routes = [
     path: 'guides/theming',
     title: `Theming · ${SITE}`,
     loadComponent: () => import('./pages/theming/theming').then((m) => m.ThemingPage),
+  },
+  {
+    path: 'guides/from-optimus',
+    title: `Coming from Optimus · ${SITE}`,
+    loadComponent: () => import('./pages/from-optimus/from-optimus').then((m) => m.FromOptimusPage),
   },
   {
     path: '**',

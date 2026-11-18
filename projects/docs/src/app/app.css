@@ -14,14 +14,16 @@
 }
 
 .header {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px 24px;
   padding: 12px 24px;
   border-block-end: 1px solid var(--wj-content-border-color);
   background: var(--wj-content-background);
+}
+
+.bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 24px;
 }
 
 .group {
@@ -29,6 +31,40 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 8px 16px;
+}
+
+.utilities {
+  margin-inline-start: auto;
+}
+
+.pages {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.page-link {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 44px;
+  padding: 0 8px;
+  color: var(--wj-text-color);
+  text-decoration: none;
+}
+
+.page-link:hover {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 6px;
+}
+
+.page-link[aria-current='page'] {
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 6px;
 }
 
 .wordmark {

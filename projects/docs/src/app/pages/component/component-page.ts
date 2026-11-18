@@ -1,7 +1,9 @@
 import { NgComponentOutlet } from '@angular/common';
-import { Component, computed, input } from '@angular/core';
+import { Component, computed, inject, input } from '@angular/core';
+import { Router, RouterLink } from '@angular/router';
 import exampleSources from '../../../generated/examples.json';
 import type { ApiClass, ApiMember } from '../../api/api-types';
+import { CATALOG } from '../../catalog/catalog';
 import { CodeBlock } from '../../code-block/code-block';
 import { DocsText } from '../../text/text';
 import type { ComponentPageData } from './component-doc';
@@ -18,6 +20,15 @@ interface ClassApi {
   sections: MemberSection[];
 }
 
+/** The shipped entries by wave group, for the sidebar. A group with nothing shipped is left out. */
+const SIDEBAR = CATALOG.groups
+  .map((group) => ({
+    id: group.id,
+    label: group.label,
+    rows: group.rows.filter((row) => row.status === 'shipped'),
+  }))
+  .filter((group) => group.rows.length > 0);
+
 const isSlot = (item: ApiClass): boolean =>
   item.kind === 'directive' && item.selector.startsWith('ng-template[');
 
@@ -27,11 +38,16 @@ const isSlot = (item: ApiClass): boolean =>
  */
 @Component({
   selector: 'docs-component-page',
-  imports: [NgComponentOutlet, CodeBlock, DocsText],
+  imports: [NgComponentOutlet, RouterLink, CodeBlock, DocsText],
   templateUrl: './component-page.html',
   styleUrl: './component-page.css',
 })
 export class ComponentPage {
+  /** Sidebar links are written relative to the root route, so the base href decides where they point. */
+  protected readonly root = inject(Router).routerState.root;
+
+  protected readonly sidebar = SIDEBAR;
+
   /** The `:entry` route parameter. */
   readonly entry = input.required<string>();
 

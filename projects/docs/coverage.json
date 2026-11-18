@@ -1,0 +1,189 @@
+{
+  "source": {
+    "waveTable": "SecondBrain/projects/weeljack-ng/efforts/weeljack-ng-library/questions/03-wave-order-and-coverage.md, wave table, lines 130-143 (Q1-Q4, Q6)",
+    "notWrapped": "SecondBrain/projects/weeljack-ng/efforts/weeljack-ng-library/weeljack-ng-library-roadmap.md, section Not wrapped, lines 752-768",
+    "note": "Hand-kept: 03's decisions only. scripts/extract-catalog.mjs guards this file against Optimus's own entry points and 03's counts. Shipped status is never listed here: it comes from generated/api/index.json."
+  },
+  "groups": [
+    { "id": "W1", "label": "What quanoi uses", "wave": 1 },
+    { "id": "W2", "label": "Other form controls", "wave": 2 },
+    { "id": "W3", "label": "Data", "wave": 3 },
+    { "id": "W4", "label": "Overlays, menus, panels", "wave": 4 },
+    { "id": "W5a", "label": "Feedback", "wave": 5 },
+    { "id": "W5b", "label": "Identity and grouping", "wave": 5 },
+    { "id": "W5c", "label": "Media", "wave": 5 },
+    { "id": "W5d", "label": "Effects and niche", "wave": 5 }
+  ],
+  "targets": {
+    "button": "W1",
+    "checkbox": "W1",
+    "dialog": "W1",
+    "drawer": "W1",
+    "inputtext": "W1",
+    "password": "W1",
+    "select": "W1",
+    "skeleton": "W1",
+    "tag": "W1",
+    "textarea": "W1",
+    "toast": "W1",
+    "toggleswitch": "W1",
+
+    "autocomplete": "W2",
+    "cascadeselect": "W2",
+    "colorpicker": "W2",
+    "fileupload": "W2",
+    "inputmask": "W2",
+    "inputnumber": "W2",
+    "inputotp": "W2",
+    "knob": "W2",
+    "listbox": "W2",
+    "multiselect": "W2",
+    "radiobutton": "W2",
+    "rating": "W2",
+    "selectbutton": "W2",
+    "slider": "W2",
+    "togglebutton": "W2",
+    "treeselect": "W2",
+    "floatlabel": "W2",
+    "fluid": "W2",
+    "iconfield": "W2",
+    "iftalabel": "W2",
+    "inputgroup": "W2",
+    "inputgroupaddon": "W2",
+    "inputicon": "W2",
+    "keyfilter": "W2",
+    "autofocus": "W2",
+
+    "table": "W3",
+    "treetable": "W3",
+    "tree": "W3",
+    "datepicker": "W3",
+    "dataview": "W3",
+    "paginator": "W3",
+    "scroller": "W3",
+    "orderlist": "W3",
+    "picklist": "W3",
+    "timeline": "W3",
+
+    "blockui": "W4",
+    "confirmdialog": "W4",
+    "confirmpopup": "W4",
+    "dynamicdialog": "W4",
+    "overlay": "W4",
+    "popover": "W4",
+    "tooltip": "W4",
+    "breadcrumb": "W4",
+    "contextmenu": "W4",
+    "dock": "W4",
+    "megamenu": "W4",
+    "menu": "W4",
+    "menubar": "W4",
+    "panelmenu": "W4",
+    "speeddial": "W4",
+    "splitbutton": "W4",
+    "tieredmenu": "W4",
+    "accordion": "W4",
+    "card": "W4",
+    "divider": "W4",
+    "fieldset": "W4",
+    "inplace": "W4",
+    "panel": "W4",
+    "scrollpanel": "W4",
+    "splitter": "W4",
+    "stepper": "W4",
+    "steps": "W4",
+    "tabs": "W4",
+    "toolbar": "W4",
+
+    "message": "W5a",
+    "progressspinner": "W5a",
+    "progressbar": "W5a",
+    "badge": "W5a",
+    "overlaybadge": "W5a",
+    "metergroup": "W5a",
+
+    "avatar": "W5b",
+    "avatargroup": "W5b",
+    "chip": "W5b",
+    "buttongroup": "W5b",
+
+    "image": "W5c",
+    "imagecompare": "W5c",
+    "carousel": "W5c",
+    "galleria": "W5c",
+
+    "ripple": "W5d",
+    "animateonscroll": "W5d",
+    "scrolltop": "W5d",
+    "organizationchart": "W5d",
+    "terminal": "W5d"
+  },
+  "own": {
+    "field": "W1",
+    "sheet": "W1"
+  },
+  "notWrapped": [
+    {
+      "entries": ["chart"],
+      "label": "Chart",
+      "why": "Cut: it adapts Chart.js, whose config WeeljackNg cannot own, and Optimus does not declare the library.",
+      "useInstead": "Chart.js"
+    },
+    {
+      "entries": ["editor"],
+      "label": "Editor",
+      "why": "Cut: it adapts Quill, for the same reason.",
+      "useInstead": "Quill"
+    },
+    {
+      "entries": ["motion"],
+      "label": "Motion",
+      "why": "Cut: it is Optimus's internal animation primitive.",
+      "useInstead": "Angular `animate.enter` and `animate.leave`"
+    },
+    {
+      "entries": ["icons"],
+      "label": "Icons (55 entries)",
+      "why": "Cut: they are Optimus's internal glyphs, and no icon slot is exposed.",
+      "useInstead": "your own icon set"
+    },
+    {
+      "entries": ["focustrap"],
+      "label": "Focus trap",
+      "why": "Not a target: the CDK already has it.",
+      "useInstead": "CDK `cdkTrapFocus`"
+    },
+    {
+      "entries": ["dragdrop"],
+      "label": "Drag and drop",
+      "why": "Not a target: the CDK already has it.",
+      "useInstead": "CDK `cdkDrag` and `cdkDropList`"
+    },
+    {
+      "entries": ["styleclass", "classnames"],
+      "label": "Style class and class names",
+      "why": "Not a target: Angular's class bindings do the same job.",
+      "useInstead": "Angular class bindings"
+    },
+    {
+      "entries": ["config"],
+      "label": "Config and themes",
+      "why": "Not wrapped: they become provideWeeljack.",
+      "useInstead": "`provideWeeljack`"
+    }
+  ],
+  "foundation": [
+    "bind",
+    "api",
+    "base",
+    "basecomponent",
+    "baseeditableholder",
+    "baseinput",
+    "basemodelholder",
+    "dom",
+    "passthrough",
+    "ts-helpers",
+    "usestyle",
+    "utils"
+  ]
+}

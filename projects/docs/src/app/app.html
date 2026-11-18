@@ -1,16 +1,39 @@
 <a class="skip-link" href="#main" (click)="skipToMain($event)">Skip to content</a>
 <header class="header">
-  <div class="group">
-    <a class="wordmark" routerLink="">WeeljackNg</a>
-    <span class="version">v{{ version }}</span>
-  </div>
-  <div class="group">
-    <a class="action" href="https://github.com/locvodever/weeljack-ng" rel="noopener">GitHub</a>
-    <a class="action" routerLink="guides/theming">Theming</a>
-    <button type="button" class="action" [attr.aria-pressed]="dark()" (click)="toggleDark()">
-      Dark mode <span aria-hidden="true">{{ dark() ? 'on' : 'off' }}</span>
-    </button>
-  </div>
+  <nav class="bar" aria-label="Main">
+    <div class="group">
+      <a class="wordmark" routerLink="">WeeljackNg</a>
+      <span class="version">v{{ version }}</span>
+    </div>
+    <ul class="pages">
+      <li>
+        <a
+          class="page-link"
+          routerLink="components"
+          routerLinkActive
+          [routerLinkActiveOptions]="{ exact: true }"
+          ariaCurrentWhenActive="page"
+          >Components</a
+        >
+      </li>
+      <li>
+        <a
+          class="page-link"
+          routerLink="guides/theming"
+          routerLinkActive
+          [routerLinkActiveOptions]="{ exact: true }"
+          ariaCurrentWhenActive="page"
+          >Theming</a
+        >
+      </li>
+    </ul>
+    <div class="group utilities">
+      <a class="action" href="https://github.com/locvodever/weeljack-ng" rel="noopener">GitHub</a>
+      <button type="button" class="action" [attr.aria-pressed]="dark()" (click)="toggleDark()">
+        Dark mode <span aria-hidden="true">{{ dark() ? 'on' : 'off' }}</span>
+      </button>
+    </div>
+  </nav>
 </header>
 <main id="main" tabindex="-1">
   <router-outlet />
