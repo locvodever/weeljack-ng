@@ -111,6 +111,10 @@ const PAIRS = {
       NON_TEXT,
       'surface.0',
     ],
+    ['spinner colour red', 'progressspinner.color.one', 'surface.0', NON_TEXT],
+    ['spinner colour blue', 'progressspinner.color.two', 'surface.0', NON_TEXT],
+    ['spinner colour green', 'progressspinner.color.three', 'surface.0', NON_TEXT],
+    ['spinner colour yellow', 'progressspinner.color.four', 'surface.0', NON_TEXT],
   ],
   dark: [
     ['body text', 'text.color', 'content.background', TEXT],
@@ -227,6 +231,10 @@ const PAIRS = {
       NON_TEXT,
       'content.background',
     ],
+    ['spinner colour red', 'progressspinner.color.one', 'content.background', NON_TEXT],
+    ['spinner colour blue', 'progressspinner.color.two', 'content.background', NON_TEXT],
+    ['spinner colour green', 'progressspinner.color.three', 'content.background', NON_TEXT],
+    ['spinner colour yellow', 'progressspinner.color.four', 'content.background', NON_TEXT],
   ],
 };
 

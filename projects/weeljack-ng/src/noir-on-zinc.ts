@@ -191,6 +191,14 @@ export const wjAlwaysOn = definePreset(aura, {
         },
       },
     },
+    // Aura's light green.500 and yellow.500 strokes read 2.28:1 and 1.92:1 over a white card, under
+    // the 3:1 a meaningful graphic needs; one or two steps up clear it. Red, blue and the dark
+    // 400s already pass (W5a-feedback FR-9).
+    progressspinner: {
+      colorScheme: {
+        light: { root: { colorThree: '{green.600}', colorFour: '{yellow.700}' } },
+      },
+    },
   },
 });
 
