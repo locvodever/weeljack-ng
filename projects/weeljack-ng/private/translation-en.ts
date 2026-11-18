@@ -181,5 +181,11 @@ export const _WJ_EN = {
     home: 'Home',
     moreActions: 'More actions',
     actions: 'Actions',
+    invalidFileSizeSummary: '{0}: Invalid file size,',
+    invalidFileSizeDetail: 'maximum upload size is {0}.',
+    invalidFileTypeSummary: '{0}: Invalid file type,',
+    invalidFileTypeDetail: 'allowed file types: {0}.',
+    invalidFileLimitSummary: 'Maximum number of files exceeded,',
+    invalidFileLimitDetail: 'limit is {0} at most.',
   },
 };

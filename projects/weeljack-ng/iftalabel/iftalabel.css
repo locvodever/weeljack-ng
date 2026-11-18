@@ -1,0 +1,31 @@
+/* The host is the box of the Optimus root inside (block), and adds none of its own. The root lays
+   its in-flow children in one grid column, as wj-field's box does, so a control with no width of
+   its own fills it; the absolutely positioned label is not a grid item. The label only changes
+   colour (focus, invalid), and Optimus transitions it on `all` at a duration its reduced-motion
+   rule does not reach: name the property, and zero the duration variable under reduced motion.
+   The label stays on one line (ui-spec B4): it ends in an ellipsis before the control's end
+   padding, and its full text stays the control's name. */
+@layer wj {
+  :host {
+    display: block;
+  }
+
+  p-iftalabel {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  p-iftalabel ::ng-deep label {
+    max-inline-size: calc(100% - 2 * var(--wj-form-field-padding-x, 14px));
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    transition-property: color;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    :host {
+      --wj-iftalabel-transition-duration: 0s;
+    }
+  }
+}

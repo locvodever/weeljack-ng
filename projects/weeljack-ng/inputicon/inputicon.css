@@ -1,0 +1,21 @@
+/* The host is inline and adds no box: the Optimus root inside is absolutely positioned against the
+   icon field's box, so the host takes no space in the icon field's grid (never `contents`).
+   Inside this host the root is both the first and the last child, so Optimus insets it at both
+   ends. The side follows the host's own place in the icon field: an icon before the input drops the
+   end inset, one after it drops the start inset. Optimus keeps the inset it applies,
+   `--wj-form-field-padding-x`. A decorative icon passes pointer events to the input under it
+   (`pointer-events` is inherited by the root). */
+@layer wj {
+  :host {
+    display: inline;
+    pointer-events: none;
+  }
+
+  :host(:not(:last-child)) p-inputicon {
+    inset-inline-end: auto;
+  }
+
+  :host(:not(:first-child)) p-inputicon {
+    inset-inline-start: auto;
+  }
+}

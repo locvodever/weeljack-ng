@@ -11,6 +11,12 @@ const OWN_KEYS = [
   'moreActions',
   'actions',
   'otpCharacter',
+  'invalidFileSizeSummary',
+  'invalidFileSizeDetail',
+  'invalidFileTypeSummary',
+  'invalidFileTypeDetail',
+  'invalidFileLimitSummary',
+  'invalidFileLimitDetail',
 ] as const satisfies readonly (keyof WjOwnStrings)[];
 
 function keys(value: object | undefined): string[] {
@@ -44,6 +50,12 @@ describe('weeljack-ng/locale', () => {
       moreActions: 'Thêm thao tác',
       actions: 'Thao tác',
       otpCharacter: 'Vui lòng nhập ký tự OTP {0}',
+      invalidFileSizeSummary: '{0}: Kích thước tập tin không hợp lệ,',
+      invalidFileSizeDetail: 'kích thước tải lên tối đa là {0}.',
+      invalidFileTypeSummary: '{0}: Loại tập tin không hợp lệ,',
+      invalidFileTypeDetail: 'các loại tập tin được phép: {0}.',
+      invalidFileLimitSummary: 'Đã vượt quá số lượng tập tin tối đa,',
+      invalidFileLimitDetail: 'giới hạn tối đa là {0}.',
     });
   });
 
