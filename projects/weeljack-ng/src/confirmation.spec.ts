@@ -7,6 +7,8 @@ import type { MockInstance } from 'vitest';
 import { WjConfirmationService, provideWeeljack, type WjConfirmation } from 'weeljack-ng';
 import { WjConfirmDialog } from 'weeljack-ng/confirmdialog';
 import { WjConfirmDialogHarness } from 'weeljack-ng/confirmdialog/testing';
+import { WjConfirmPopup } from 'weeljack-ng/confirmpopup';
+import { WjConfirmPopupHarness } from 'weeljack-ng/confirmpopup/testing';
 import { _CONFIRM_DIALOG_KEY, _CONFIRM_POPUP_KEY, _WJ_CONFIRMATIONS } from 'weeljack-ng/private';
 
 /** The app shell: one `wj-confirmdialog`, and nothing else provided. */
@@ -16,6 +18,17 @@ import { _CONFIRM_DIALOG_KEY, _CONFIRM_POPUP_KEY, _WJ_CONFIRMATIONS } from 'weel
   template: `<wj-confirmdialog />`,
 })
 class Shell {
+  readonly service = inject(WjConfirmationService);
+}
+
+/** The app shell with both hosts, and a button for a popup's `target`. */
+@Component({
+  selector: 'wj-confirmation-both-shell',
+  imports: [WjConfirmDialog, WjConfirmPopup],
+  template: `<button id="anchor" type="button">Remove</button
+    ><wj-confirmdialog /><wj-confirmpopup />`,
+})
+class BothShell {
   readonly service = inject(WjConfirmationService);
 }
 
@@ -166,6 +179,77 @@ describe('WjConfirmationService', () => {
     await fixture.whenStable();
 
     expect(dialogEl()).toBeNull();
+  });
+
+  describe('with a dialog and a popup rendered', () => {
+    const popupEl = (): HTMLElement | null =>
+      document.querySelector<HTMLElement>('div[role="alertdialog"][data-wj-confirmpopup]');
+    const dialogOnly = (): HTMLElement | null =>
+      document.querySelector<HTMLElement>('div[role="alertdialog"]:not([data-wj-confirmpopup])');
+
+    function anchorOf(fixture: ComponentFixture<BothShell>): HTMLElement {
+      const anchor = (fixture.nativeElement as HTMLElement).querySelector<HTMLElement>('#anchor');
+      if (!anchor) {
+        throw new Error('#anchor is missing');
+      }
+      return anchor;
+    }
+
+    async function renderBoth(): Promise<ComponentFixture<BothShell>> {
+      TestBed.configureTestingModule({ providers: [provideWeeljack()] });
+      const fixture = TestBed.createComponent(BothShell);
+      await fixture.whenStable();
+      return fixture;
+    }
+
+    async function closeBoth(fixture: ComponentFixture<BothShell>): Promise<void> {
+      fixture.componentInstance.service.close();
+      await fixture.whenStable();
+      await gone();
+      await expect.poll(popupEl).toBeNull();
+    }
+
+    it('opens only the dialog for a confirmation with no target', async () => {
+      const fixture = await renderBoth();
+      fixture.componentInstance.service.confirm({ message: 'Delete?' });
+      await fixture.whenStable();
+      await expect.poll(dialogOnly).not.toBeNull();
+
+      expect(popupEl()).toBeNull();
+      expect(warn).not.toHaveBeenCalled();
+      await closeBoth(fixture);
+    });
+
+    it('opens only the popup for a confirmation with a target, and a harness reads it', async () => {
+      const fixture = await renderBoth();
+      fixture.componentInstance.service.confirm({ message: 'Remove?', target: anchorOf(fixture) });
+      await fixture.whenStable();
+      await expect.poll(popupEl).not.toBeNull();
+      const harness =
+        await TestbedHarnessEnvironment.loader(fixture).getHarness(WjConfirmPopupHarness);
+
+      expect(dialogOnly()).toBeNull();
+      expect(document.querySelector('.p-dialog-mask')).toBeNull();
+      expect(await harness.getMessage()).toBe('Remove?');
+      expect(warn).not.toHaveBeenCalled();
+      await closeBoth(fixture);
+    });
+
+    it('opens one, then the other, as each confirmation asks', async () => {
+      const fixture = await renderBoth();
+      const service = fixture.componentInstance.service;
+      service.confirm({ message: 'Remove?', target: anchorOf(fixture) });
+      await fixture.whenStable();
+      await expect.poll(popupEl).not.toBeNull();
+      await closeBoth(fixture);
+
+      service.confirm({ message: 'Delete?' });
+      await fixture.whenStable();
+      await expect.poll(dialogOnly).not.toBeNull();
+
+      expect(popupEl()).toBeNull();
+      await closeBoth(fixture);
+    });
   });
 
   describe('callbacks', () => {
