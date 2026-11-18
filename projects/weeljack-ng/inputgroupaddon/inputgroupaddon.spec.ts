@@ -402,11 +402,16 @@ describe('WjInputGroupAddon', () => {
     it('lifts the focused button, and nothing around it clips its ring', async () => {
       const { fixture, element } = await render(ButtonHost);
       const button = find(element, 'button.p-button');
-      button.focus();
+      // The ring is Optimus's `.p-button:focus-visible`, which a programmatic `focus()` matches
+      // only when the page's last input was a key; the page is shared across spec files, so
+      // reach the button with a real Tab from the input before reading it.
+      find(element, 'input').focus();
+      await userEvent.tab();
+      await expect.poll(() => document.activeElement).toBe(button);
       await fixture.whenStable();
       const lifted = getComputedStyle(button);
 
-      expect(document.activeElement).toBe(button);
+      expect(button.matches(':focus-visible')).toBe(true);
       expect(lifted.zIndex).toBe('1');
       expect(lifted.outlineStyle).toBe('solid');
       expect(lifted.outlineWidth).toBe('2px');
