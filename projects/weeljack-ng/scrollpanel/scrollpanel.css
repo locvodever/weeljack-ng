@@ -1,0 +1,59 @@
+/* The host and Optimus's root are blocks, and a block size set on the host reaches the root, which
+   fills it. Optimus draws its parts inside its own component, so they carry no `wj` attribute and
+   are reached with `::ng-deep` scoped to the host: (0,2,0) or more against Optimus's (0,1,0) in
+   the same layer, so these win on specificity.
+   Thumbs: `--wj-surface-500` (3:1 on the page in both schemes) through Optimus's own variable. A
+   thumb keeps its 9 px, rounded and Optimus-sized box, which its position math reads
+   (`clientWidth`, `clientHeight`); a transparent pseudo-element grows only the hit box to 24 px,
+   centred on the thumb, so a click on it is a click on the bar.
+   Focus: the scrolling element is larger than its clipping container, so a ring on it would be
+   cut, and so would the browser's own focus ring, which is switched off. The ring is drawn on the
+   root, only while the region itself has keyboard focus, and the thumbs show then as they do on
+   hover. */
+@layer wj {
+  :host,
+  p-scroll-panel {
+    display: block;
+  }
+
+  p-scroll-panel {
+    block-size: 100%;
+  }
+
+  :host {
+    --wj-scrollpanel-bar-background: var(--wj-surface-500);
+  }
+
+  :host ::ng-deep .p-scrollpanel-bar::before {
+    content: '';
+    position: absolute;
+  }
+
+  :host ::ng-deep .p-scrollpanel-bar-y::before {
+    inset-block: 0;
+    inset-inline: calc((100% - 24px) / 2);
+  }
+
+  :host ::ng-deep .p-scrollpanel-bar-x::before {
+    inset-inline: 0;
+    inset-block: calc((100% - 24px) / 2);
+  }
+
+  :host ::ng-deep .p-scrollpanel-content:focus-visible {
+    outline: none;
+  }
+
+  :host
+    ::ng-deep
+    .p-scrollpanel:has(> .p-scrollpanel-content-container > .p-scrollpanel-content:focus-visible) {
+    outline: var(--wj-focus-ring-width) var(--wj-focus-ring-style) var(--wj-focus-ring-color);
+    outline-offset: var(--wj-focus-ring-offset);
+  }
+
+  :host
+    ::ng-deep
+    .p-scrollpanel:has(> .p-scrollpanel-content-container > .p-scrollpanel-content:focus-visible)
+    .p-scrollpanel-bar {
+    opacity: 1;
+  }
+}
