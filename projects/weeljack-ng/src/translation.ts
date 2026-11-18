@@ -32,6 +32,8 @@ export interface WjOwnStrings {
   invalidFileLimitSummary?: string;
   /** The second part of that message; `{0}` is the `fileLimit`. */
   invalidFileLimitDetail?: string;
+  /** The name of `wj-terminal`'s command input, when the app sets no `ariaLabel` or `ariaLabelledBy`. */
+  terminalCommand?: string;
 }
 
 /**

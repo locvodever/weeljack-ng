@@ -187,5 +187,6 @@ export const _WJ_EN = {
     invalidFileTypeDetail: 'allowed file types: {0}.',
     invalidFileLimitSummary: 'Maximum number of files exceeded,',
     invalidFileLimitDetail: 'limit is {0} at most.',
+    terminalCommand: 'Command',
   },
 };
