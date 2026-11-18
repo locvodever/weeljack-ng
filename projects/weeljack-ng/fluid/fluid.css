@@ -1,0 +1,26 @@
+/* The host is the box of the Optimus root inside (block), and adds none of its own. Optimus's Fluid
+   has no CSS: it works through DI, which cannot cross a wrapper host. The root lays its direct
+   children in one full-width column instead, with no gap (spacing is the app's), so every control
+   with no width of its own fills it. A `wj-button` is the exception: its inner button is an
+   inline-flex item of two inline-flex hosts, so it is told to fill its row, label centred.
+   Both rules stop at direct children: a control in the app's own nested layout keeps its width. */
+@layer wj {
+  :host {
+    display: block;
+  }
+
+  p-fluid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  p-fluid > ::ng-deep wj-button > p-button {
+    flex: 1 1 auto;
+    min-inline-size: 0;
+  }
+
+  p-fluid > ::ng-deep wj-button > p-button > button {
+    flex: 1 1 auto;
+    min-inline-size: 0;
+  }
+}
