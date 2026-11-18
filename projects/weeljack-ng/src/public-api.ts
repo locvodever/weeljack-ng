@@ -2,8 +2,8 @@
  * Public API surface of the root entry `weeljack-ng`: `provideWeeljack`, its option type, the
  * brand colour and translation types, and the public types two or more entries share (the data
  * types of `data-types.ts`: column model and paging; the menu item and its command event of
- * `menu-item.ts`; the tree node and its selection mode of `tree-node.ts`). The root never exports
- * a component or re-exports another entry (01 Q2).
+ * `menu-item.ts`; the tree node and its selection mode of `tree-node.ts`; the choice-control option
+ * of `option.ts`). The root never exports a component or re-exports another entry (01 Q2).
  */
 export { type WjColorScale } from './brand';
 export { provideWeeljack, type WjThemeOptions } from './provide-weeljack';
@@ -20,4 +20,5 @@ export type {
   WjSortOrder,
 } from './data-types';
 export type { WjMenuItem, WjMenuItemCommandEvent } from './menu-item';
+export type { WjOption } from './option';
 export type { WjTreeNode, WjTreeSelectionMode } from './tree-node';
