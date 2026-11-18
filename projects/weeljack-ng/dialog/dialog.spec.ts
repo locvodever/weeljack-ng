@@ -86,6 +86,22 @@ class AriaOnHostHost {}
 })
 class RoutedHost {}
 
+/** A non-closable dialog with a closable one in its body: the stacked case of FR-9. */
+@Component({
+  selector: 'wj-dialog-nested-host',
+  imports: [WjDialog],
+  template: `
+    <wj-dialog [(visible)]="outer" header="Outer" [closable]="false">
+      <p>Saving.</p>
+      <wj-dialog [(visible)]="inner" header="Inner"><p>Are you sure?</p></wj-dialog>
+    </wj-dialog>
+  `,
+})
+class NestedHost {
+  readonly outer = signal(false);
+  readonly inner = signal(false);
+}
+
 type Scheme = 'light' | 'dark';
 
 interface Rendered {
@@ -891,6 +907,104 @@ describe('WjDialog', () => {
           await expectNoAxeViolations(rendered.element);
         });
       });
+    }
+  });
+});
+
+describe('WjDialog, stacked and in Safari', () => {
+  const viewport = { width: window.innerWidth, height: window.innerHeight };
+  const masks = (): number => document.querySelectorAll('.p-dialog-mask').length;
+
+  beforeEach(() => {
+    vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    reduceMotion(true);
+  });
+
+  afterEach(async () => {
+    if (current && dialogEl()) {
+      await close(current);
+    }
+    current = undefined;
+    await page.viewport(viewport.width, viewport.height);
+  });
+
+  it('closes a closable dialog inside a non-closable one on Escape, and the outer one stays', async () => {
+    TestBed.configureTestingModule({ providers: [provideWeeljack()] });
+    const fixture = TestBed.createComponent(NestedHost);
+    const host = fixture.componentInstance;
+    try {
+      host.outer.set(true);
+      await fixture.whenStable();
+      await expect.poll(masks).toBe(1);
+      host.inner.set(true);
+      await fixture.whenStable();
+      await expect.poll(masks).toBe(2);
+      await expect
+        .poll(() =>
+          document.activeElement?.closest('.p-dialog')?.textContent.includes('Are you sure?'),
+        )
+        .toBe(true);
+
+      await userEvent.keyboard('{Escape}');
+      await expect.poll(() => host.inner()).toBe(false);
+      await expect.poll(masks).toBe(1);
+
+      expect(host.outer()).toBe(true);
+      expect(maskEl()).not.toBeNull();
+      // The upper dialog has left, so the outer one blocks Escape again: a second one does nothing.
+      await userEvent.keyboard('{Escape}');
+      await fixture.whenStable();
+      expect(host.outer()).toBe(true);
+      expect(masks()).toBe(1);
+    } finally {
+      host.inner.set(false);
+      host.outer.set(false);
+      await fixture.whenStable();
+      await gone();
+    }
+  });
+
+  it('keeps the page from scrolling under the outer dialog once the inner one has closed', async () => {
+    TestBed.configureTestingModule({ providers: [provideWeeljack()] });
+    const fixture = TestBed.createComponent(NestedHost);
+    const host = fixture.componentInstance;
+    try {
+      host.outer.set(true);
+      host.inner.set(true);
+      await fixture.whenStable();
+      await expect.poll(masks).toBe(2);
+      host.inner.set(false);
+      await fixture.whenStable();
+      await expect.poll(masks).toBe(1);
+
+      await expect.poll(() => document.body.classList.contains('p-overflow-hidden')).toBe(true);
+    } finally {
+      host.inner.set(false);
+      host.outer.set(false);
+      await fixture.whenStable();
+      await gone();
+    }
+  });
+
+  it('returns focus to the opener in Safari, where a pressed button takes no focus', async () => {
+    const rendered = await render();
+    const opener = find(rendered.element, '#opener button', HTMLElement);
+    opener.addEventListener('mousedown', (event) => {
+      event.preventDefault();
+    });
+    expect(document.activeElement).toBe(document.body);
+
+    for (const key of ['{Escape}', 'close']) {
+      await userEvent.click(opener);
+      await expect.poll(() => rendered.component.opens()).toBeGreaterThan(0);
+      if (key === 'close') {
+        await (await harnessOf(rendered.fixture)).close();
+      } else {
+        await userEvent.keyboard(key);
+      }
+      await gone();
+      expect(document.activeElement).toBe(opener);
+      opener.blur();
     }
   });
 });
