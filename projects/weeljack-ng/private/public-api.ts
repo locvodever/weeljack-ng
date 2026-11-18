@@ -16,6 +16,7 @@ export {
   type _WjFieldControl,
 } from './field-context';
 export { _wjId } from './ids';
+export { _checkNotInField } from './in-field-label';
 export {
   _toOptimusMegaMenuModel,
   _toOptimusMenuModel,
