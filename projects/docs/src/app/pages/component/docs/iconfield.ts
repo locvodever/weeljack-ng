@@ -1,4 +1,7 @@
 import { IconFieldBasicExample } from '../../../examples/iconfield/basic';
+import { IconFieldInAFieldExample } from '../../../examples/iconfield/in-a-field';
+import { IconFieldLeadingExample } from '../../../examples/iconfield/leading';
+import { IconFieldTrailingExample } from '../../../examples/iconfield/trailing';
 import type { ComponentDoc, MappingRow } from '../component-doc';
 
 const droppedAlways = 'Never exposed on any wrapper (ADR 0002).';
@@ -18,9 +21,30 @@ export const DOC: ComponentDoc = {
     {
       title: 'Basic',
       description:
-        'Put a text input inside `wj-iconfield`, with a visible `<label for>` above it. Size the icon field, not the input: an input with no width of its own fills it. This example has no icon yet; the icon examples arrive with `wj-inputicon`.',
+        'Put a text input inside `wj-iconfield`, with a visible `<label for>` above it. Size the icon field, not the input: an input with no width of its own fills it.',
       sourceKey: 'iconfield/basic',
       component: IconFieldBasicExample,
+    },
+    {
+      title: 'Leading icon',
+      description:
+        'Put a `wj-inputicon` before the input for an icon at its start. Draw the icon as an inline SVG `1em` square in `currentColor` and mark it `aria-hidden="true"`: it is decorative, and the input keeps its name from the label. The input pads its start so typed text never runs under the icon.',
+      sourceKey: 'iconfield/leading',
+      component: IconFieldLeadingExample,
+    },
+    {
+      title: 'Trailing icon',
+      description:
+        'Put the `wj-inputicon` after the input for an icon at its end. It sits at the input’s end because the input fills the icon field, and the input pads its end instead.',
+      sourceKey: 'iconfield/trailing',
+      component: IconFieldTrailingExample,
+    },
+    {
+      title: 'In a field',
+      description:
+        'Inside a `wj-field` the icon field changes nothing: the field’s label names the input, and the hint and the error describe it. The invalid input keeps its icon, and the icon keeps its colour.',
+      sourceKey: 'iconfield/in-a-field',
+      component: IconFieldInAFieldExample,
     },
     {
       title: 'Testing with the harness',
@@ -38,6 +62,7 @@ export const DOC: ComponentDoc = {
     'Mark a decorative icon `aria-hidden="true"`, so a screen reader skips it. An icon that carries information the text does not is not decorative: say it in the label or the hint instead.',
     'A clickable control beside an input belongs in a `wj-inputgroupaddon`, not in an icon: an icon is not a button and takes no focus.',
     'A decorative icon passes clicks to the input under it, so a click anywhere in the visible box focuses the input.',
+    'Optimus gap: the icon’s colour (`--wj-iconfield-icon-color`, zinc 400 in the light theme) is about 2.6:1 on white, which meets no contrast minimum. That is acceptable only because every icon covered here is decorative; never let the icon alone carry a state.',
     'Inside a `wj-field` the icon field changes nothing: the input is named by the field’s label, described by its hint and error, and invalid while the field shows an error.',
     'Only a text input (`input[wjInputText]`) is covered. Other controls inside an icon field are not supported.',
     'The keyboard walk and the screen-reader pass (NVDA with Chrome) are recorded on this page before `0.2.0`.',

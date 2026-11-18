@@ -9,6 +9,7 @@ import { WjField } from 'weeljack-ng/field';
 import { WjFieldHarness } from 'weeljack-ng/field/testing';
 import { WjIconField, type WjIconFieldPt } from 'weeljack-ng/iconfield';
 import { WjIconFieldHarness } from 'weeljack-ng/iconfield/testing';
+import { WjInputIcon } from 'weeljack-ng/inputicon';
 import { WjInputText, type WjInputTextSize } from 'weeljack-ng/inputtext';
 import { WjInputTextHarness } from 'weeljack-ng/inputtext/testing';
 import { expectNoAxeViolations } from '../spec-support/axe';
@@ -23,34 +24,25 @@ const PADDED = 2 * INSET + ICON;
 /** The large input's own side padding. */
 const LARGE_INSET = 16;
 
-/**
- * The stand-in for the icon until `wj-inputicon` ships: a decorative, absolutely positioned sibling
- * of the input, 16 px square and inset 14 px. Optimus pads the input by its place before or after
- * the input, not by what it is.
- */
-const STAND_IN_STYLES = `
-  .stand-in {
-    position: absolute;
-    top: 50%;
-    inline-size: 16px;
-    block-size: 16px;
-    margin-block-start: -8px;
-    z-index: 1;
-  }
-  .stand-in.start { inset-inline-start: 14px; }
-  .stand-in.end { inset-inline-end: 14px; }
-`;
-
 /** A consumer's template: a text input, with a sibling before it and/or after it. */
 @Component({
   selector: 'wj-iconfield-host',
-  imports: [WjIconField, WjInputText],
+  imports: [WjIconField, WjInputIcon, WjInputText],
   template: `
     <button type="button" id="before">Before</button>
     <div id="scope" style="width: 320px">
       <wj-iconfield [pt]="pt()">
         @if (leading()) {
-          <span id="lead" class="stand-in start" aria-hidden="true"></span>
+          <wj-inputicon
+            ><svg
+              id="lead"
+              viewBox="0 0 24 24"
+              width="1em"
+              height="1em"
+              aria-hidden="true"
+              focusable="false"
+            ></svg
+          ></wj-inputicon>
         }
         <input
           wjInputText
@@ -61,13 +53,21 @@ const STAND_IN_STYLES = `
           [disabled]="disabled()"
         />
         @if (trailing()) {
-          <span id="trail" class="stand-in end" aria-hidden="true"></span>
+          <wj-inputicon
+            ><svg
+              id="trail"
+              viewBox="0 0 24 24"
+              width="1em"
+              height="1em"
+              aria-hidden="true"
+              focusable="false"
+            ></svg
+          ></wj-inputicon>
         }
       </wj-iconfield>
     </div>
     <button type="button" id="after">After</button>
   `,
-  styles: STAND_IN_STYLES,
 })
 class Host {
   readonly pt = signal<WjIconFieldPt>(undefined);
@@ -81,37 +81,34 @@ class Host {
 /** An icon field inside a `wj-field`, with a hint and an error the test turns on. */
 @Component({
   selector: 'wj-iconfield-field-host',
-  imports: [WjField, WjIconField, WjInputText],
+  imports: [WjField, WjIconField, WjInputIcon, WjInputText],
   template: `
     <div id="scope" style="width: 320px">
       <wj-field label="Search" [hint]="hint()" [error]="error()">
         <wj-iconfield>
-          <span class="stand-in start" aria-hidden="true"></span>
+          <wj-inputicon
+            ><svg
+              viewBox="0 0 24 24"
+              width="1em"
+              height="1em"
+              aria-hidden="true"
+              focusable="false"
+            ></svg
+          ></wj-inputicon>
           <input wjInputText id="field-search" type="search" />
         </wj-iconfield>
       </wj-field>
     </div>
   `,
-  styles: STAND_IN_STYLES,
 })
 class FieldHost {
   readonly hint = signal<string | undefined>('Search by name.');
   readonly error = signal<string | undefined>(undefined);
 }
 
-/**
- * The harness reads the side from the host order of `wj-inputicon` elements. This stand-in has the
- * real element's name and nothing else, so the harness's selectors are proven before phase 5.
- */
-@Component({
-  selector: 'wj-inputicon',
-  template: '',
-})
-class StandInIcon {}
-
 @Component({
   selector: 'wj-iconfield-icons-host',
-  imports: [WjIconField, WjInputText, StandInIcon],
+  imports: [WjIconField, WjInputIcon, WjInputText],
   template: `
     <wj-iconfield id="leading"><wj-inputicon /><input wjInputText aria-label="A" /></wj-iconfield>
     <wj-iconfield id="trailing"><input wjInputText aria-label="B" /><wj-inputicon /></wj-iconfield>
@@ -166,7 +163,11 @@ function find(element: Element, selector: string): HTMLElement {
 }
 
 function box(element: Element, selector: string): DOMRect {
-  return find(element, selector).getBoundingClientRect();
+  const found = element.querySelector(selector);
+  if (found === null) {
+    throw new Error(`${selector} is missing`);
+  }
+  return found.getBoundingClientRect();
 }
 
 /** The input's start and end padding, in px. */
@@ -301,6 +302,22 @@ describe('WjIconField', () => {
       expect(input.right - border - padding(element).end).toBeLessThanOrEqual(
         box(element, '#trail').left,
       );
+    });
+  });
+
+  describe('icon colour', () => {
+    it('is Optimus�s icon colour, and the input�s invalid and disabled states leave it alone', async () => {
+      const { fixture, host, element } = await render(Host);
+      host.leading.set(true);
+      host.trailing.set(true);
+      await fixture.whenStable();
+      const colour = getComputedStyle(find(element, 'p-inputicon')).color;
+      for (const state of [host.invalid, host.disabled]) {
+        state.set(true);
+        await fixture.whenStable();
+        expect(getComputedStyle(find(element, 'p-inputicon')).color).toBe(colour);
+        state.set(false);
+      }
     });
   });
 
