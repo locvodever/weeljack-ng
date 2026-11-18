@@ -1,0 +1,23 @@
+/* The host is a block with no box of its own. Optimus draws its nodes and its empty message inside
+   its own components, so they carry no `wj` attribute and are reached with `::ng-deep` scoped to the
+   host. Optimus's rules also sit in the `wj` layer, so these win on specificity: one more class
+   than Optimus's. The focus ring is Optimus's inset one, and ink on ink would hide it on a picked
+   node: there it takes the highlight colour, 3px inside the fill. No transition and no animation. */
+@layer wj {
+  :host {
+    display: block;
+  }
+
+  :host ::ng-deep .p-tree-node:focus-visible > .p-tree-node-content.p-tree-node-selected {
+    outline-color: var(--wj-highlight-color);
+    outline-offset: -3px;
+  }
+
+  :host ::ng-deep .p-tree-empty-message {
+    color: var(--wj-text-muted-color);
+  }
+
+  :host ::ng-deep .p-tree-loading {
+    min-block-size: 3rem;
+  }
+}

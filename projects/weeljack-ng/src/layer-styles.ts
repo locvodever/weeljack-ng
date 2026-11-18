@@ -14,6 +14,7 @@ export const wjLayerStyles = `
 .p-inputtext,
 .p-textarea,
 .p-select-label,
+.p-treeselect-label,
 .p-button {
   line-height: 1.5;
 }

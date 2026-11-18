@@ -1,0 +1,56 @@
+/* The host and Optimus's element are blocks, so the table fills the host's width, and `autoLayout`
+   makes Optimus's wrapper scroll sideways inside the host when the columns do not fit. The rest is
+   what the wrapper writes itself, the first cell's row, or reaches in Optimus's own markup with
+   `::ng-deep` scoped to the host (one more class than Optimus's rules, which sit in the same
+   layer). The focus ring is Optimus's inset one, and ink on ink would hide it on a picked row or a
+   sorted header: there it takes the highlight colour, 3px inside the fill. No transition and no
+   animation. */
+@layer wj {
+  :host,
+  p-treetable {
+    display: block;
+  }
+
+  :host {
+    min-inline-size: 0;
+  }
+
+  .p-treetable-body-cell-content {
+    display: flex;
+    align-items: center;
+    gap: var(--wj-treetable-body-cell-gap);
+  }
+
+  .p-treetable-column-header-content {
+    display: flex;
+    align-items: center;
+    gap: var(--wj-treetable-header-cell-gap);
+  }
+
+  :host ::ng-deep .p-treetable-tbody > tr.p-treetable-row-selected:focus-visible,
+  :host ::ng-deep .p-treetable-thead > tr > th.p-treetable-column-sorted:focus-visible {
+    outline-color: var(--wj-highlight-color);
+    outline-offset: -3px;
+  }
+
+  :host
+    ::ng-deep
+    .p-treetable.p-treetable-hoverable-rows
+    .p-treetable-tbody
+    > tr.wj-treetable-empty {
+    cursor: default;
+  }
+
+  :host ::ng-deep .wj-treetable-empty > td {
+    color: var(--wj-text-muted-color);
+  }
+
+  :host
+    ::ng-deep
+    .p-treetable.p-treetable-hoverable-rows
+    .p-treetable-tbody
+    > tr.wj-treetable-empty:hover {
+    background: var(--wj-treetable-row-background);
+    color: var(--wj-treetable-row-color);
+  }
+}

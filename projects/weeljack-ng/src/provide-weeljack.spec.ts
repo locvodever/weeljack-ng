@@ -304,7 +304,13 @@ describe('provideWeeljack', () => {
       const rule = allRules().find(
         (r): r is CSSStyleRule => r instanceof CSSStyleRule && r.style.lineHeight === '1.5',
       );
-      for (const selector of ['.p-inputtext', '.p-textarea', '.p-select-label', '.p-button']) {
+      for (const selector of [
+        '.p-inputtext',
+        '.p-textarea',
+        '.p-select-label',
+        '.p-treeselect-label',
+        '.p-button',
+      ]) {
         expect(rule?.selectorText).toContain(selector);
       }
     });
