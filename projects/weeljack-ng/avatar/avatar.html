@@ -1,0 +1,12 @@
+<p-avatar
+  [label]="label()"
+  [image]="image()"
+  [size]="size()"
+  [shape]="shape()"
+  [ariaLabel]="ariaLabel()"
+  [ariaLabelledBy]="ariaLabelledBy()"
+  [pt]="partAttributes()"
+  (onImageError)="imageError.emit($event)"
+>
+  <ng-content />
+</p-avatar>

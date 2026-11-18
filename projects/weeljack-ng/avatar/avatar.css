@@ -1,0 +1,18 @@
+/* One unencapsulated stylesheet (ui-spec A2, B3, A6): the rules reach Optimus's own elements, so
+   each is rooted at `wj-avatar`. Optimus clears the fill of an image avatar, which would leave a
+   loading or failed photo invisible: the fill stays behind it. The photo fills its box (cropped,
+   never stretched) and takes the box's corner radius. Everything else is the preset. */
+@layer wj {
+  wj-avatar {
+    display: inline-flex;
+  }
+
+  wj-avatar .p-avatar-image {
+    background: var(--wj-avatar-background);
+  }
+
+  wj-avatar img {
+    object-fit: cover;
+    border-radius: inherit;
+  }
+}
