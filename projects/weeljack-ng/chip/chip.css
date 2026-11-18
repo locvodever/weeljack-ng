@@ -1,0 +1,47 @@
+/* One unencapsulated stylesheet (ui-spec A2, D2): the rules reach Optimus's own elements, so each
+   is rooted at `wj-chip`. The remove button is a 24 px circle centred on Optimus's 16 px glyph and
+   overhangs it by 4 px on every side, so its layout footprint is the glyph and the chip keeps
+   Optimus's size. Everything else is the preset. */
+@layer wj {
+  wj-chip {
+    display: inline-flex;
+  }
+
+  wj-chip img {
+    object-fit: cover;
+  }
+
+  wj-chip .p-chip-remove-icon > button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    inline-size: 1.5rem;
+    block-size: 1.5rem;
+    margin: -0.25rem;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+  }
+
+  wj-chip .p-chip-remove-icon > button:focus-visible {
+    outline: var(--wj-focus-ring-width) var(--wj-focus-ring-style) var(--wj-focus-ring-color);
+    outline-offset: 0;
+  }
+
+  wj-chip .p-chip-remove-icon > button:disabled {
+    cursor: default;
+  }
+
+  wj-chip .p-chip-remove-icon > button svg {
+    inline-size: 1rem;
+    block-size: 1rem;
+  }
+
+  wj-chip .p-chip-remove-icon > button:disabled svg {
+    opacity: var(--wj-disabled-opacity);
+    pointer-events: none;
+  }
+}
