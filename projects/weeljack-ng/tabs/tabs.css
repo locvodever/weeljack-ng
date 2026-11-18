@@ -1,0 +1,20 @@
+/* The host is a block with no box of its own. Optimus's active bar slides on a `transition` that
+   names no property, and its strip scrolls smoothly: reduced motion stops both. Optimus draws
+   those two elements inside its own components, so they carry no `wj` attribute and are reached
+   with `::ng-deep` scoped to the host; that rule is (0,2,0) against Optimus's (0,1,0), and both
+   sit in the `wj` layer, so it wins on specificity. */
+@layer wj {
+  :host {
+    display: block;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    :host ::ng-deep .p-tablist-active-bar {
+      transition: none;
+    }
+
+    :host ::ng-deep .p-tablist-viewport {
+      scroll-behavior: auto;
+    }
+  }
+}
