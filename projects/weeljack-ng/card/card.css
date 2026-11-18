@@ -1,0 +1,43 @@
+/* The host is a block and Optimus's own element fills it, so a grid or flex row that stretches the
+   host stretches the card: the body grows and the footer sits at the bottom. The card gets one
+   1 px edge, which a card on its own colour needs in dark. The header region clips to the top
+   corners (media), a heading directly in the title keeps the title's look, and the footer is a
+   wrapping row. Optimus's parts carry no `wj` attribute, so they are reached with `::ng-deep`
+   scoped to the host, which outranks Optimus's rules in the same layer by specificity. */
+@layer wj {
+  :host {
+    display: block;
+  }
+
+  p-card {
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    block-size: 100%;
+    border: 1px solid var(--wj-content-border-color);
+  }
+
+  :host ::ng-deep .p-card-header {
+    overflow: hidden;
+    border-start-start-radius: inherit;
+    border-start-end-radius: inherit;
+  }
+
+  :host ::ng-deep .p-card-body {
+    flex: 1;
+  }
+
+  :host ::ng-deep .p-card-title > :is(h1, h2, h3, h4, h5, h6) {
+    margin: 0;
+    font: inherit;
+  }
+
+  :host ::ng-deep .p-card-footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    margin-block-start: auto;
+    padding-block-start: 0.5rem;
+  }
+}

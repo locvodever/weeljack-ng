@@ -1,0 +1,14 @@
+<p-splitter
+  [layout]="orientation()"
+  [step]="step()"
+  [panelSizes]="sizes()"
+  [minSizes]="minSizes()"
+  [pt]="partAttributes()"
+  (onResizeStart)="resizing = true"
+  (onResizeEnd)="ended($event)"
+>
+  @for (part of drawn(); track part) {
+    <ng-template #panel><ng-container [ngTemplateOutlet]="part.content()" /></ng-template>
+  }
+</p-splitter>
+<ng-content select="wj-splitter-panel" />

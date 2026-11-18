@@ -1,0 +1,18 @@
+<p-inplace
+  [active]="active()"
+  [closable]="closable()"
+  [disabled]="disabled()"
+  [pt]="partAttributes()"
+  (onActivate)="switched(true)"
+  (onDeactivate)="switched(false)"
+>
+  <ng-template #display><ng-container [ngTemplateOutlet]="displaySlot().template" /></ng-template>
+  <ng-template #content>
+    <div data-wj-part="inplace">
+      <ng-container
+        [ngTemplateOutlet]="contentSlot().template"
+        [ngTemplateOutletContext]="context"
+      />
+    </div>
+  </ng-template>
+</p-inplace>

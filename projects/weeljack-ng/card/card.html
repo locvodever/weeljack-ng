@@ -1,0 +1,15 @@
+<p-card [header]="header()" [subheader]="subheader()" [pt]="pt()">
+  @if (headerSlot(); as slot) {
+    <ng-template #header><ng-container [ngTemplateOutlet]="slot.template" /></ng-template>
+  }
+  @if (titleSlot(); as slot) {
+    <ng-template #title><ng-container [ngTemplateOutlet]="slot.template" /></ng-template>
+  }
+  @if (subtitleSlot(); as slot) {
+    <ng-template #subtitle><ng-container [ngTemplateOutlet]="slot.template" /></ng-template>
+  }
+  @if (footerSlot(); as slot) {
+    <ng-template #footer><ng-container [ngTemplateOutlet]="slot.template" /></ng-template>
+  }
+  <ng-content />
+</p-card>

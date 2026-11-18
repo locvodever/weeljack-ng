@@ -1,0 +1,30 @@
+/* The host and Optimus's root are blocks, so the content part is not held in an inline box. The
+   display keeps Optimus's look and gets a 44 px minimum height (its box is border-box), so it is
+   that tall even when empty. The active content is a top-aligned row of the slot's own box and the close button.
+   Optimus's parts carry no `wj` attribute, so they are reached with `::ng-deep` scoped to the
+   host, which outranks Optimus's rules in the same layer by specificity. */
+@layer wj {
+  :host,
+  p-inplace {
+    display: block;
+  }
+
+  :host ::ng-deep .p-inplace-display {
+    min-block-size: 2.75rem;
+  }
+
+  :host ::ng-deep .p-inplace-content {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  :host ::ng-deep .p-inplace-content:focus-visible {
+    outline: var(--wj-focus-ring-width) var(--wj-focus-ring-style) var(--wj-focus-ring-color);
+    outline-offset: var(--wj-focus-ring-offset);
+  }
+
+  [data-wj-part='inplace'] {
+    min-inline-size: 0;
+  }
+}
