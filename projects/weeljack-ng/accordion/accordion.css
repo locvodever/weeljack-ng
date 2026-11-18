@@ -1,0 +1,12 @@
+/* The host is a block with no box of its own. The 8 px gap keeps a wrapped header from touching
+   its chevron; the header's content sits in one plain span, so an icon and its text stay together
+   at the inline start. Everything else is the preset. */
+@layer wj {
+  :host {
+    display: block;
+  }
+
+  p-accordion-header {
+    gap: 0.5rem;
+  }
+}
