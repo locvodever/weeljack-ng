@@ -212,6 +212,12 @@ export const wjAlwaysOn = definePreset(aura, {
         },
       },
     },
+    // Aura paints the connector lines with `{content.border.color}`: surface.200, 1.3:1 on white, and
+    // surface.700, 1.7:1 on zinc.900. They are the chart's only drawing of what sits under what, so
+    // they need 3:1 (WCAG 1.4.11): surface.500 is the smallest step that clears it in both schemes,
+    // the step the control boundaries use. The node borders and the toggle ring stay Aura's
+    // (W5-effects FR-50).
+    organizationchart: { connector: { color: '{surface.500}' } },
     // Aura's light home glyph is surface.400 (zinc.400), 2.56:1 on white, under the 3:1 a graphic
     // that is a link's only visible content needs (WCAG 1.4.11). Rest moves to surface.500 (4.83:1)
     // and hover to surface.700, so the glyph still darkens on hover (Aura's hover is surface.500).
