@@ -1,0 +1,18 @@
+/* The host is the box an app sizes with `style` or `class` (Optimus's 100 x 100 px by default), and
+   Optimus's own element fills it. Optimus's `.p-progressspinner` is a fixed inline-block; the
+   encapsulated element selector is more specific, so a block that fills the host wins inside the
+   same layer. Rotation stops under reduced motion through the root's rule in
+   `layer-styles.ts`, not here. */
+@layer wj {
+  :host {
+    display: inline-block;
+    inline-size: 100px;
+    block-size: 100px;
+  }
+
+  p-progressspinner {
+    display: block;
+    inline-size: 100%;
+    block-size: 100%;
+  }
+}

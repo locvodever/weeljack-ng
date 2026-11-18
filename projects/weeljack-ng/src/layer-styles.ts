@@ -26,8 +26,8 @@ export const wjLayerStyles = `
     --wj-mask-transition-duration: 0s;
   }
 
-  .p-progressspinner-spin,
-  .p-progressspinner-circle {
+  .p-progressspinner .p-progressspinner-spin,
+  .p-progressspinner .p-progressspinner-circle {
     animation: none;
   }
 

@@ -1,0 +1,12 @@
+/* The host is an inline-flex box around Optimus's own inline-flex pill, so it is exactly as tall as
+   the badge and sits on the text baseline like an inline word. The pill has a fixed height, so a
+   value never wraps inside it: a value too long for its container overflows the container. */
+@layer wj {
+  :host {
+    display: inline-flex;
+  }
+
+  p-badge {
+    white-space: nowrap;
+  }
+}
