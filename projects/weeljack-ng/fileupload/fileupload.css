@@ -6,7 +6,7 @@
    would draw a broken image that shows the file name a second time. The progress bar's `display`
    outranks the `hidden` the wrapper routes onto it, so it is hidden here too. Optimus's message
    enters with a 0.3 s keyframe class that its own `motion` options do not reach: under reduced
-   motion it runs for 0s, as `wj-message` does. */
+   motion none runs (`animation: none`, so Angular drops the enter class at once). */
 @layer wj {
   :host {
     display: block;
@@ -28,7 +28,7 @@
 
   @media (prefers-reduced-motion: reduce) {
     :host ::ng-deep p-message {
-      animation-duration: 0s;
+      animation: none;
     }
   }
 }

@@ -254,8 +254,8 @@ const frame = (): Promise<void> =>
 
 /**
  * Runs `action`, waits three frames, and returns the `animation-duration` each message's enter
- * started with. Angular drops an enter class whose computed duration is `0s`, so under reduced
- * motion the enter never starts and the list stays empty.
+ * started with. Under reduced motion the rule is `animation: none`, so no enter starts and the
+ * list stays empty.
  */
 async function startedEnters(element: HTMLElement, action: () => Promise<void>): Promise<string[]> {
   const seen: string[] = [];
@@ -280,15 +280,14 @@ async function startedEnters(element: HTMLElement, action: () => Promise<void>):
   return seen;
 }
 
-/** The `animation-duration` a message that is entering gets, read from the cascade. */
+/** The animation name and duration a message that is entering gets, read from the cascade. */
 function enterDuration(element: HTMLElement): string {
   const probe = document.createElement('p-message');
   probe.className = 'p-message p-message-enter-active';
   uploaderOf(element).append(probe);
   const { animationName, animationDuration } = getComputedStyle(probe);
   probe.remove();
-  expect(animationName).toBe('p-animate-message-enter');
-  return animationDuration;
+  return `${animationName} ${animationDuration}`;
 }
 
 const jsonRect = (element: Element): string => {
@@ -1108,10 +1107,10 @@ describe('WjFileUpload', () => {
 
       const normal = await startedEnters(element, () => upload.chooseFiles([text('b.txt')]));
       expect(normal).toEqual(['0.3s']);
-      expect(enterDuration(element)).toBe('0.3s');
+      expect(enterDuration(element)).toBe('p-animate-message-enter 0.3s');
 
       await emulateReducedMotion(true);
-      expect(enterDuration(element)).toBe('0s');
+      expect(enterDuration(element)).toBe('none 0s');
       const reduced = await startedEnters(element, () => upload.chooseFiles([text('c.txt')]));
       expect(reduced).toEqual([]);
       // A message that is still leaving may be in the list too: the new one is there.
