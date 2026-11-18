@@ -1,0 +1,30 @@
+<p-stepper
+  [value]="value()"
+  [linear]="linear()"
+  [motionOptions]="motion"
+  [pt]="rootPt()"
+  (valueChange)="$event !== undefined && value.set($event)"
+>
+  <p-step-list data-wj-part="step-list" [pt]="list()?.routedPt()">
+    @for (step of list()?.steps(); track step) {
+      <p-step
+        data-wj-part="step"
+        [value]="step.value()"
+        [disabled]="step.disabled()"
+        [pt]="stepPts().get(step)"
+      >
+        <ng-container [ngTemplateOutlet]="step.content()" />
+      </p-step>
+    }
+  </p-step-list>
+  <p-step-panels data-wj-part="step-panels" [pt]="panels()?.pt()">
+    @for (panel of panels()?.panels(); track panel) {
+      <p-step-panel data-wj-part="step-panel" [value]="panel.value()" [pt]="panel.pt()">
+        <ng-template #content>
+          <ng-container [ngTemplateOutlet]="panel.content()" />
+        </ng-template>
+      </p-step-panel>
+    }
+  </p-step-panels>
+</p-stepper>
+<ng-content select="wj-step-list, wj-step-panels" />
