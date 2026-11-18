@@ -179,5 +179,11 @@ export const vi: WjTranslation = {
     home: 'Trang chủ',
     moreActions: 'Thêm thao tác',
     actions: 'Thao tác',
+    invalidFileSizeSummary: '{0}: Kích thước tập tin không hợp lệ,',
+    invalidFileSizeDetail: 'kích thước tải lên tối đa là {0}.',
+    invalidFileTypeSummary: '{0}: Loại tập tin không hợp lệ,',
+    invalidFileTypeDetail: 'các loại tập tin được phép: {0}.',
+    invalidFileLimitSummary: 'Đã vượt quá số lượng tập tin tối đa,',
+    invalidFileLimitDetail: 'giới hạn tối đa là {0}.',
   },
 };

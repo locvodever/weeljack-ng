@@ -20,6 +20,18 @@ export interface WjOwnStrings {
    * 1.
    */
   otpCharacter?: string;
+  /** `wj-fileupload`'s message for a file over `maxFileSize`, first part; `{0}` is the file name. */
+  invalidFileSizeSummary?: string;
+  /** The second part of that message; `{0}` is the largest size allowed, such as `1.000 MB`. */
+  invalidFileSizeDetail?: string;
+  /** `wj-fileupload`'s message for a file `accept` rejects, first part; `{0}` is the file name. */
+  invalidFileTypeSummary?: string;
+  /** The second part of that message; `{0}` is the `accept` list. */
+  invalidFileTypeDetail?: string;
+  /** `wj-fileupload`'s message for more files than `fileLimit`, first part. */
+  invalidFileLimitSummary?: string;
+  /** The second part of that message; `{0}` is the `fileLimit`. */
+  invalidFileLimitDetail?: string;
 }
 
 /**

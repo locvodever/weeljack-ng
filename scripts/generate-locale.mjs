@@ -28,12 +28,29 @@ const OWN_FROM_UPSTREAM = {
 /** Own `wj` keys with no upstream equivalent: one row per language. */
 /** @type {Record<string, Record<string, string>>} */
 const OWN_STRINGS = {
-  en: { breadcrumb: 'Breadcrumb', home: 'Home', moreActions: 'More actions', actions: 'Actions' },
+  en: {
+    breadcrumb: 'Breadcrumb',
+    home: 'Home',
+    moreActions: 'More actions',
+    actions: 'Actions',
+    invalidFileSizeSummary: '{0}: Invalid file size,',
+    invalidFileSizeDetail: 'maximum upload size is {0}.',
+    invalidFileTypeSummary: '{0}: Invalid file type,',
+    invalidFileTypeDetail: 'allowed file types: {0}.',
+    invalidFileLimitSummary: 'Maximum number of files exceeded,',
+    invalidFileLimitDetail: 'limit is {0} at most.',
+  },
   vi: {
     breadcrumb: 'Đường dẫn',
     home: 'Trang chủ',
     moreActions: 'Thêm thao tác',
     actions: 'Thao tác',
+    invalidFileSizeSummary: '{0}: Kích thước tập tin không hợp lệ,',
+    invalidFileSizeDetail: 'kích thước tải lên tối đa là {0}.',
+    invalidFileTypeSummary: '{0}: Loại tập tin không hợp lệ,',
+    invalidFileTypeDetail: 'các loại tập tin được phép: {0}.',
+    invalidFileLimitSummary: 'Đã vượt quá số lượng tập tin tối đa,',
+    invalidFileLimitDetail: 'giới hạn tối đa là {0}.',
   },
 };
 
