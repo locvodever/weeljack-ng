@@ -313,6 +313,7 @@ describe('provideWeeljack', () => {
         '.p-textarea',
         '.p-select-label',
         '.p-treeselect-label',
+        '.p-cascadeselect-label',
         '.p-button',
       ]) {
         expect(rule?.selectorText).toContain(selector);
