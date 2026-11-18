@@ -1,0 +1,37 @@
+/* The host and Optimus's own element are blocks with no box of their own. The active step's number
+   is filled with the primary colour (Optimus's own look draws it as the others, in a darker text),
+   through Optimus's component variables, which `:host` re-declares below the theme's `:root`. The
+   rest reaches Optimus's own classes with `::ng-deep` scoped to the host: each rule is more
+   specific than Optimus's and both sit in the `wj` layer. A step's label wraps at spaces and is
+   never ellipsized, its lines centred. The connector is pinned to the circles' centre (Optimus
+   puts it at half the step's height, which drops below the circles once a label wraps). A disabled
+   step fades only when the steps can be used: Optimus forces every disabled step to full opacity
+   so read-only steps stay crisp. */
+@layer wj {
+  :host,
+  p-steps {
+    display: block;
+  }
+
+  :host {
+    --wj-steps-item-number-active-background: var(--wj-primary-color);
+    --wj-steps-item-number-active-border-color: var(--wj-primary-color);
+    --wj-steps-item-number-active-color: var(--wj-primary-contrast-color);
+  }
+
+  :host ::ng-deep .p-steps-item-label {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    text-align: center;
+  }
+
+  :host ::ng-deep .p-steps-item::before {
+    top: 0;
+    margin-top: calc(1rem - 1px);
+  }
+
+  :host ::ng-deep .p-steps:not(.p-readonly) .p-steps-item.p-disabled {
+    opacity: var(--wj-disabled-opacity);
+  }
+}
