@@ -306,7 +306,7 @@ describe('WjIconField', () => {
   });
 
   describe('icon colour', () => {
-    it('is Optimus�s icon colour, and the input�s invalid and disabled states leave it alone', async () => {
+    it('is Optimus’s icon colour, and the input’s invalid and disabled states leave it alone', async () => {
       const { fixture, host, element } = await render(Host);
       host.leading.set(true);
       host.trailing.set(true);
