@@ -179,5 +179,6 @@ export const _WJ_EN = {
     breadcrumb: 'Breadcrumb',
     home: 'Home',
     moreActions: 'More actions',
+    actions: 'Actions',
   },
 };

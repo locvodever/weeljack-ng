@@ -13,6 +13,8 @@ export interface WjOwnStrings {
   home?: string;
   /** The split button's menu button name, when the app sets no `expandAriaLabel`. */
   moreActions?: string;
+  /** The speed dial's toggle name, when the app sets no `ariaLabel`. */
+  actions?: string;
 }
 
 /**

@@ -24,8 +24,13 @@ const OWN_FROM_UPSTREAM = { showPassword: 'passwordShow', hidePassword: 'passwor
 /** Own `wj` keys with no upstream equivalent: one row per language. */
 /** @type {Record<string, Record<string, string>>} */
 const OWN_STRINGS = {
-  en: { breadcrumb: 'Breadcrumb', home: 'Home', moreActions: 'More actions' },
-  vi: { breadcrumb: 'Đường dẫn', home: 'Trang chủ', moreActions: 'Thêm thao tác' },
+  en: { breadcrumb: 'Breadcrumb', home: 'Home', moreActions: 'More actions', actions: 'Actions' },
+  vi: {
+    breadcrumb: 'Đường dẫn',
+    home: 'Trang chủ',
+    moreActions: 'Thêm thao tác',
+    actions: 'Thao tác',
+  },
 };
 
 /** @type {{ lang: string, file: string, code: (json: string) => string }[]} */

@@ -177,5 +177,6 @@ export const vi: WjTranslation = {
     breadcrumb: 'Đường dẫn',
     home: 'Trang chủ',
     moreActions: 'Thêm thao tác',
+    actions: 'Thao tác',
   },
 };
