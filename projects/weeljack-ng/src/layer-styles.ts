@@ -17,6 +17,7 @@ export const wjLayerStyles = `
 .p-treeselect-label,
 .p-cascadeselect-label,
 .p-multiselect-label,
+.p-togglebutton-label,
 .p-button {
   line-height: 1.5;
 }

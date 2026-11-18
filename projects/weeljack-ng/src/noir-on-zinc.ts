@@ -237,6 +237,61 @@ export const wjAlwaysOn = definePreset(aura, {
         },
       },
     },
+    /*
+     * The toggle button, preset-wide: `wj-selectbutton` renders one per option, and
+     * `wj-togglebutton` (w2-forms-choice) renders the same `p-togglebutton` and reads these tokens
+     * unchanged. Nothing here is scoped to either entry. Three things differ from Aura (W2-select
+     * FR-10, FR-41):
+     *
+     * 1. Heights 44 / 36 / 52 px, derived as `formField` above: a button is its 1px border twice,
+     *    plus `root.padding` (the track, Aura's 0.25rem, kept) and the vertical `content.padding`
+     *    (the pill) on each side, around a label at line-height 1.5 (the `.p-togglebutton-label`
+     *    rule in `layer-styles.ts`). So `root.padding` + vertical `content.padding` must equal
+     *    `formField.paddingY`: default 0.25 + 0.3125 = 0.5625rem (24 + 18 + 2 = 44px), small
+     *    0.25 + 0.15625 = 0.40625rem (21 + 13 + 2 = 36px at 0.875rem text), large
+     *    0.25 + 0.46875 = 0.71875rem (27 + 23 + 2 = 52px at 1.125rem text). The horizontal
+     *    padding stays Aura's 0.75rem.
+     * 2. Unpicked text. Aura's light `root.color` is `{surface.500}` on the `{surface.100}` track:
+     *    4.40:1, under AA. `{surface.600}` is the smallest step that passes (7.03:1). Hover
+     *    (`{surface.700}`, 9.50:1) and dark (`{surface.400}` on `{surface.950}`, 7.76:1) already
+     *    pass and stay Aura's.
+     * 3. The picked state. Aura's pill (`content.checkedBackground`) is white on the `{surface.100}`
+     *    track in light, about 1.1:1, and `{surface.800}` on `{surface.950}` in dark, 1.34:1: the
+     *    pick would show only as a slightly darker text. The pill moves to `{surface.500}` in both
+     *    schemes, the smallest step that gives the pick 3:1 against the track it sits on
+     *    (WCAG 1.4.11: 4.40:1 light, 4.12:1 dark) and 4.5:1 for its text, which is white
+     *    (`root.checkedColor` and `icon.checkedColor` `{surface.0}`: 4.83:1). Aura's dark
+     *    `checkedColor` is already `{surface.0}`. The track (`root.checkedBackground`,
+     *    `root.checkedBorderColor`), the pill's faint shadow, hover and the disabled tokens stay
+     *    Aura's: a disabled button keeps `{form.field.disabled.background}` / `.color`.
+     *
+     * Optimus emits a component's `colorScheme.light` before its base tokens, so a light-only key
+     * would lose to a base value, and Aura puts its light colours in `colorScheme.light`: the light
+     * steps sit in the base (the browser reads them there), repeated in `colorScheme.light` (the
+     * contrast check reads a scheme's tokens after the base, so it would see Aura's otherwise), and
+     * `dark` sets the one dark token that differs, the pill (as `breadcrumb` above).
+     */
+    togglebutton: {
+      root: {
+        color: '{surface.600}',
+        checkedColor: '{surface.0}',
+      },
+      icon: { checkedColor: '{surface.0}' },
+      content: {
+        padding: '0.3125rem 0.75rem',
+        checkedBackground: '{surface.500}',
+        sm: { padding: '0.15625rem 0.75rem' },
+        lg: { padding: '0.46875rem 0.75rem' },
+      },
+      colorScheme: {
+        light: {
+          root: { color: '{surface.600}', checkedColor: '{surface.0}' },
+          icon: { checkedColor: '{surface.0}' },
+          content: { checkedBackground: '{surface.500}' },
+        },
+        dark: { content: { checkedBackground: '{surface.500}' } },
+      },
+    },
   },
 });
 
