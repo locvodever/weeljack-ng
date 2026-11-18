@@ -39,5 +39,10 @@ export const wjLayerStyles = `
   .p-icon-spin {
     animation: none !important;
   }
+
+  /* wjRipple: Optimus's press handler returns early when the ink is not displayed. */
+  .p-ripple > .p-ink {
+    display: none;
+  }
 }
 `;
