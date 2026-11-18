@@ -1,0 +1,148 @@
+<p-treeTable
+  [value]="copy().nodes"
+  [rowTrackBy]="trackBy"
+  [autoLayout]="true"
+  [sortField]="sortField()"
+  [sortOrder]="sortOrder()"
+  [paginator]="paginator()"
+  [first]="first()"
+  [rows]="pageRows()"
+  [totalRecords]="totalRecords()"
+  [rowsPerPageOptions]="rowsPerPageOptions()"
+  [paginatorPosition]="paginatorPosition()"
+  [showGridlines]="showGridlines()"
+  [rowHover]="rowHover()"
+  [selectionMode]="selectionMode()"
+  [selection]="picked()"
+  [loading]="loading()"
+  [pt]="partAttributes()"
+  (onSort)="sorted($event)"
+  (onPage)="paged($event)"
+  (onNodeExpand)="toggled($event.node, true)"
+  (onNodeCollapse)="toggled($event.node, false)"
+  (selectionChange)="pick($event)"
+>
+  <ng-template #header>
+    <tr>
+      @for (column of columns(); track column; let first = $first) {
+        @let sortKey = column.sortKey();
+        @if (sortKey) {
+          <th [ttSortableColumn]="sortKey" [pt]="partAttributes()">
+            <ng-container
+              *ngTemplateOutlet="
+                head;
+                context: { $implicit: column, sortKey: sortKey, first: first }
+              "
+            />
+          </th>
+        } @else {
+          <th>
+            <ng-container
+              *ngTemplateOutlet="
+                head;
+                context: { $implicit: column, sortKey: sortKey, first: first }
+              "
+            />
+          </th>
+        }
+      }
+    </tr>
+  </ng-template>
+  <ng-template #body let-row let-node="node">
+    @if (picks()) {
+      <tr
+        [ttRow]="row"
+        [pt]="partAttributes()"
+        [ttSelectableRow]="row"
+        [ttSelectableRowDisabled]="node.selectable === false"
+        data-wj-row
+      >
+        <ng-container *ngTemplateOutlet="cells; context: { $implicit: row, node: node }" />
+      </tr>
+    } @else {
+      <tr [ttRow]="row" [pt]="partAttributes()" data-wj-row (keydown.space)="space($event, row)">
+        <ng-container *ngTemplateOutlet="cells; context: { $implicit: row, node: node }" />
+      </tr>
+    }
+  </ng-template>
+  <ng-template #emptymessage>
+    <tr class="wj-treetable-empty">
+      <td [attr.colspan]="columns().length">
+        @if (loading()) {
+          &nbsp;
+        } @else if (emptySlot(); as slot) {
+          <ng-container *ngTemplateOutlet="slot.template" />
+        } @else {
+          {{ emptyText() }}
+        }
+      </td>
+    </tr>
+  </ng-template>
+  @if (captionSlot(); as slot) {
+    <ng-template #caption><ng-container *ngTemplateOutlet="slot.template" /></ng-template>
+  }
+  @if (summarySlot(); as slot) {
+    <ng-template #summary><ng-container *ngTemplateOutlet="slot.template" /></ng-template>
+  }
+
+  <ng-template #head let-column let-sortKey="sortKey" let-first="first">
+    <div class="p-treetable-column-header-content">
+      @if (first && checks()) {
+        <p-treeTableHeaderCheckbox [pt]="partAttributes()" />
+      }
+      <span class="p-treetable-column-title">
+        @let headerCell = column.headerCell();
+        @if (headerCell) {
+          <ng-container
+            *ngTemplateOutlet="
+              headerCell.template;
+              context: { $implicit: column.header(), field: column.field() }
+            "
+          />
+        } @else {
+          {{ column.header() }}
+        }
+      </span>
+      @if (sortKey) {
+        <p-treeTableSortIcon [field]="sortKey" [pt]="partAttributes()" />
+      }
+    </div>
+  </ng-template>
+  <ng-template #cells let-row let-node="node">
+    @for (column of columns(); track column; let first = $first) {
+      <td>
+        @if (first) {
+          <div class="p-treetable-body-cell-content">
+            <p-treeTableToggler [rowNode]="row" [pt]="partAttributes()" />
+            @if (checks()) {
+              <p-treeTableCheckbox
+                [value]="row"
+                [pt]="partAttributes()"
+                [disabled]="node.selectable === false"
+              />
+            }
+            <ng-container *ngTemplateOutlet="cell; context: { $implicit: column, node: node }" />
+          </div>
+        } @else {
+          <ng-container *ngTemplateOutlet="cell; context: { $implicit: column, node: node }" />
+        }
+      </td>
+    }
+  </ng-template>
+  <ng-template #cell let-column let-node="node">
+    @let field = column.field();
+    @let value = cellValue(node, field);
+    @let slot = column.cell();
+    @if (slot) {
+      <ng-container
+        *ngTemplateOutlet="
+          slot.template;
+          context: { $implicit: copy().original(node), value: value, field: field }
+        "
+      />
+    } @else {
+      {{ value }}
+    }
+  </ng-template>
+</p-treeTable>
+<ng-content select="wj-treetable-column" />
