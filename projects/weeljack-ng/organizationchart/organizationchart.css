@@ -1,0 +1,8 @@
+/* The host is a block with no box of its own. Optimus draws the nested tables, nodes and
+   connectors inside its own components, centred in the host; the wrapper adds no width, overflow
+   or scrolling, so a wide chart overflows and the app holds it in its own scroll region. */
+@layer wj {
+  :host {
+    display: block;
+  }
+}

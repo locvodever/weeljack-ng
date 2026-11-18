@@ -294,6 +294,10 @@ describe('provideWeeljack', () => {
       expect(reduced).toContain('--wj-transition-duration: 0s');
       expect(reduced).toContain('.p-progressspinner-spin');
       expect(reduced).toMatch(/\.p-icon-spin \{ animation: [^;]*none[^;]*!important/);
+      expect(reduced).toMatch(/\.p-ripple > \.p-ink \{ display: none/);
+      expect(reduced).toMatch(
+        /\.p-animateonscroll \{ opacity: 1 !important; animation: [^;]*none[^;]*!important; transition: none !important/,
+      );
     });
   });
 

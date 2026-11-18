@@ -40,4 +40,4 @@ export { _mergePartAttributes, type _PartAttributeValue } from './part-attribute
 export { _WJ_EN } from './translation-en';
 export { _copyTree, type _TreeCopy } from './tree-copy';
 export { _bridgeAccessor, type _AccessorHost } from './value-accessor';
-export { _wjStrings, type _WjStringKey } from './wj-strings';
+export { _ariaStrings, _wjStrings, type _AriaStringKey, type _WjStringKey } from './wj-strings';

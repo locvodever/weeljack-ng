@@ -151,6 +151,25 @@ const PAIRS = {
     // The current number is filled with the primary (steps.css), so this is the pair drawn: the
     // preset's own active-number colour on the content background is no longer on screen.
     ['steps number, current (filled)', 'primary.contrast.color', 'primary.color', TEXT],
+    ['org chart connector on the card', 'organizationchart.connector.color', 'surface.0', NON_TEXT],
+    [
+      'org chart connector on the page',
+      'organizationchart.connector.color',
+      'surface.50',
+      NON_TEXT,
+    ],
+    [
+      'org chart toggle icon',
+      'organizationchart.node.toggle.button.color',
+      'organizationchart.node.toggle.button.background',
+      NON_TEXT,
+    ],
+    [
+      'org chart toggle icon on hover',
+      'organizationchart.node.toggle.button.hover.color',
+      'organizationchart.node.toggle.button.hover.background',
+      NON_TEXT,
+    ],
   ],
   dark: [
     ['body text', 'text.color', 'content.background', TEXT],
@@ -314,6 +333,30 @@ const PAIRS = {
     // The current number is filled with the primary (steps.css), so this is the pair drawn: the
     // preset's own active-number colour on the content background is no longer on screen.
     ['steps number, current (filled)', 'primary.contrast.color', 'primary.color', TEXT],
+    [
+      'org chart connector on the card',
+      'organizationchart.connector.color',
+      'content.background',
+      NON_TEXT,
+    ],
+    [
+      'org chart connector on the page',
+      'organizationchart.connector.color',
+      'surface.950',
+      NON_TEXT,
+    ],
+    [
+      'org chart toggle icon',
+      'organizationchart.node.toggle.button.color',
+      'organizationchart.node.toggle.button.background',
+      NON_TEXT,
+    ],
+    [
+      'org chart toggle icon on hover',
+      'organizationchart.node.toggle.button.hover.color',
+      'organizationchart.node.toggle.button.hover.background',
+      NON_TEXT,
+    ],
   ],
 };
 

@@ -39,5 +39,20 @@ export const wjLayerStyles = `
   .p-icon-spin {
     animation: none !important;
   }
+
+  /* wjRipple: Optimus's press handler returns early when the ink is not displayed. */
+  .p-ripple > .p-ink {
+    display: none;
+  }
+
+  /*
+   * wjAnimateOnScroll: nothing is held or animated. The important beats the inline opacity: 0
+   * that Optimus writes on a held element.
+   */
+  .p-animateonscroll {
+    opacity: 1 !important;
+    animation: none !important;
+    transition: none !important;
+  }
 }
 `;

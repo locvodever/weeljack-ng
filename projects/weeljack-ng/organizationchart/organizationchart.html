@@ -1,0 +1,16 @@
+<p-organizationchart
+  [value]="copy().nodes"
+  [collapsible]="collapsible()"
+  [pt]="partAttributes()"
+  (onNodeExpand)="toggled($event.node, true)"
+  (onNodeCollapse)="toggled($event.node, false)"
+>
+  @if (nodeSlot(); as slot) {
+    <ng-template pTemplate="default" let-node>
+      <ng-container
+        [ngTemplateOutlet]="slot.template"
+        [ngTemplateOutletContext]="{ $implicit: copy().original(node) }"
+      />
+    </ng-template>
+  }
+</p-organizationchart>

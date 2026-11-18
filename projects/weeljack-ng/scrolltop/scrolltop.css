@@ -1,0 +1,7 @@
+/* Optimus's button is `position: fixed` (20px from the window's bottom and inline-end edges), so the
+   host takes no room in the flow, as `wj-toast`'s does. */
+@layer wj {
+  :host {
+    display: block;
+  }
+}

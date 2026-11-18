@@ -1,0 +1,20 @@
+/* Optimus draws no focus indicator: its input is `outline: 0 none`. The whole box draws the default
+   look's ring while the input holds focus (2 px solid, 2 px offset, from the preset's variables), the
+   input is 24 px tall (target size, 22 Q3), and long text wraps anywhere so nothing scrolls sideways
+   (WCAG 1.4.10). */
+@layer wj {
+  :host {
+    display: block;
+    overflow-wrap: anywhere;
+  }
+
+  :host p-terminal:focus-within {
+    outline: var(--wj-focus-ring-width, 2px) var(--wj-focus-ring-style, solid)
+      var(--wj-focus-ring-color);
+    outline-offset: var(--wj-focus-ring-offset, 2px);
+  }
+
+  :host ::ng-deep .p-terminal-prompt-value {
+    line-height: 1.5;
+  }
+}
