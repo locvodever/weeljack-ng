@@ -1,0 +1,13 @@
+<p-popover
+  [ariaLabel]="ariaLabel()"
+  [ariaLabelledBy]="ariaLabelledBy()"
+  [focusOnShow]="false"
+  [motionOptions]="motion"
+  [pt]="partAttributes()"
+  (onShow)="shown()"
+  (onHide)="hidden()"
+>
+  <div pFocusTrap [pFocusTrapDisabled]="!trapped()">
+    <div #body><ng-content /></div>
+  </div>
+</p-popover>
