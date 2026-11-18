@@ -212,6 +212,25 @@ export const wjAlwaysOn = definePreset(aura, {
         },
       },
     },
+    // Aura's light home glyph is surface.400 (zinc.400), 2.56:1 on white, under the 3:1 a graphic
+    // that is a link's only visible content needs (WCAG 1.4.11). Rest moves to surface.500 (4.83:1)
+    // and hover to surface.700, so the glyph still darkens on hover (Aura's hover is surface.500).
+    // Optimus emits a component's `colorScheme.light` before its base tokens, so a light-only key
+    // would lose to Aura's base value: the steps sit in the base, and `dark` puts Aura's own dark
+    // tokens back (W4-menus-more FR-12).
+    breadcrumb: {
+      item: { icon: { color: '{surface.500}', hoverColor: '{surface.700}' } },
+      colorScheme: {
+        dark: {
+          item: {
+            icon: {
+              color: '{navigation.item.icon.color}',
+              hoverColor: '{navigation.item.icon.focus.color}',
+            },
+          },
+        },
+      },
+    },
   },
 });
 

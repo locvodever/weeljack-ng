@@ -7,6 +7,10 @@ export interface WjOwnStrings {
   showPassword?: string;
   /** The password mask's "hide" button label. */
   hidePassword?: string;
+  /** The breadcrumb's navigation landmark name, when the app sets no `ariaLabel`. */
+  breadcrumb?: string;
+  /** The breadcrumb's home link name, when the home item has no label. */
+  home?: string;
 }
 
 /**

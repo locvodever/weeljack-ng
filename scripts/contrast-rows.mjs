@@ -136,6 +136,15 @@ const PAIRS = {
       'treetable.row.selected.background',
       TEXT,
     ],
+    ['breadcrumb link text', 'breadcrumb.item.color', 'content.background', TEXT],
+    ['breadcrumb link text on hover', 'breadcrumb.item.hover.color', 'content.background', TEXT],
+    ['breadcrumb home glyph', 'breadcrumb.item.icon.color', 'content.background', NON_TEXT],
+    [
+      'breadcrumb home glyph on hover',
+      'breadcrumb.item.icon.hover.color',
+      'content.background',
+      NON_TEXT,
+    ],
   ],
   dark: [
     ['body text', 'text.color', 'content.background', TEXT],
@@ -283,6 +292,15 @@ const PAIRS = {
       'treetable.row.selected.background',
       TEXT,
       'content.background',
+    ],
+    ['breadcrumb link text', 'breadcrumb.item.color', 'content.background', TEXT],
+    ['breadcrumb link text on hover', 'breadcrumb.item.hover.color', 'content.background', TEXT],
+    ['breadcrumb home glyph', 'breadcrumb.item.icon.color', 'content.background', NON_TEXT],
+    [
+      'breadcrumb home glyph on hover',
+      'breadcrumb.item.icon.hover.color',
+      'content.background',
+      NON_TEXT,
     ],
   ],
 };

@@ -1,0 +1,9 @@
+@let view = shown();
+@if (view.home || view.items) {
+  <p-breadcrumb
+    [model]="view.items"
+    [home]="view.home"
+    [homeAriaLabel]="view.homeAriaLabel"
+    [pt]="partAttributes()"
+  />
+}
