@@ -298,13 +298,38 @@ function fieldOf(fixture: ComponentFixture<unknown>): Promise<WjFieldHarness> {
 }
 
 /**
- * Focuses the input and waits for the mask to show. Optimus writes the mask and places the caret
- * from a timer after focus, and a key pressed before that lands on a stale caret, so the spec
- * polls the shown text instead of sleeping.
+ * Focuses the input and waits until Optimus has finished placing the caret. Optimus writes the
+ * mask and places the caret from a 10 ms timer after focus, and a key pressed before that lands
+ * on a stale caret. Polling the shown text is not enough: it does not change when the input
+ * already shows `shown` (a full value, or a mask already on display), so the poll would pass
+ * before the timer ran.
+ *
+ * The timer leaves the caret on the first unfilled slot, or selects everything when no slot is
+ * left. A focus listener, registered after Optimus's own, parks the selection somewhere else
+ * before the timer can fire, so the expected selection only appears once the timer has run. No
+ * sleep: the spec polls the state the user would see.
  */
-async function focusMasked(input: WjInputMaskHarness, shown: string): Promise<void> {
+async function focusMasked(
+  input: WjInputMaskHarness,
+  shown: string,
+  slotChar = '_',
+): Promise<void> {
+  const element = TestbedHarnessEnvironment.getNativeElement(await input.host());
+  if (!(element instanceof HTMLInputElement)) {
+    throw new Error('input[wjInputMask] is missing');
+  }
+  const slot = shown.indexOf(slotChar);
+  const expected = slot === -1 ? { start: 0, end: shown.length } : { start: slot, end: slot };
+  const parked = expected.start === 0 ? shown.length : 0;
+  const park = (): void => {
+    element.setSelectionRange(parked, parked);
+  };
+  element.addEventListener('focus', park, { once: true });
   await input.focus();
   await expect.poll(() => input.getValue()).toBe(shown);
+  await expect
+    .poll(() => [element.selectionStart, element.selectionEnd])
+    .toEqual([expected.start, expected.end]);
 }
 
 const STATES: [string, (host: Host) => void][] = [
@@ -431,7 +456,7 @@ describe('WjInputMask', () => {
       });
       const input = await harnessOf(fixture);
 
-      await focusMasked(input, '(###) ###-####');
+      await focusMasked(input, '(###) ###-####', '#');
     });
 
     it('autoClear clears an incomplete value on blur, and keeps it when off', async () => {
@@ -909,11 +934,11 @@ describe('WjInputMask', () => {
         host.value.set(PHONE_FULL);
       });
       const input = await harnessOf(fixture);
-      await input.focus();
-      await expect.poll(() => input.getValue()).toBe(PHONE_FULL);
+      await focusMasked(input, PHONE_FULL);
 
+      // A full value is selected whole on focus, so Backspace clears all of it, as it does for a user.
       await userEvent.keyboard('{Backspace}');
-      expect(await input.getValue()).toBe('(555) 012-345_');
+      expect(await input.getValue()).toBe(PHONE_EMPTY);
 
       await userEvent.keyboard('{Escape}');
       expect(await input.getValue()).toBe(PHONE_FULL);
