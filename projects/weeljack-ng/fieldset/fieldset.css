@@ -1,0 +1,7 @@
+/* The host is a block and nothing else is authored: Optimus's bordered box, legend and toggle
+   are unchanged. */
+@layer wj {
+  :host {
+    display: block;
+  }
+}
