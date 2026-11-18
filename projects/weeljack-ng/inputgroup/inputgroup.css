@@ -3,8 +3,7 @@
    .p-component:first-child`), which a `wj-*` host between the group and the control hides: a
    `wj-select` is not a direct child, and its radius sits on the `p-select` inside it. The rules
    below restore Optimus's native result for each projected host, as direct children only, so a
-   control in the app's own nested layout is left alone. No `:has()`.
-   Phase 7 appends the addon rules at the end of this file. */
+   control in the app's own nested layout is left alone. No `:has()`. */
 @layer wj {
   :host {
     display: block;
@@ -33,5 +32,65 @@
   p-inputgroup > ::ng-deep wj-select:last-child > p-select {
     border-start-end-radius: var(--wj-inputgroup-addon-border-radius, 8px);
     border-end-end-radius: var(--wj-inputgroup-addon-border-radius, 8px);
+  }
+
+  /* Addons. Inside a `wj-inputgroupaddon` host the Optimus addon is both the first and the last
+     child, so its own position rules draw all four borders and all four corners on every addon.
+     Reset them, then give each back by the host's place in the group: the outer edge and outer
+     corners of the first and last host, and one line between two neighbouring addons. Next to a
+     control the control's border is the one line. `:first-child` on the addon (always true) lifts
+     each rule above Optimus's `.p-inputgroupaddon:first-child` in specificity, so none depends on
+     sheet order. */
+  p-inputgroup > ::ng-deep wj-inputgroupaddon > p-inputgroup-addon:first-child {
+    border-radius: 0;
+    border-inline-start-width: 0;
+    border-inline-end-width: 0;
+    /* The button inside takes the corners and draws its focus ring whole: Optimus clips it. */
+    overflow: visible;
+  }
+
+  p-inputgroup > ::ng-deep wj-inputgroupaddon:first-child > p-inputgroup-addon:first-child {
+    border-inline-start-width: 1px;
+    border-start-start-radius: var(--wj-inputgroup-addon-border-radius, 8px);
+    border-end-start-radius: var(--wj-inputgroup-addon-border-radius, 8px);
+  }
+
+  p-inputgroup
+    > ::ng-deep
+    wj-inputgroupaddon
+    + wj-inputgroupaddon
+    > p-inputgroup-addon:first-child {
+    border-inline-start-width: 1px;
+  }
+
+  p-inputgroup > ::ng-deep wj-inputgroupaddon:last-child > p-inputgroup-addon:first-child {
+    border-inline-end-width: 1px;
+    border-start-end-radius: var(--wj-inputgroup-addon-border-radius, 8px);
+    border-end-end-radius: var(--wj-inputgroup-addon-border-radius, 8px);
+  }
+
+  /* A button addon: Optimus squares the button (`.p-inputgroupaddon .p-button`); the outer
+     corners go back to it, by the host's place, and the focused button is lifted above its
+     neighbours so its 2 px ring at 2 px offset shows on every side. */
+  p-inputgroup
+    > ::ng-deep
+    wj-inputgroupaddon:first-child
+    > p-inputgroup-addon:first-child
+    .p-button {
+    border-start-start-radius: var(--wj-inputgroup-addon-border-radius, 8px);
+    border-end-start-radius: var(--wj-inputgroup-addon-border-radius, 8px);
+  }
+
+  p-inputgroup
+    > ::ng-deep
+    wj-inputgroupaddon:last-child
+    > p-inputgroup-addon:first-child
+    .p-button {
+    border-start-end-radius: var(--wj-inputgroup-addon-border-radius, 8px);
+    border-end-end-radius: var(--wj-inputgroup-addon-border-radius, 8px);
+  }
+
+  p-inputgroup > ::ng-deep wj-inputgroupaddon > p-inputgroup-addon:first-child .p-button:focus {
+    z-index: 1;
   }
 }

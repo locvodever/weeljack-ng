@@ -5,10 +5,13 @@ import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import type { MockInstance } from 'vitest';
 import { userEvent } from 'vitest/browser';
 import { provideWeeljack } from 'weeljack-ng';
+import { WjButton } from 'weeljack-ng/button';
 import { WjField } from 'weeljack-ng/field';
 import { WjFieldHarness } from 'weeljack-ng/field/testing';
 import { WjInputGroup, type WjInputGroupPt } from 'weeljack-ng/inputgroup';
 import { WjInputGroupHarness } from 'weeljack-ng/inputgroup/testing';
+import { WjInputGroupAddon } from 'weeljack-ng/inputgroupaddon';
+import { WjInputGroupAddonHarness } from 'weeljack-ng/inputgroupaddon/testing';
 import { WjInputText, type WjInputTextSize } from 'weeljack-ng/inputtext';
 import { WjInputTextHarness } from 'weeljack-ng/inputtext/testing';
 import { WjSelect, type WjSelectOption, type WjSelectSize } from 'weeljack-ng/select';
@@ -25,6 +28,9 @@ const SELECT_WIDTH = 146.59375;
 /** `--wj-form-field-border-color` (zinc.500 in the Noir preset) and `--wj-form-field-invalid-border-color`. */
 const BORDER = 'rgb(113, 113, 122)';
 const INVALID_BORDER = 'rgb(220, 38, 38)';
+/** A 320 px group with a 40 px addon, a text input and a select: the free 280 px shared as in C3. */
+const INPUT_WIDTH_AFTER_ADDON = 153.40625;
+const SELECT_WIDTH_AFTER_ADDON = 126.59375;
 
 const CURRENCIES: WjSelectOption<string>[] = [
   { label: 'USD', value: 'USD' },
@@ -158,6 +164,92 @@ class FieldHost {
 })
 class FieldGroupHost {
   readonly currencies = CURRENCIES;
+  readonly error = signal<string | undefined>(undefined);
+}
+
+/**
+ * C1 and C3 with an addon: text addons around a text input, and optionally a `wj-select` after it.
+ * Each addon has an id the input can name.
+ */
+@Component({
+  selector: 'wj-inputgroup-addon-host',
+  imports: [WjInputGroup, WjInputGroupAddon, WjInputText, WjSelect],
+  template: `
+    <button type="button" id="before">Before</button>
+    <div id="scope" style="width: 320px">
+      <wj-inputgroup>
+        @if (before()) {
+          <wj-inputgroupaddon id="before-unit">{{ before() }}</wj-inputgroupaddon>
+        }
+        <input
+          wjInputText
+          aria-label="Amount"
+          aria-describedby="before-unit"
+          [size]="inputSize()"
+          [disabled]="inputDisabled()"
+          [invalid]="inputInvalid()"
+        />
+        @if (withSelect()) {
+          <wj-select ariaLabel="Currency" [options]="currencies" />
+        }
+        @if (after()) {
+          <wj-inputgroupaddon id="after-unit">{{ after() }}</wj-inputgroupaddon>
+        }
+      </wj-inputgroup>
+    </div>
+    <button type="button" id="after">After</button>
+  `,
+})
+class AddonHost {
+  readonly currencies = CURRENCIES;
+  readonly before = signal<string | null>('$');
+  readonly after = signal<string | null>(null);
+  readonly withSelect = signal(false);
+  readonly inputSize = signal<WjInputTextSize | undefined>(undefined);
+  readonly inputInvalid = signal(false);
+  readonly inputDisabled = signal(false);
+}
+
+/** C2: a `wj-button` in the addon after the input. */
+@Component({
+  selector: 'wj-inputgroup-button-addon-host',
+  imports: [WjButton, WjInputGroup, WjInputGroupAddon, WjInputText],
+  template: `
+    <div id="scope" style="width: 320px">
+      <wj-inputgroup>
+        <input wjInputText aria-label="Discount code" />
+        <wj-inputgroupaddon><wj-button label="Apply" /></wj-inputgroupaddon>
+      </wj-inputgroup>
+    </div>
+  `,
+})
+class ButtonAddonHost {}
+
+/**
+ * The docs' "In a field": a unit after the input, described by the addon's id, and a currency
+ * before it with an error the test turns on.
+ */
+@Component({
+  selector: 'wj-inputgroup-field-addon-host',
+  imports: [WjField, WjInputGroup, WjInputGroupAddon, WjInputText],
+  template: `
+    <div id="scope" style="width: 320px">
+      <wj-field label="Weight" hint="Round to the nearest kilogram.">
+        <wj-inputgroup>
+          <input wjInputText id="weight" inputmode="numeric" aria-describedby="weight-unit" />
+          <wj-inputgroupaddon id="weight-unit">kg</wj-inputgroupaddon>
+        </wj-inputgroup>
+      </wj-field>
+      <wj-field label="Price" [error]="error()">
+        <wj-inputgroup>
+          <wj-inputgroupaddon id="price-unit">$</wj-inputgroupaddon>
+          <input wjInputText id="price" inputmode="decimal" aria-describedby="price-unit" />
+        </wj-inputgroup>
+      </wj-field>
+    </div>
+  `,
+})
+class FieldAddonHost {
   readonly error = signal<string | undefined>(undefined);
 }
 
@@ -543,6 +635,192 @@ describe('WjInputGroup', () => {
     });
   });
 
+  describe('text addons (C1)', () => {
+    // Optimus's own result with native `p-inputgroup-addon` children in a 320 px group: the addon
+    // keeps its content width (at least 40 px), the input takes the rest, and the line between an
+    // addon and the input is the input's own border.
+    it('shares the row: a 40 px addon, the input fills the rest, no gap and no overlap', async () => {
+      const { element } = await render(AddonHost);
+
+      expect(box(element, 'wj-inputgroup').width).toBe(320);
+      expect(box(element, 'wj-inputgroupaddon').width).toBe(40);
+      expect(box(element, INPUT).width).toBe(280);
+      expect(box(element, 'wj-inputgroupaddon').right).toBe(box(element, INPUT).left);
+    });
+
+    it('shares it with an addon on each side: 40 + 240 + 40', async () => {
+      const { element } = await render(AddonHost, 'light', (host) => {
+        host.after.set('.00');
+      });
+
+      expect(box(element, INPUT).width).toBe(240);
+      expect(box(element, INPUT).right).toBe(box(element, '#after-unit').left);
+      expect(box(element, '#after-unit').width).toBe(40);
+    });
+
+    it('lets a longer addon text take its width from the input, never wrapping the row', async () => {
+      const { fixture, host, element } = await render(AddonHost);
+      host.before.set('https://');
+      await fixture.whenStable();
+
+      expect(box(element, 'wj-inputgroupaddon').width).toBeGreaterThan(40);
+      expect(box(element, 'wj-inputgroupaddon').width + box(element, INPUT).width).toBeCloseTo(
+        320,
+        1,
+      );
+      expect(box(element, 'wj-inputgroup').height).toBe(44);
+    });
+
+    it('rounds the outer corners only: the addon its start, the input its end', async () => {
+      const { element } = await render(AddonHost);
+
+      expect(radii(find(element, 'p-inputgroup-addon'))).toBe(`${RADIUS} / 0px / 0px / ${RADIUS}`);
+      expect(radii(find(element, INPUT))).toBe(`0px / ${RADIUS} / ${RADIUS} / 0px`);
+    });
+
+    it('rounds an addon after the input at the end, and the input at the start', async () => {
+      const { element } = await render(AddonHost, 'light', (host) => {
+        host.before.set(null);
+        host.after.set('kg');
+      });
+
+      expect(radii(find(element, INPUT))).toBe(`${RADIUS} / 0px / 0px / ${RADIUS}`);
+      expect(radii(find(element, 'p-inputgroup-addon'))).toBe(`0px / ${RADIUS} / ${RADIUS} / 0px`);
+    });
+
+    it('draws one line between the addon and the input: the input’s 1 px, the addon none', async () => {
+      await pointerAway();
+      const { element } = await render(AddonHost);
+      const addon = find(element, 'p-inputgroup-addon');
+
+      expect(borders(addon)).toBe('1px / 0px / 1px / 1px');
+      expect(borders(find(element, INPUT))).toBe('1px / 1px / 1px / 1px');
+      expect(getComputedStyle(addon).borderLeftColor).toBe(BORDER);
+      expect(getComputedStyle(find(element, INPUT)).borderLeftColor).toBe(BORDER);
+    });
+
+    it('mirrors in rtl: the addon sits on the right, its start corners the right ones', async () => {
+      const { fixture, element } = await render(AddonHost);
+      find(element, '#scope').dir = 'rtl';
+      await fixture.whenStable();
+
+      expect(radii(find(element, 'p-inputgroup-addon'))).toBe(`0px / ${RADIUS} / ${RADIUS} / 0px`);
+      expect(radii(find(element, INPUT))).toBe(`${RADIUS} / 0px / 0px / ${RADIUS}`);
+      expect(box(element, 'wj-inputgroupaddon').left).toBe(box(element, INPUT).right);
+    });
+
+    it('stretches the addon to the input at every size: 36, 44 and 52 px', async () => {
+      const { fixture, host, element } = await render(AddonHost);
+
+      for (const [size, height] of [
+        ['small', 36],
+        [undefined, 44],
+        ['large', 52],
+      ] as const) {
+        host.inputSize.set(size);
+        await fixture.whenStable();
+
+        expect(box(element, INPUT).height, String(size)).toBe(height);
+        expect(box(element, 'p-inputgroup-addon').height, String(size)).toBe(height);
+        expect(box(element, 'wj-inputgroup').height, String(size)).toBe(height);
+      }
+    });
+
+    it('lifts the focused input above the addon, ring whole', async () => {
+      const { fixture, element } = await render(AddonHost);
+      find(element, INPUT).focus();
+      await fixture.whenStable();
+      const lifted = getComputedStyle(find(element, INPUT));
+
+      expect(lifted.zIndex).toBe('1');
+      expect(lifted.outlineWidth).toBe('2px');
+      expect(lifted.outlineOffset).toBe('2px');
+      expect(getComputedStyle(find(element, 'p-inputgroup-addon')).zIndex).toBe('auto');
+    });
+
+    it('leaves the addon alone when the input is invalid or disabled', async () => {
+      const { fixture, host, element } = await render(AddonHost);
+      host.inputInvalid.set(true);
+      await fixture.whenStable();
+      await pointerAway();
+
+      expect(getComputedStyle(find(element, INPUT)).borderTopColor).toBe(INVALID_BORDER);
+      expect(getComputedStyle(find(element, 'p-inputgroup-addon')).borderTopColor).toBe(BORDER);
+
+      host.inputInvalid.set(false);
+      host.inputDisabled.set(true);
+      await fixture.whenStable();
+
+      expect(getComputedStyle(find(element, 'p-inputgroup-addon')).borderTopColor).toBe(BORDER);
+      expect(radii(find(element, 'p-inputgroup-addon'))).toBe(`${RADIUS} / 0px / 0px / ${RADIUS}`);
+    });
+  });
+
+  describe('button addon (C2)', () => {
+    it('shares the row: the input takes what the button addon leaves', async () => {
+      const { element } = await render(ButtonAddonHost);
+      const addon = box(element, 'wj-inputgroupaddon');
+
+      expect(box(element, 'wj-inputgroup').width).toBe(320);
+      expect(addon.width + box(element, INPUT).width).toBe(320);
+      expect(box(element, INPUT).width).toBeCloseTo(249, 0);
+      expect(box(element, INPUT).right).toBe(addon.left);
+    });
+
+    it('is 46 px tall: the 44 px button plus the addon’s two 1 px lines, the input stretched', async () => {
+      const { element } = await render(ButtonAddonHost);
+
+      expect(box(element, 'button.p-button').height).toBe(44);
+      expect(box(element, 'p-inputgroup-addon').height).toBe(46);
+      expect(box(element, INPUT).height).toBe(46);
+      expect(box(element, 'wj-inputgroup').height).toBe(46);
+    });
+
+    it('rounds the input’s start corners and the button’s end corners, the seam square', async () => {
+      const { element } = await render(ButtonAddonHost);
+
+      expect(radii(find(element, INPUT))).toBe(`${RADIUS} / 0px / 0px / ${RADIUS}`);
+      expect(radii(find(element, 'button.p-button'))).toBe(`0px / ${RADIUS} / ${RADIUS} / 0px`);
+      expect(borders(find(element, 'p-inputgroup-addon'))).toBe('1px / 1px / 1px / 0px');
+    });
+  });
+
+  describe('a text addon, an input and a select (C3 with an addon)', () => {
+    it('shares the free width between the input and the select, as C3 does, after the addon', async () => {
+      const { element } = await render(AddonHost, 'light', (host) => {
+        host.withSelect.set(true);
+      });
+
+      expect(box(element, 'wj-inputgroupaddon').width).toBe(40);
+      expect(box(element, INPUT).width).toBeCloseTo(INPUT_WIDTH_AFTER_ADDON, 1);
+      expect(box(element, 'wj-select').width).toBeCloseTo(SELECT_WIDTH_AFTER_ADDON, 1);
+      expect(box(element, 'wj-select').right).toBe(box(element, 'wj-inputgroup').right);
+    });
+
+    it('rounds the addon’s start corners and the select’s end corners, the inner ones square', async () => {
+      const { element } = await render(AddonHost, 'light', (host) => {
+        host.withSelect.set(true);
+      });
+
+      expect(radii(find(element, 'p-inputgroup-addon'))).toBe(`${RADIUS} / 0px / 0px / ${RADIUS}`);
+      expect(radii(find(element, INPUT))).toBe('0px / 0px / 0px / 0px');
+      expect(radii(find(element, SELECT))).toBe(`0px / ${RADIUS} / ${RADIUS} / 0px`);
+    });
+
+    it('squares the select when an addon follows it, which takes the end corners', async () => {
+      const { element } = await render(AddonHost, 'light', (host) => {
+        host.withSelect.set(true);
+        host.after.set('.00');
+      });
+
+      expect(element.querySelectorAll('p-inputgroup-addon')).toHaveLength(2);
+      expect(radii(find(element, SELECT))).toBe('0px / 0px / 0px / 0px');
+      expect(radii(find(element, '#after-unit p-inputgroup-addon'))).toBe(
+        `0px / ${RADIUS} / ${RADIUS} / 0px`,
+      );
+    });
+  });
+
   describe('host box', () => {
     it('takes the block display of the root it wraps, never contents', async () => {
       const { element } = await render(Host);
@@ -665,6 +943,42 @@ describe('WjInputGroup', () => {
     });
   });
 
+  describe('inside a wj-field, with an addon', () => {
+    it('keeps the addon’s id ahead of the field’s hint in the input’s description', async () => {
+      const { element } = await render(FieldAddonHost);
+      const hintId = find(element, '.wj-field-hint').id;
+      const input = find(element, '#weight');
+
+      expect(input.getAttribute('aria-describedby')).toBe(`weight-unit ${hintId}`);
+      expect(document.getElementById('weight-unit')?.textContent.trim()).toBe('kg');
+      expect(find(element, 'label.wj-field-label').getAttribute('for')).toBe('weight');
+    });
+
+    it('adds the error after the addon’s id, and marks the input invalid', async () => {
+      const { fixture, host, element } = await render(FieldAddonHost);
+      host.error.set('Enter a price above zero.');
+      await fixture.whenStable();
+      const price = find(element, '#price');
+      const errorId = find(element, '.wj-field-error').id;
+
+      await expect.poll(() => price.getAttribute('aria-describedby')).toBe(`price-unit ${errorId}`);
+      await expect.poll(() => price.getAttribute('aria-invalid')).toBe('true');
+      expect(document.getElementById('price-unit')?.textContent.trim()).toBe('$');
+    });
+
+    it('keeps the addon’s grey boundary when the field shows an error', async () => {
+      const { fixture, host, element } = await render(FieldAddonHost);
+      host.error.set('Enter a price above zero.');
+      await fixture.whenStable();
+      await pointerAway();
+
+      expect(getComputedStyle(find(element, '#price')).borderTopColor).toBe(INVALID_BORDER);
+      expect(getComputedStyle(find(element, '#price-unit p-inputgroup-addon')).borderTopColor).toBe(
+        BORDER,
+      );
+    });
+  });
+
   describe('host attributes', () => {
     it('applies role and aria-labelledby on the host as written, and adds none of its own', async () => {
       const { element } = await render(CaptionHost);
@@ -686,12 +1000,32 @@ describe('WjInputGroup', () => {
   });
 
   describe('harness', () => {
-    it('reports no addon in phase 6', async () => {
+    it('reports no addon for a group of controls', async () => {
       const { fixture } = await render(Host);
       const group = await TestbedHarnessEnvironment.loader(fixture).getHarness(WjInputGroupHarness);
 
       expect(await group.getAddonCount()).toBe(0);
       expect(await group.getAddonTexts()).toEqual([]);
+    });
+
+    it('reports the addons’ count and texts, in order, through WjInputGroupAddonHarness', async () => {
+      const { fixture } = await render(AddonHost, 'light', (host) => {
+        host.after.set('.00');
+      });
+      const group = await TestbedHarnessEnvironment.loader(fixture).getHarness(WjInputGroupHarness);
+
+      expect(await group.getAddonCount()).toBe(2);
+      expect(await group.getAddonTexts()).toEqual(['$', '.00']);
+      const unit = await group.getHarness(WjInputGroupAddonHarness.with({ text: '.00' }));
+      expect(await unit.getText()).toBe('.00');
+    });
+
+    it('reports a button addon by its button’s label', async () => {
+      const { fixture } = await render(ButtonAddonHost);
+      const group = await TestbedHarnessEnvironment.loader(fixture).getHarness(WjInputGroupHarness);
+
+      expect(await group.getAddonCount()).toBe(1);
+      expect(await group.getAddonTexts()).toEqual(['Apply']);
     });
 
     it('finds the group and the controls inside it', async () => {
@@ -739,6 +1073,53 @@ describe('WjInputGroup', () => {
         const { fixture, element } = await render(Host, scheme, setup);
         await fixture.whenStable();
 
+        await expectNoAxeViolations(find(element, '#scope'));
+      });
+
+      it.each<[string, (host: AddonHost) => void]>([
+        ['a text addon before the input (C1)', () => undefined],
+        [
+          'text addons on both sides',
+          (host) => {
+            host.after.set('.00');
+          },
+        ],
+        [
+          'a text addon, an input and a select',
+          (host) => {
+            host.withSelect.set(true);
+          },
+        ],
+        [
+          'an invalid input beside an addon',
+          (host) => {
+            host.inputInvalid.set(true);
+          },
+        ],
+        [
+          'a disabled input beside an addon',
+          (host) => {
+            host.inputDisabled.set(true);
+          },
+        ],
+      ])('has no axe violations: %s', async (_name, setup) => {
+        const { element } = await render(AddonHost, scheme, setup);
+
+        await expectNoAxeViolations(find(element, '#scope'));
+      });
+
+      it('has no axe violations: a button addon (C2)', async () => {
+        const { element } = await render(ButtonAddonHost, scheme);
+
+        await expectNoAxeViolations(find(element, '#scope'));
+      });
+
+      it('has no axe violations: addons in a field, with a hint and then an error', async () => {
+        const { fixture, host, element } = await render(FieldAddonHost, scheme);
+        await expectNoAxeViolations(find(element, '#scope'));
+
+        host.error.set('Enter a price above zero.');
+        await fixture.whenStable();
         await expectNoAxeViolations(find(element, '#scope'));
       });
 
