@@ -1,0 +1,24 @@
+<p-panel
+  [header]="header()"
+  [toggleable]="toggleable()"
+  [collapsed]="toggleable() && collapsed()"
+  (collapsedChange)="collapsed.set($event === true)"
+  [toggleButtonProps]="toggleProps"
+  [motionOptions]="motion"
+  [pt]="partAttributes()"
+>
+  @if (headerSlot(); as slot) {
+    <ng-template #header>
+      <div data-wj-part="panel-header" [id]="headerId">
+        <ng-container [ngTemplateOutlet]="slot.template" />
+      </div>
+    </ng-template>
+  }
+  @if (iconsSlot(); as slot) {
+    <ng-template #icons><ng-container [ngTemplateOutlet]="slot.template" /></ng-template>
+  }
+  @if (footerSlot(); as slot) {
+    <ng-template #footer><ng-container [ngTemplateOutlet]="slot.template" /></ng-template>
+  }
+  <ng-content />
+</p-panel>
