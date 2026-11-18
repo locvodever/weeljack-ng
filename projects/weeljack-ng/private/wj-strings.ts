@@ -21,3 +21,21 @@ export function _wjStrings(): (key: _WjStringKey) => string {
     return typeof text === 'string' ? text : _WJ_EN.wj[key];
   };
 }
+
+/** A key of Optimus's `aria` translation group, as WeeljackNg's English default carries it. */
+export type _AriaStringKey = keyof typeof _WJ_EN.aria;
+
+/**
+ * Reads Optimus's `aria` translation keys (the group `provideWeeljack` sets) as a lookup. Each key
+ * falls back to the English default on its own, as `_wjStrings` does, so a partial override keeps
+ * every other string. Read once, when called. Must run in an injection context.
+ *
+ * @docs-private
+ */
+export function _ariaStrings(): (key: _AriaStringKey) => string {
+  const group: unknown = inject(Optimus).getTranslation('aria');
+  return (key) => {
+    const text: unknown = Reflect.get(Object(group), key);
+    return typeof text === 'string' ? text : _WJ_EN.aria[key];
+  };
+}
