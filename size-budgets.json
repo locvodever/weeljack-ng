@@ -14,7 +14,8 @@
     {
       "entry": "weeljack-ng/private",
       "optimus": "own",
-      "note": "Shared helpers (_-prefixed, outside semver). Shipped to every consumer, so it gets an own-entry row."
+      "kb": 7,
+      "note": "Shared helpers (_-prefixed, outside semver). Shipped to every consumer, so it gets an own-entry row. Measured as one whole module, so every family's helpers and wj strings add up here: Loc raised it from 5 to 7 KB on 2026-11-18, when the last five families would each have crossed 5 KB."
     },
     {
       "entry": "weeljack-ng/field",
