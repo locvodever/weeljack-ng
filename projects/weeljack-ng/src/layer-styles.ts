@@ -57,5 +57,13 @@ export const wjLayerStyles = `
     animation: none !important;
     transition: none !important;
   }
+
+  /*
+   * Optimus fades the tooltip bubble in from JavaScript, writing an inline opacity on every
+   * step, so only an important declaration inside the layer shows it fully opaque at once.
+   */
+  .p-tooltip {
+    opacity: 1 !important;
+  }
 }
 `;

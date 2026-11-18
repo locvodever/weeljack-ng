@@ -189,6 +189,7 @@ const PAIRS = {
       'togglebutton.checked.background',
       NON_TEXT,
     ],
+    ['tooltip text', 'tooltip.color', 'tooltip.background', TEXT],
   ],
   dark: [
     ['body text', 'text.color', 'content.background', TEXT],
@@ -395,6 +396,7 @@ const PAIRS = {
       'togglebutton.checked.background',
       NON_TEXT,
     ],
+    ['tooltip text', 'tooltip.color', 'tooltip.background', TEXT],
   ],
 };
 
