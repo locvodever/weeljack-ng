@@ -801,7 +801,7 @@ describe('WjListbox', () => {
       async (scheme) => {
         const { element } = await renderAs(KeyboardHost, () => undefined, scheme);
         await tabFrom(element, 'before');
-        expect(activeLabel(element)).toBe('Apple');
+        await expect.poll(() => activeLabel(element)).toBe('Apple');
         const ring = getComputedStyle(rowOf(element, 'Apple'));
 
         expect(ring.outlineStyle).toBe('solid');
@@ -823,7 +823,7 @@ describe('WjListbox', () => {
           scheme,
         );
         await tabFrom(element, 'before');
-        expect(activeLabel(element)).toBe('Banana');
+        await expect.poll(() => activeLabel(element)).toBe('Banana');
         const ring = getComputedStyle(rowOf(element, 'Banana'));
 
         expect(ring.outlineStyle).toBe('solid');
@@ -835,8 +835,9 @@ describe('WjListbox', () => {
     it('follows the focused row as the arrows move it, and draws no ring on a mouse focus', async () => {
       const { element } = await renderAs(KeyboardHost);
       await tabFrom(element, 'before');
+      await expect.poll(() => activeLabel(element)).toBe('Apple');
       await userEvent.keyboard('{ArrowDown}');
-      expect(activeLabel(element)).toBe('Banana');
+      await expect.poll(() => activeLabel(element)).toBe('Banana');
       expect(getComputedStyle(rowOf(element, 'Banana')).outlineStyle).toBe('solid');
       expect(getComputedStyle(rowOf(element, 'Apple')).outlineStyle).toBe('none');
 
@@ -859,7 +860,7 @@ describe('WjListbox', () => {
     it('rings the message row of an empty list while its hidden entry has keyboard focus', async () => {
       const { element } = await renderAs(EmptyKeyboardHost);
       await tabFrom(element, 'before');
-      expect(document.activeElement).toBe(entryOf(element));
+      await expect.poll(() => document.activeElement).toBe(entryOf(element));
       const message = getComputedStyle(
         find(element, '[data-pc-section="emptymessage"]', HTMLElement),
       );
