@@ -1,5 +1,5 @@
 import { Component, ElementRef, signal } from '@angular/core';
-import { TestBed } from '@angular/core/testing';
+import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import type { Translation } from '@openng/optimus-ui/api';
 import { provideOptimus } from '@openng/optimus-ui/config';
 import { _WJ_EN } from './translation-en';
@@ -10,6 +10,7 @@ import {
   _focusIntoOverlay,
   _overlayCloseLabel,
   _overlayEscapeGate,
+  _overlayFocusTarget,
   _overlayLifecycle,
 } from './overlay';
 
@@ -249,6 +250,229 @@ describe('_overlayLifecycle', () => {
   });
 });
 
+describe('_overlayLifecycle, Safari and anchors', () => {
+  let opener: HTMLButtonElement;
+  let elsewhere: HTMLButtonElement;
+  const visible = signal(false);
+  const closed = vi.fn<() => void>();
+
+  beforeEach(() => {
+    opener = document.createElement('button');
+    elsewhere = document.createElement('button');
+    document.body.append(opener, elsewhere);
+    visible.set(false);
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
+  });
+
+  afterEach(() => {
+    opener.remove();
+    elsewhere.remove();
+    document.body.classList.remove('p-overflow-hidden');
+  });
+
+  function start(anchor?: () => unknown): ReturnType<typeof _overlayLifecycle> {
+    const lifecycle = TestBed.runInInjectionContext(() =>
+      _overlayLifecycle(visible, closed, anchor),
+    );
+    TestBed.tick();
+    return lifecycle;
+  }
+
+  /** A press that leaves focus where it was, as Safari's does on a button. */
+  const pressWithoutFocus = (target: Element): void => {
+    target.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
+  };
+
+  const open = (): void => {
+    visible.set(true);
+    TestBed.tick();
+  };
+
+  it('returns focus to the pressed opener when the page had focus at open time (Safari)', () => {
+    const lifecycle = start();
+    pressWithoutFocus(opener);
+    open();
+    expect(document.activeElement).toBe(document.body);
+
+    lifecycle.left();
+
+    expect(document.activeElement).toBe(opener);
+    expect(closed).toHaveBeenCalledTimes(1);
+  });
+
+  it('takes the nearest focusable ancestor of the pressed element', () => {
+    const lifecycle = start();
+    const card = document.createElement('div');
+    card.tabIndex = 0;
+    card.innerHTML = '<span>inner</span>';
+    document.body.append(card);
+    pressWithoutFocus(card.querySelector('span') ?? card);
+    open();
+    lifecycle.left();
+
+    expect(document.activeElement).toBe(card);
+    card.remove();
+  });
+
+  it('restores focus before it calls closed in Safari too', () => {
+    const lifecycle = start();
+    closed.mockImplementationOnce(() => {
+      expect(document.activeElement).toBe(opener);
+    });
+    pressWithoutFocus(opener);
+    open();
+    lifecycle.left();
+
+    expect(closed).toHaveBeenCalledTimes(1);
+  });
+
+  it('prefers the element that has focus over the pressed one', () => {
+    const lifecycle = start();
+    pressWithoutFocus(opener);
+    elsewhere.focus();
+    open();
+    opener.focus();
+    lifecycle.left();
+
+    expect(document.activeElement).toBe(elsewhere);
+  });
+
+  it('forgets a press once focus has moved since, and one that landed on nothing focusable', () => {
+    const lifecycle = start();
+    pressWithoutFocus(opener);
+    elsewhere.focus();
+    elsewhere.blur();
+    open();
+    lifecycle.left();
+    expect(document.activeElement).toBe(document.body);
+
+    visible.set(false);
+    TestBed.tick();
+    pressWithoutFocus(document.body);
+    open();
+    lifecycle.left();
+    expect(document.activeElement).toBe(document.body);
+  });
+
+  it('does not restore focus to a pressed opener that has left the document', () => {
+    const lifecycle = start();
+    pressWithoutFocus(opener);
+    open();
+    opener.remove();
+    lifecycle.left();
+
+    expect(document.activeElement).toBe(document.body);
+    expect(closed).toHaveBeenCalledTimes(1);
+  });
+
+  it('returns focus to the anchor first: itself if focusable, else its first focusable descendant', () => {
+    const anchor = document.createElement('div');
+    anchor.innerHTML = '<span>label</span><button id="inner">Inner</button>';
+    document.body.append(anchor);
+    const lifecycle = start(() => anchor);
+    opener.focus();
+    open();
+    lifecycle.left();
+    expect(document.activeElement?.id).toBe('inner');
+
+    visible.set(false);
+    TestBed.tick();
+    anchor.tabIndex = 0;
+    opener.focus();
+    open();
+    lifecycle.left();
+    expect(document.activeElement).toBe(anchor);
+    anchor.remove();
+  });
+
+  it('falls back to the opener when the anchor has nothing focusable, or is gone', () => {
+    const anchor = document.createElement('div');
+    document.body.append(anchor);
+    const lifecycle = start(() => anchor);
+    opener.focus();
+    open();
+    elsewhere.focus();
+    lifecycle.left();
+    expect(document.activeElement).toBe(opener);
+
+    visible.set(false);
+    TestBed.tick();
+    anchor.innerHTML = '<button>Inner</button>';
+    opener.focus();
+    open();
+    anchor.remove();
+    elsewhere.focus();
+    lifecycle.left();
+    expect(document.activeElement).toBe(opener);
+  });
+
+  it('puts the scroll lock back when another modal still has its mask up', async () => {
+    const lifecycle = start();
+    const lower = document.createElement('div');
+    lower.setAttribute('data-p-scrollblocker-active', 'true');
+    document.body.append(lower);
+    open();
+    lifecycle.left();
+    await expect.poll(() => document.body.classList.contains('p-overflow-hidden')).toBe(true);
+    lower.remove();
+  });
+
+  it('leaves the lock off when no modal remains', async () => {
+    const lifecycle = start();
+    open();
+    lifecycle.left();
+    TestBed.tick();
+    await new Promise<void>((resolve) => {
+      requestAnimationFrame(() => {
+        resolve();
+      });
+    });
+
+    expect(document.body.classList.contains('p-overflow-hidden')).toBe(false);
+  });
+});
+
+describe('_overlayFocusTarget', () => {
+  let root: HTMLElement;
+
+  beforeEach(() => {
+    root = document.createElement('div');
+    root.innerHTML =
+      '<span id="plain">x</span><div id="host"><i></i><a id="link" href="#a">a</a></div>';
+    document.body.append(root);
+  });
+
+  afterEach(() => {
+    root.remove();
+  });
+
+  const part = (id: string): HTMLElement => {
+    const found = root.querySelector<HTMLElement>(`#${id}`);
+    if (!found) {
+      throw new Error(`#${id} is missing`);
+    }
+    return found;
+  };
+
+  it('is the target when it can take focus', () => {
+    expect(_overlayFocusTarget(part('link'))).toBe(part('link'));
+  });
+
+  it('is the first focusable descendant otherwise, from an element or an ElementRef', () => {
+    expect(_overlayFocusTarget(part('host'))).toBe(part('link'));
+    expect(_overlayFocusTarget(new ElementRef(part('host')))).toBe(part('link'));
+  });
+
+  it('is null when nothing in it can take focus, and for anything that is not an element', () => {
+    expect(_overlayFocusTarget(part('plain'))).toBeNull();
+    expect(_overlayFocusTarget(null)).toBeNull();
+    expect(_overlayFocusTarget(undefined)).toBeNull();
+    expect(_overlayFocusTarget({})).toBeNull();
+  });
+});
+
 /** A component that holds the gate: the overlay's host, with a control in it. */
 @Component({
   selector: 'wj-escape-gate-host',
@@ -344,6 +568,120 @@ describe('_overlayEscapeGate', () => {
     press(document.body);
 
     expect(reachedDocument).toHaveBeenCalledTimes(1);
+  });
+
+  describe('stacked overlays', () => {
+    /** The roots a spec attached, so the next one starts without them. */
+    const attached: HTMLElement[] = [];
+
+    afterEach(() => {
+      for (const element of attached.splice(0)) {
+        element.remove();
+      }
+    });
+
+    interface Stacked {
+      host: GateHost;
+      input: HTMLInputElement;
+      element: HTMLElement;
+      fixture: ComponentFixture<GateHost>;
+    }
+
+    /** Renders a host. One given a `parent` is moved into it, so its Escape passes through it. */
+    async function stacked(options: { closable: boolean; parent?: HTMLElement }): Promise<Stacked> {
+      const fixture = TestBed.createComponent(GateHost);
+      fixture.componentInstance.closable.set(options.closable);
+      await fixture.whenStable();
+      const element = fixture.nativeElement as HTMLElement;
+      // TestBed removes every earlier `#root<n>` element when it creates the next fixture.
+      element.removeAttribute('id');
+      (options.parent ?? document.body).append(element);
+      attached.push(element);
+      const input = element.querySelector('input');
+      if (!input) {
+        throw new Error('the input is missing');
+      }
+      return { host: fixture.componentInstance, input, element, fixture };
+    }
+
+    it('lets Escape through a non-closable overlay while a closable one is open above it', async () => {
+      const lower = await stacked({ closable: false });
+      const upper = await stacked({ closable: true, parent: lower.element });
+
+      press(upper.input);
+      press(lower.input);
+      press(document.body);
+
+      expect(reachedDocument).toHaveBeenCalledTimes(3);
+    });
+
+    it('blocks Escape again, from all three places, once the upper overlay has closed', async () => {
+      const lower = await stacked({ closable: false });
+      const upper = await stacked({ closable: true, parent: lower.element });
+      upper.host.open.set(false);
+      await upper.fixture.whenStable();
+
+      press(upper.input);
+      press(lower.input);
+      press(document.body);
+
+      expect(reachedDocument).not.toHaveBeenCalled();
+    });
+
+    it('blocks again once the upper overlay is destroyed while open', async () => {
+      const lower = await stacked({ closable: false });
+      const upper = await stacked({ closable: true, parent: lower.element });
+      upper.fixture.destroy();
+
+      press(lower.input);
+      press(document.body);
+
+      expect(reachedDocument).not.toHaveBeenCalled();
+    });
+
+    it('keeps blocking while the overlay above is non-closable too, and after it closes', async () => {
+      const lower = await stacked({ closable: false });
+      const upper = await stacked({ closable: false, parent: lower.element });
+
+      press(upper.input);
+      expect(reachedDocument).not.toHaveBeenCalled();
+
+      upper.host.open.set(false);
+      await upper.fixture.whenStable();
+      press(lower.input);
+      expect(reachedDocument).not.toHaveBeenCalled();
+    });
+
+    it('keeps the order of the rest when a middle overlay closes', async () => {
+      const lower = await stacked({ closable: false });
+      const middle = await stacked({ closable: false, parent: lower.element });
+      const upper = await stacked({ closable: true, parent: middle.element });
+
+      middle.host.open.set(false);
+      await middle.fixture.whenStable();
+      press(upper.input);
+      expect(reachedDocument).toHaveBeenCalledTimes(1);
+
+      upper.host.open.set(false);
+      await upper.fixture.whenStable();
+      press(lower.input);
+      press(document.body);
+      expect(reachedDocument).toHaveBeenCalledTimes(1);
+    });
+
+    it('joins with an always-true closable, which only adds it to the stack', async () => {
+      const lower = await stacked({ closable: false });
+      const top = await stacked({ closable: true });
+
+      press(document.body);
+      expect(reachedDocument).toHaveBeenCalledTimes(1);
+
+      top.host.open.set(false);
+      await top.fixture.whenStable();
+      press(document.body);
+      expect(reachedDocument).toHaveBeenCalledTimes(1);
+      expect(lower.host.open()).toBe(true);
+    });
   });
 });
 

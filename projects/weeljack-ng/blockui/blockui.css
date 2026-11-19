@@ -1,0 +1,20 @@
+/* The host is a block with no height: Optimus's element sits inside it until the first block, and
+   is then moved onto the target (or the page) as the mask. Before that Optimus gives it no
+   `display` rule, so its projected content would show in the page flow, the server render
+   included: it is hidden while it is here without the mask class. Blocked, the content sits
+   centred on the mask: `margin: auto` in Optimus's flex mask, kept off the mask's edges. The
+   wrapper paints no card, spinner or text of its own. */
+@layer wj {
+  :host {
+    display: block;
+  }
+
+  :host ::ng-deep .p-blockui:not(.p-overlay-mask) {
+    display: none;
+  }
+
+  .content {
+    margin: auto;
+    max-inline-size: calc(100% - 2rem);
+  }
+}

@@ -3,6 +3,13 @@
  * is `_`-prefixed and `@docs-private`, and the entry sits outside semver (01 Q4, ADR 0004).
  */
 export {
+  _CONFIRM_DIALOG_KEY,
+  _CONFIRM_POPUP_KEY,
+  _confirmationHosts,
+  _registerConfirmationHost,
+  _WJ_CONFIRMATIONS,
+} from './confirmation';
+export {
   _checkAriaOnHost,
   _checkWeeljackSetup,
   _warnOnce,
@@ -32,6 +39,7 @@ export {
   _overlayCloseLabel,
   _overlayDrawer,
   _overlayEscapeGate,
+  _overlayFocusTarget,
   _overlayLifecycle,
   type _OverlayLifecycle,
   type _OverlayRegion,

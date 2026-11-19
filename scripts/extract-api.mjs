@@ -498,14 +498,16 @@ for (const entry of entries) {
   document.types.sort((a, b) => a.name.localeCompare(b.name));
   document.services.sort((a, b) => a.name.localeCompare(b.name));
 
-  // Empty-entry guard (07 Q6): a shipped component entry must yield an input or an output.
+  // Empty-entry guard (07 Q6): a shipped component entry must yield an input or an output, or, for
+  // an entry whose public surface is a service, a public service method.
   const memberCount = document.classes.reduce(
     (total, item) => total + item.inputs.length + item.outputs.length + item.models.length,
     0,
   );
-  if (document.classes.length === 0 || memberCount === 0) {
+  const methodCount = document.services.reduce((total, item) => total + item.methods.length, 0);
+  if ((document.classes.length === 0 || memberCount === 0) && methodCount === 0) {
     failures.push(
-      `weeljack-ng/${entry}: the extractor found ${String(document.classes.length)} component(s) and ${String(memberCount)} input/output member(s). A shipped component entry must yield at least one. Check ${relative(root, join(libraryRoot, entry, 'public-api.ts'))}, or the extractor itself (undocumented API; fallback: Compodoc 2.0 JSON, 07 Q6).`,
+      `weeljack-ng/${entry}: the extractor found ${String(document.classes.length)} component(s), ${String(memberCount)} input/output member(s) and ${String(methodCount)} service method(s). A shipped component entry must yield at least one input or output, or a service method. Check ${relative(root, join(libraryRoot, entry, 'public-api.ts'))}, or the extractor itself (undocumented API; fallback: Compodoc 2.0 JSON, 07 Q6).`,
     );
     continue;
   }

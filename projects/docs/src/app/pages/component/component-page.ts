@@ -44,7 +44,9 @@ export class ComponentPage {
 
   protected readonly importLine = computed(() => {
     const api = this.api();
-    return `import { ${api.classes.map((item) => item.name).join(', ')} } from '${api.importPath}';`;
+    // An entry with no component (the dynamic dialog) imports its services.
+    const names = (api.classes.length > 0 ? api.classes : api.services).map((item) => item.name);
+    return `import { ${names.join(', ')} } from '${api.importPath}';`;
   });
 
   protected readonly examples = computed(() =>
@@ -79,7 +81,9 @@ export class ComponentPage {
 
   /** The mapping sentence's selectors: the page's own, and Optimus's (`optimusSelector`). */
   protected readonly selectors = computed(() => ({
-    weeljack: this.components()[0]?.api.selector ?? `wj-${this.entry()}`,
+    // An entry with no component (the dynamic dialog) names its first service instead.
+    weeljack:
+      this.components()[0]?.api.selector ?? this.api().services[0]?.name ?? `wj-${this.entry()}`,
     optimus: this.doc().optimusSelector ?? `p-${this.entry()}`,
   }));
 }

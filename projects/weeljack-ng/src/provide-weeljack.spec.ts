@@ -299,6 +299,35 @@ describe('provideWeeljack', () => {
         /\.p-animateonscroll \{ opacity: 1 !important; animation: [^;]*none[^;]*!important; transition: none !important/,
       );
     });
+
+    it('shows the tooltip bubble fully opaque at once under reduced motion', async () => {
+      await render();
+      // Optimus's fade writes an inline opacity from JavaScript, as the bubble is being faded in.
+      const bubble = document.createElement('div');
+      bubble.className = 'p-tooltip p-component';
+      bubble.style.opacity = '0.3';
+      document.body.append(bubble);
+      const rule = mediaRules('prefers-reduced-motion: reduce').find((media) =>
+        media.cssText.includes('.p-tooltip'),
+      );
+
+      if (!rule) {
+        throw new Error('the reduced-motion block has no tooltip rule');
+      }
+      expect(rule.cssText).toMatch(/\.p-tooltip \{ opacity: 1 !important; \}/);
+      // Control: the reader has no reduced-motion preference, so the fade's opacity stands.
+      expect(getComputedStyle(bubble).opacity).toBe('0.3');
+
+      // Widen the real rule in place, so the shipped cascade order is what is tested.
+      const original = rule.media.mediaText;
+      try {
+        rule.media.mediaText = 'all';
+        expect(getComputedStyle(bubble).opacity).toBe('1');
+      } finally {
+        rule.media.mediaText = original;
+      }
+      expect(getComputedStyle(bubble).opacity).toBe('0.3');
+    });
   });
 
   describe('line-height rule', () => {

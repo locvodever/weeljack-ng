@@ -2,6 +2,7 @@
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { Component, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
+import { Dialog } from '@openng/optimus-ui/dialog';
 import type { MockInstance } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
 import { provideWeeljack } from 'weeljack-ng';
@@ -14,6 +15,7 @@ import {
   type WjDrawerPt,
 } from 'weeljack-ng/drawer';
 import { WjDrawerHarness } from 'weeljack-ng/drawer/testing';
+import { _overlayEscapeGate } from 'weeljack-ng/private';
 import { WjSelect } from 'weeljack-ng/select';
 import { WjSelectHarness } from 'weeljack-ng/select/testing';
 import { expectNoAxeViolations } from '../spec-support/axe';
@@ -92,6 +94,30 @@ class AriaOnHostHost {}
   template: `<wj-drawer header="Filters" />`,
 })
 class RoutedHost {}
+
+/** A drawer with a spec-local overlay on top of it: Optimus Dialog, on the seam's stack. */
+@Component({
+  selector: 'wj-drawer-stacked-host',
+  imports: [WjDrawer, Dialog],
+  template: `
+    <wj-drawer [(visible)]="drawer" header="Filters" [closable]="closable()">
+      <p>Narrow the list down.</p>
+    </wj-drawer>
+    <p-dialog [(visible)]="above" header="Above" [modal]="true">
+      <button id="above-action">Action</button>
+    </p-dialog>
+  `,
+})
+class StackedHost {
+  readonly drawer = signal(false);
+  readonly above = signal(false);
+  readonly closable = signal(true);
+
+  constructor() {
+    // Joins the stack with no `closable` of its own, as the confirm dialog and the popover do.
+    _overlayEscapeGate(this.above, () => true);
+  }
+}
 
 type Scheme = 'light' | 'dark';
 
@@ -1138,6 +1164,46 @@ describe('WjDrawer', () => {
           await expectNoAxeViolations(rendered.element);
         });
       });
+    }
+  });
+});
+
+describe('WjDrawer, under a stacked overlay', () => {
+  beforeEach(() => {
+    vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    reduceMotion(true);
+  });
+
+  it('stays open when Escape closes an overlay above it after its closable turned false', async () => {
+    TestBed.configureTestingModule({ providers: [provideWeeljack()] });
+    const fixture = TestBed.createComponent(StackedHost);
+    const host = fixture.componentInstance;
+    try {
+      host.drawer.set(true);
+      await fixture.whenStable();
+      await expect.poll(maskEl).not.toBeNull();
+      host.closable.set(false);
+      await fixture.whenStable();
+      host.above.set(true);
+      await fixture.whenStable();
+      await expect.poll(() => document.activeElement?.id).toBe('above-action');
+
+      await userEvent.keyboard('{Escape}');
+      await expect.poll(() => host.above()).toBe(false);
+      await expect.poll(() => document.querySelector('.p-dialog-mask')).toBeNull();
+      await fixture.whenStable();
+
+      expect(host.drawer()).toBe(true);
+      expect(maskEl()).not.toBeNull();
+      expect(drawerEl()).not.toBeNull();
+    } finally {
+      host.above.set(false);
+      host.closable.set(true);
+      host.drawer.set(false);
+      await fixture.whenStable();
+      await expect.poll(maskEl).toBeNull();
+      await expect.poll(() => document.querySelector('.p-dialog-mask')).toBeNull();
+      document.body.classList.remove('p-overflow-hidden');
     }
   });
 });
