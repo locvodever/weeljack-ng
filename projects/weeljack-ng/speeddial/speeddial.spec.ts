@@ -1310,25 +1310,54 @@ describe('WjSpeedDial', () => {
       await expect.poll(activeLabel).toBe('Edit');
     });
 
-    it('pins Optimus: the arrows also land on a disabled action, which runs nothing', async () => {
+    it('the arrows skip a disabled action: from the first, the next lands on the third', async () => {
       const run = vi.fn<(event: WjMenuItemCommandEvent) => void>();
       await render((host) => {
         host.model.set([
           { label: 'Edit', command: run },
+          { label: 'Download', disabled: true },
           { label: 'Share', command: run },
-          { label: 'Download', disabled: true, command: run },
         ]);
       });
       await tabOntoToggle();
       await userEvent.keyboard('{ArrowDown}');
       await expect.poll(activeLabel).toBe('Edit');
-      await userEvent.keyboard('{ArrowUp}{ArrowUp}');
-      await expect.poll(activeLabel).toBe('Download');
 
-      await userEvent.keyboard('{Enter}');
+      await userEvent.keyboard('{ArrowUp}');
+      await expect.poll(activeLabel).toBe('Share');
+      await userEvent.keyboard('{ArrowDown}');
+      await expect.poll(activeLabel).toBe('Edit');
+      await userEvent.keyboard('{End}');
+      await expect.poll(activeLabel).toBe('Share');
+      await userEvent.keyboard('{Home}');
+      await expect.poll(activeLabel).toBe('Edit');
+    });
 
-      await expect.poll(() => document.activeElement).toBe(toggleEl());
-      expect(run).not.toHaveBeenCalled();
+    it('marks a disabled action for Optimus with a hidden element, never rendered or exposed', async () => {
+      await render();
+      await open();
+
+      const markers = Array.from(hostEl().querySelectorAll<HTMLElement>('a.p-disabled'));
+      expect(markers).toHaveLength(1);
+      expect(markers[0]?.hidden).toBe(true);
+      expect(markers[0]?.getBoundingClientRect().width).toBe(0);
+      expect(itemEl('Download').querySelector('a.p-disabled')).toBe(markers[0]);
+      expect(await exposedMenuItems()).toEqual(['Copy link', 'Download', 'Edit', 'Share']);
+    });
+
+    it('does not throw when every action is disabled: the arrows have nowhere to land', async () => {
+      await render((host) => {
+        host.model.set([
+          { label: 'Edit', disabled: true },
+          { label: 'Share', disabled: true },
+        ]);
+      });
+      await tabOntoToggle();
+
+      await userEvent.keyboard('{ArrowDown}');
+
+      await settled();
+      expect(document.activeElement).toBe(listEl());
     });
 
     it('Enter runs the active action and puts focus back on the toggle', async () => {
@@ -1348,17 +1377,34 @@ describe('WjSpeedDial', () => {
       expect(document.activeElement).toBe(toggleEl());
     });
 
-    it('pins Optimus: Enter on the list moves focus to the toggle during keydown, so its click opens the dial again', async () => {
-      await render();
+    it('Enter on the list runs the active action and the dial stays closed after the key press', async () => {
+      const run = vi.fn<(event: WjMenuItemCommandEvent) => void>();
+      const { fixture } = await render((host) => {
+        host.model.set([{ label: 'Edit', command: run }, { label: 'Share' }]);
+      });
       await tabOntoToggle();
       await userEvent.keyboard('{ArrowDown}');
       await expect.poll(activeLabel).toBe('Edit');
 
       await userEvent.keyboard('{Enter}');
 
+      await expect.poll(() => run.mock.calls.length).toBe(1);
       await expect.poll(() => document.activeElement).toBe(toggleEl());
+      await expect.poll(isOpen).toBe(false);
+      await fixture.whenStable();
+      expect(isOpen()).toBe(false);
+      expect(run).toHaveBeenCalledTimes(1);
+    });
+
+    it('Enter on the toggle still opens and closes the dial', async () => {
+      await render();
+      await tabOntoToggle();
+
+      await userEvent.keyboard('{Enter}');
       await settled();
-      expect(isOpen()).toBe(true);
+      expect(document.activeElement).toBe(toggleEl());
+      await userEvent.keyboard('{Enter}');
+      await expect.poll(isOpen).toBe(false);
     });
 
     it('Space runs the active action, closes the dial and puts focus back on the toggle', async () => {
@@ -1381,11 +1427,12 @@ describe('WjSpeedDial', () => {
       ['Enter', '{Enter}'],
       ['Space', ' '],
     ])(
-      'pins Optimus: %s on an action reached with Tab runs nothing, because Optimus’s list takes the key and moves focus to the toggle',
+      '%s on an action reached with Tab runs it once, closes the dial and puts focus on the toggle',
       async (_name, key) => {
         const run = vi.fn<(event: WjMenuItemCommandEvent) => void>();
-        await render((host) => {
-          host.model.set([{ label: 'Edit', command: run }, { label: 'Share' }]);
+        const edit: WjMenuItem = { label: 'Edit', command: run };
+        const { fixture } = await render((host) => {
+          host.model.set([edit, { label: 'Share' }]);
         });
         await open();
         await tabOntoToggle();
@@ -1394,8 +1441,13 @@ describe('WjSpeedDial', () => {
 
         await userEvent.keyboard(key);
 
+        await expect.poll(() => run.mock.calls.length).toBe(1);
+        expect(run.mock.calls[0]?.[0].item).toBe(edit);
+        await expect.poll(isOpen).toBe(false);
         await expect.poll(() => document.activeElement).toBe(toggleEl());
-        expect(run).not.toHaveBeenCalled();
+        await fixture.whenStable();
+        expect(isOpen()).toBe(false);
+        expect(run).toHaveBeenCalledTimes(1);
       },
     );
 

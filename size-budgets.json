@@ -55,6 +55,12 @@
       "optimus": "treeselect",
       "kb": 2.75,
       "note": "Raised under CLAUDE.md § 5's rule (Loc, 2026-11-19): S4, the set size counts siblings (FR-17), a partly checked node reads aria-checked=\"mixed\" (FR-16), and Home and End move focus in the panel (FR-18). Type-ahead did not fit the 2.75 KB cap."
+    },
+    {
+      "entry": "weeljack-ng/speeddial",
+      "optimus": "speeddial",
+      "kb": 2.75,
+      "note": "Raised under CLAUDE.md § 5's rule (Loc, 2026-11-19): S3, Enter or Space on an action reached with Tab runs it, Enter on the list no longer reopens the dial, and the arrow keys skip a disabled action (FR-20)."
     }
   ]
 }

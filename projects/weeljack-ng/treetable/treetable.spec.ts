@@ -2032,18 +2032,31 @@ describe('WjTreeTable', () => {
       }
     });
 
-    it('sorts with Enter on a header, and not with Space: Optimus listens to Enter only', async () => {
+    it('sorts with Enter and with Space on a header, and Space does not scroll the page', async () => {
       const { element, table } = await render('light', (host) => {
         host.sortable.set(true);
       });
       part(element, 'th').focus();
 
       await userEvent.keyboard(' ');
-      expect(await table.getSortOrder('Name')).toBe('none');
+      expect(await table.getSortOrder('Name')).toBe('ascending');
+      await userEvent.keyboard(' ');
+      expect(await table.getSortOrder('Name')).toBe('descending');
       await userEvent.keyboard('{Enter}');
       expect(await table.getSortOrder('Name')).toBe('ascending');
-      await userEvent.keyboard('{Enter}');
-      expect(await table.getSortOrder('Name')).toBe('descending');
+      const space = new KeyboardEvent('keydown', { key: ' ', bubbles: true, cancelable: true });
+      part(element, 'th').dispatchEvent(space);
+      expect(space.defaultPrevented).toBe(true);
+    });
+
+    it('leaves Space on an unsortable header alone', async () => {
+      const { element } = await render('light', (host) => {
+        host.sortable.set(true);
+      });
+      const plain = part(element, 'th:nth-child(3)');
+      const space = new KeyboardEvent('keydown', { key: ' ', bubbles: true, cancelable: true });
+      plain.dispatchEvent(space);
+      expect(space.defaultPrevented).toBe(false);
     });
 
     it('changes the page with Enter and Space on a page button, and leaves First Page a Tab stop on page 1', async () => {

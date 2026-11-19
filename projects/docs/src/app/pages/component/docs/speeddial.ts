@@ -74,7 +74,12 @@ export const DOC: ComponentDoc = {
     {
       key: 'Enter, Space',
       effect:
-        'On the list, runs the active action’s `command`, closes the dial and puts focus back on the toggle. A disabled action runs nothing.',
+        'On the list, runs the active action’s `command`, closes the dial and puts focus back on the toggle. A disabled action is skipped by the arrow keys, so it is never the active one.',
+    },
+    {
+      key: 'Enter, Space on an action',
+      effect:
+        'On an action reached with Tab, runs its `command` once, closes the dial and puts focus back on the toggle.',
     },
     { key: 'Escape', effect: 'Closes the dial and puts focus back on the toggle.' },
   ],
@@ -89,9 +94,9 @@ export const DOC: ComponentDoc = {
     'Gap (Optimus), fixed: the circle types did not centre on the toggle. Optimus’s root is not positioned, so the actions anchored to whatever ancestor was; its 8 px root gap moved the circle’s centre off the toggle; and it never sets the half-step it adds to each action’s position (it tries before its buttons have attributes), leaving the circle 4 px up and to the left. Each is fixed, so the actions sit on one circle exactly around the toggle’s centre.',
     'Gap (Optimus), fixed: the small icon-only button put its text padding back, which squeezed a 16 px icon to 10 px. The action’s padding is zero, so the icon is 16 × 16 px, centred in the 36 × 36 px button.',
     'Gap (Optimus), fixed: the actions, the toggle’s turn and the list animate over 200 to 800 ms, which does not follow the reduced-motion setting. Under `prefers-reduced-motion: reduce` their transitions are stopped, so the dial opens and closes in one frame and the plus becomes a cross at once.',
-    'Gap (Optimus), listed: the arrow keys also land on a disabled action. Optimus skips only an `a.p-disabled`, which its button rendering never has. The action runs nothing, because a disabled item has no command, but it takes the active ring.',
-    'Gap (Optimus), listed: Enter on the list runs the active action and puts focus on the toggle during the key press, so the browser’s Enter then clicks the toggle and opens the dial again. The command ran and focus is on the toggle, but the dial is open. Space does not, and closes it.',
-    'Gap (Optimus), listed: Enter or Space on an action reached with Tab runs nothing. Optimus’s list takes the key, finds no active action and moves focus to the toggle, so the press ends there. A click, and the arrow keys with Enter on the list, run the action. The fix is a key handler on the action itself, which a wrapper this small cannot carry within its size budget today.',
+    'Gap, fixed: the arrow keys landed on a disabled action. Optimus skips only an item whose `a` is `p-disabled`, which its button rendering never has, so each disabled action is drawn with a hidden `a.p-disabled` beside its button (never rendered, not in the accessibility tree). The arrow keys, Home and End now skip it. While every action is disabled the marker is left off, because Optimus throws when it skips them all; the arrows then land on a disabled action, which runs nothing.',
+    'Gap, fixed: Enter on the list ran the active action and put focus on the toggle during the key press, so the browser’s Enter then clicked the toggle and opened the dial again. The default of an Enter pressed on the list is now cancelled after Optimus’s handler, so the command runs and the dial stays closed, as Space already did.',
+    'Gap, fixed: Enter or Space on an action reached with Tab ran nothing, because Optimus’s list took the key, found no active action and moved focus to the toggle. The action now handles both keys itself: it runs its `command` once as a click does, closes the dial and puts focus on the toggle, since the closed actions are `inert`.',
     'Gap (Optimus), listed: with a slot that appears after the dial was created, Optimus keeps its own empty buttons. Give the slot at creation.',
     'The tooltip inputs are not exposed: `tooltipOptions` can switch on a raw HTML write, so no tooltip ever appears, on hover or on focus. The icon is therefore the only visible hint of an action (it has no visible name).',
     'The toggle is 44 × 44 px and each action 36 × 36 px, both above the 24 × 24 px target size; the 36 px actions sit between the 24 px floor and the 44 px of the toggle, as the menu family’s rows do.',
