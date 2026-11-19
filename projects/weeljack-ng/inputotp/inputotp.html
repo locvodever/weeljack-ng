@@ -17,6 +17,7 @@
       [attr.type]="mask() ? 'password' : 'text'"
       [attr.inputmode]="integerOnly() ? 'numeric' : 'text'"
       [attr.maxlength]="index === 1 ? length() : 1"
+      [attr.autocomplete]="index === 1 ? 'one-time-code' : undefined"
       [attr.required]="required() ? '' : undefined"
       [attr.disabled]="isDisabled() ? '' : undefined"
       [pSize]="size()"

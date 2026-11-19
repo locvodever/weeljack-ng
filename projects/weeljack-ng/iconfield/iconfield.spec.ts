@@ -305,6 +305,48 @@ describe('WjIconField', () => {
     });
   });
 
+  describe('icon size', () => {
+    // Optimus sizes the icon on `.p-inputfield-sm/-lg`, which a text input never carries.
+    it('is 14, 16 and 18 px beside a small, default and large input, leading or trailing', async () => {
+      const { fixture, host, element } = await render(Host);
+      host.leading.set(true);
+      host.trailing.set(true);
+      await fixture.whenStable();
+
+      for (const [size, expected] of [
+        ['small', 14],
+        [undefined, ICON],
+        ['large', 18],
+      ] as const) {
+        host.size.set(size);
+        await fixture.whenStable();
+
+        for (const id of ['#lead', '#trail']) {
+          const { width, height } = box(element, id);
+          expect([width, height], `${id} size ${String(size)}`).toEqual([expected, expected]);
+        }
+      }
+    });
+
+    it('keeps the icon centred on the input at every size', async () => {
+      const { fixture, host, element } = await render(Host);
+      host.leading.set(true);
+      await fixture.whenStable();
+
+      for (const size of ['small', undefined, 'large'] as const) {
+        host.size.set(size);
+        await fixture.whenStable();
+        const icon = box(element, '#lead');
+        const input = box(element, 'input');
+
+        expect(icon.top + icon.height / 2, `size ${String(size)}`).toBeCloseTo(
+          input.top + input.height / 2,
+          0,
+        );
+      }
+    });
+  });
+
   describe('icon colour', () => {
     it('is Optimus’s icon colour, and the input’s invalid and disabled states leave it alone', async () => {
       const { fixture, host, element } = await render(Host);

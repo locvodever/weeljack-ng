@@ -840,6 +840,23 @@ describe('WjTreeSelect', () => {
       await closePanel(select, element);
     });
 
+    it('lands a pcTree node part on the first level of nodes only: Optimus hands the nodes below no pt', async () => {
+      const { fixture, element } = await render((host) => {
+        host.pt.set({ pcTree: { node: { 'data-probe': 'node' } } });
+        host.value.set([dept('infra')]);
+      });
+      const select = await harnessOf(fixture);
+      await openPanel(select, element);
+
+      // Pins an Optimus defect (treeselect.mjs:1048, tree.mjs:722): the nodes below level 1 get no
+      // pt. The docs page lists it; a fix upstream flips the second line and this spec with it.
+      expect(itemOf(element, 'eng').getAttribute('data-probe')).toBe('node');
+      expect(itemOf(element, 'platform').hasAttribute('data-probe')).toBe(false);
+      expect(itemOf(element, 'infra').hasAttribute('data-probe')).toBe(false);
+
+      await closePanel(select, element);
+    });
+
     it('keeps a consumer pt of any form on the parts the wrapper also routes into', async () => {
       const { fixture, element } = await render((host) => {
         host.pt.set({ dropdown: 'consumer-chevron', hiddenInput: () => ({ 'data-fn': 'y' }) });

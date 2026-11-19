@@ -71,7 +71,7 @@ export class WjFileUpload {
   });
   /** Emits `upload` as soon as files are chosen, with no Upload and Cancel buttons. */
   readonly auto = input(false, { transform: booleanAttribute });
-  /** Disables Choose, Upload, Cancel and dropping. */
+  /** Disables Choose, Upload, Cancel, each queued file’s Remove, and dropping. */
   readonly disabled = input(false, { transform: booleanAttribute });
   /** Accessible name of the Choose button. Keep its visible word "Choose" in it. */
   readonly ariaLabel = input<string>();
@@ -113,7 +113,8 @@ export class WjFileUpload {
 
   /**
    * `pt` forwarded as given, plus what this wrapper routes into Optimus's parts: the ARIA inputs
-   * on the Choose button; a name on each Remove button, which is icon-only; the progress bar,
+   * on the Choose button; a name on each Remove button, which is icon-only, and native `disabled` on
+   * it while the component is (Optimus leaves it active); the progress bar,
    * hidden from view and from assistive technology (`hidden`, which also takes it out of the
    * accessibility tree), because with no request it never moves and has no name; and safe motion
    * on the validation messages, so reduced motion stops their enter.
@@ -128,7 +129,10 @@ export class WjFileUpload {
             'aria-describedby': this.ariaDescribedBy(),
           }),
           'pcFileRemoveButton.root',
-          { 'aria-label': typeof this.removeLabel === 'string' ? this.removeLabel : undefined },
+          {
+            'aria-label': typeof this.removeLabel === 'string' ? this.removeLabel : undefined,
+            disabled: this.disabled() ? 'true' : undefined,
+          },
         ),
         'pcProgressBar.root',
         { hidden: 'true' },

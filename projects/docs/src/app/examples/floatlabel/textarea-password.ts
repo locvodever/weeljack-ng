@@ -24,7 +24,7 @@ import { WjTextarea } from 'weeljack-ng/textarea';
     :host {
       display: grid;
       gap: 24px;
-      padding-block-start: 16px;
+      padding-block-start: 24px;
       inline-size: min(100%, 24rem);
     }
   `,
