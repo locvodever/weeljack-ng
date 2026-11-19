@@ -151,6 +151,11 @@ async function render(
   TestBed.configureTestingModule({ providers: [provideWeeljack({ darkMode: 'class' })] });
   const fixture = TestBed.createComponent(Host);
   setup(fixture.componentInstance);
+  // `createComponent` builds the legend now, but Optimus injects its styles in the first change
+  // detection, which the zoneless scheduler runs later. A frame in between styles the legend
+  // without them, and Aura's colour transitions then fade it to the themed colours: axe would read
+  // dark text on the dark background mid-fade. Running the first pass now leaves no such frame.
+  fixture.detectChanges();
   await fixture.whenStable();
   const element = fixture.nativeElement as HTMLElement;
   // A render without Optimus's styles would pass for the wrong reason: fail loudly instead.
