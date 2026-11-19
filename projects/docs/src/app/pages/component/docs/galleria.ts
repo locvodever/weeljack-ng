@@ -57,7 +57,7 @@ export const DOC: ComponentDoc = {
     {
       key: 'Tab',
       effect:
-        'Moves to the previous button, then the next button, then on. A button at an end looks dim but stays a Tab stop. In full screen focus starts on Close, and Tab stays inside the gallery.',
+        'Moves to the previous button, then the next button, then on. A button at an end (the previous button on the first item, the next on the last, unless `circular`) is skipped. In full screen focus starts on Close, and Tab stays inside the gallery.',
     },
     {
       key: 'Enter or Space',
@@ -76,7 +76,7 @@ export const DOC: ComponentDoc = {
     'Optimus marks the item `role="group"` with `aria-roledescription="Slide"` and names it by its number alone (`aria.slideNumber`, “1” in English). Set `aria.slideNumber` in your translation to a phrase such as “Photo {slideNumber}” for a fuller name.',
     'Every `img` in a template is yours: give each item image a descriptive `alt`.',
     'The full screen is a modal `role="dialog"` named by `ariaLabel`. Focus moves to Close when it opens, Tab stays inside, and the page behind does not scroll. Optimus wires no Escape: `wj-galleria` closes the gallery on Escape and returns focus to the element that opened it, whichever way it closed (Close, Escape, the backdrop or the app setting `visible` to `false`).',
-    'Listed gap: the previous button on the first item, and the next button on the last (not circular), look dim but stay Tab stops and are not announced as disabled. Optimus would step past the end when Enter reaches one, handing your template an `undefined` item: `wj-galleria` stops that click.',
+    'Gap, fixed: the previous button on the first item, and the next button on the last (not circular), looked dim but stayed Tab stops and were not announced as disabled. Each now has `aria-disabled="true"` and `tabindex="-1"`, so it leaves the Tab order and is read as unavailable, in the full screen too; both come off when the item changes. It is not `disabled`, and Optimus would still step past the end when Enter reached one, handing your template an `undefined` item: `wj-galleria` stops that click.',
     'There is no thumbnail strip, and no indicators: the navigators are the way to move. Optimus’s strip is a `tablist` of `div`s that are not tabs, with `aria-selected` on a `div` and `aria-label` on a role-less `div`, and its arrow keys miscount; making it clean takes more code than the entry’s size limit leaves. It can return as an additive minor.',
     'Nothing moves on its own: there is no autoplay, so WCAG 2.2.2 (pause, stop, hide) does not apply. The full screen fades and scales in over 300 ms, and `wj-galleria` makes that motion respect `prefers-reduced-motion`: under reduced motion it appears and disappears at once.',
     'An `aria-*` attribute on `wj-galleria` is not forwarded and raises `WJ0003` in development: use `ariaLabel` or `ariaLabelledBy` instead.',

@@ -31,6 +31,12 @@
       "entry": "weeljack-ng/locale",
       "optimus": "own",
       "note": "Complete UI translations: vi's data, and en re-exported from private."
+    },
+    {
+      "entry": "weeljack-ng/carousel",
+      "optimus": "carousel",
+      "kb": 2.75,
+      "note": "Raised under CLAUDE.md § 5's rule (Loc, 2026-11-19): a dimmed navigator leaves the Tab order and reads as disabled (FR-9), and Home and End move focus on the indicators (FR-10)."
     }
   ]
 }

@@ -3,6 +3,7 @@ import {
   Component,
   ElementRef,
   ViewEncapsulation,
+  afterEveryRender,
   afterNextRender,
   booleanAttribute,
   computed,
@@ -34,8 +35,9 @@ import type { WjGalleriaPt } from './galleria-types';
  * - There is no thumbnail strip (`[showThumbnails]="false"`): with it the entry weighs 3.29 KB
  *   against a limit of 2.75 KB (21), so the PRD's fallback ships without it (� 9 item 6).
  * - The item navigators carry a static `role="navigation"` and no name; both are routed.
- * - A navigator at an end is only dimmed, and Optimus still steps past the end on Enter: the host
- *   stops that click (`stopDimmed`).
+ * - A navigator at an end is only dimmed (`p-disabled`), and Optimus still steps past the end on
+ *   Enter: the host stops that click (`stopDimmed`), and `dim`, after every render, takes the
+ *   button out of the Tab order and says it is disabled.
  * - Optimus binds nothing to Escape, so the document listener below closes the full screen; focus
  *   goes back to the opener as `visible` turns false.
  */
@@ -110,6 +112,9 @@ export class WjGalleria<T = unknown> {
     afterNextRender(() => {
       host.addEventListener('click', stopDimmed, true);
     });
+    afterEveryRender(() => {
+      dim(host);
+    });
     const lifecycle = _overlayLifecycle(this.visible, () => undefined);
     effect(() => {
       if (!this.visible()) {
@@ -128,10 +133,30 @@ export class WjGalleria<T = unknown> {
   }
 }
 
+/** Sets an attribute only when it differs, so a render that changes nothing writes nothing. */
+function put(element: Element, name: string, value: string | null): void {
+  if (element.getAttribute(name) !== value) {
+    if (value === null) {
+      element.removeAttribute(name);
+    } else {
+      element.setAttribute(name, value);
+    }
+  }
+}
+
+/** Makes each navigator button Optimus dims a non-stop that reads as disabled. */
+function dim(host: HTMLElement): void {
+  for (const button of host.querySelectorAll('[data-pc-group-section$="navigator"]')) {
+    const dimmed = button.classList.contains('p-disabled');
+    put(button, 'aria-disabled', dimmed ? 'true' : null);
+    put(button, 'tabindex', dimmed ? '-1' : null);
+  }
+}
+
 /**
  * Stops a click on a dimmed navigator before Optimus sees it. Dimmed (`p-disabled`) is only a look:
- * the pointer cannot reach it, but a navigator at an end stays a Tab stop, and Enter on it would move
- * Optimus past the last item (an `undefined` item reaches the app's template) or before the first.
+ * the pointer cannot reach it, and `dim` keeps it out of the Tab order, but a reader who still lands
+ * on it with Enter would move Optimus past the last item (an `undefined` item reaches the app's template) or before the first.
  */
 function stopDimmed(event: Event): void {
   if (event.target instanceof Element && event.target.closest('.p-disabled')) {

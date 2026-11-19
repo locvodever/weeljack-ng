@@ -59,7 +59,7 @@ export const DOC: ComponentDoc = {
     {
       key: 'Tab',
       effect:
-        'Moves to the previous button, the controls in the slides on screen, the next button, then the indicator of the current page. Slides off screen are skipped.',
+        'Moves to the previous button, the controls in the slides on screen, the next button, then the indicator of the current page. Slides off screen are skipped, and so is a navigator at an end (the previous button on the first page, the next on the last, unless `circular`).',
     },
     {
       key: 'Enter or Space',
@@ -69,6 +69,14 @@ export const DOC: ComponentDoc = {
       key: 'ArrowLeft or ArrowRight',
       effect: 'On an indicator: moves focus to the previous or next indicator.',
     },
+    {
+      key: 'Home',
+      effect: 'On an indicator: moves focus to the first indicator.',
+    },
+    {
+      key: 'End',
+      effect: 'On an indicator: moves focus to the last indicator.',
+    },
   ],
   aria: [
     '`ariaLabel` is required and names the carousel. Optimus 2.0.2 renders its root as `role="region"` with no name, an axe `landmark` failure; `ariaLabel` (or `ariaLabelledBy`) lands there. A missing `ariaLabel` is a compile error under `strictTemplates`. Name each carousel on a page differently.',
@@ -76,8 +84,8 @@ export const DOC: ComponentDoc = {
     'Optimus marks every slide off screen `aria-hidden` while its content stays focusable, an axe `aria-hidden-focus` failure as soon as a slide holds a link or a button. `wj-carousel` makes every slide off screen `inert`, the copies a circular carousel keeps included, and takes `inert` off a slide when it comes on screen. Optimus works out which slides are on screen one check late after it is created and after `value`, `numVisible` and `numScroll` change; `wj-carousel` asks it to check again.',
     'Slide changes are announced: Optimus ties `aria-live` to its autoplay, which is always off here, so `wj-carousel` sets `aria-live="polite"` on the content. A spec re-checks it after paging, a wrap and a change of inputs.',
     'Each indicator is a button named by the translation (`aria.pageLabel`, “Page 1” in English), and the current one has `aria-current="page"`. The visible bar stays 32 × 8 px; its hit box is 32 × 24 px. The bar is drawn in the preset’s control-boundary colour, which holds 3:1 against the page, where Optimus’s own is under 2:1.',
-    'Listed gap: on the indicators only ArrowLeft and ArrowRight move focus. Optimus wires no Home or End.',
-    'Listed gap: on the first page the previous button, and on the last page the next button (not circular), look dim but stay Tab stops and are not announced as disabled.',
+    'Gap, fixed: on the indicators only ArrowLeft and ArrowRight moved focus, because Optimus wires no Home or End. Home now moves focus to the first indicator and End to the last, through Optimus’s own `onHomeKey` and `onEndKey`. They only move focus, as the arrows do: Enter or Space then shows the page.',
+    'Gap, fixed: on the first page the previous button, and on the last page the next button (not circular), looked dim but stayed Tab stops and were not announced as disabled. The inner `<button>` of a dimmed navigator now has `aria-disabled="true"` and `tabindex="-1"`, so it leaves the Tab order and is read as unavailable; both come off again when the page changes. It is not `disabled`, so a pointer or a script can still reach it, and Optimus still ignores a step past the end.',
     'Nothing moves on its own: there is no autoplay, so WCAG 2.2.2 (pause, stop, hide) does not apply. Optimus’s slide runs a 500 ms transition that no option reaches; under `prefers-reduced-motion: reduce` `wj-carousel` makes it 1 ms. It is never `none`: the circular wrap finishes on the transition’s end, and without that event the carousel would stay on a copy.',
     'Optimus puts `autofocus="true"` on each navigator’s button. It does not move focus when the carousel renders (a spec pins this); it only leaves the attribute.',
     'An `aria-*` attribute on `wj-carousel` is not forwarded and raises `WJ0003` in development: use `ariaLabel` or `ariaLabelledBy` instead.',
