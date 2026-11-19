@@ -8,6 +8,7 @@ import { page, userEvent } from 'vitest/browser';
 import { provideWeeljack } from 'weeljack-ng';
 import { WjButton } from 'weeljack-ng/button';
 import { WjButtonHarness } from 'weeljack-ng/button/testing';
+import { WjDialog } from 'weeljack-ng/dialog';
 import { WjPopover, type WjPopoverPt } from 'weeljack-ng/popover';
 import { WjPopoverHarness } from 'weeljack-ng/popover/testing';
 import { _overlayEscapeGate } from 'weeljack-ng/private';
@@ -86,6 +87,43 @@ class LowerHost {
   constructor() {
     _overlayEscapeGate(this.visible, () => false);
   }
+}
+
+/** A popover with a `wj-dialog` that a button inside it opens: the dialog is the upper overlay. */
+@Component({
+  selector: 'wj-popover-over-dialog-host',
+  imports: [WjButton, WjDialog, WjPopover],
+  template: `
+    <wj-button id="trigger" label="Open" (click)="popover.toggle($event)" />
+    <wj-popover #popover ariaLabel="Outer">
+      <button id="open-dialog" type="button" (click)="dialog.set(true)">Dialog</button>
+    </wj-popover>
+    <wj-dialog [(visible)]="dialog" header="Above">
+      <button id="dialog-action" type="button">Action</button>
+    </wj-dialog>
+  `,
+})
+class OverDialogHost {
+  readonly popover = viewChild.required(WjPopover);
+  readonly dialog = signal(false);
+}
+
+/** A `wj-dialog` with a popover that a button inside it opens: the popover is the upper overlay. */
+@Component({
+  selector: 'wj-popover-under-dialog-host',
+  imports: [WjDialog, WjPopover],
+  template: `
+    <wj-dialog [(visible)]="dialog" header="Below">
+      <button id="popover-opener" type="button" (click)="popover.toggle($event)">Open</button>
+    </wj-dialog>
+    <wj-popover #popover ariaLabel="Inner">
+      <button id="inner" type="button">Inner</button>
+    </wj-popover>
+  `,
+})
+class UnderDialogHost {
+  readonly popover = viewChild.required(WjPopover);
+  readonly dialog = signal(true);
 }
 
 /** A consumer who writes aria-* on the host. */
@@ -840,6 +878,72 @@ describe('WjPopover', () => {
       expect(fixture.componentInstance.visible()).toBe(true);
       expect(document.querySelector('.p-dialog-mask')).not.toBeNull();
       await closeBoth(fixture);
+    });
+
+    const dialogEl = (): HTMLElement | null => document.querySelector<HTMLElement>('.p-dialog');
+
+    /** Waits until the dialog is on the page and focus has moved into it. */
+    async function dialogOpened(): Promise<void> {
+      await expect.poll(() => dialogEl() !== null).toBe(true);
+      await expect.poll(() => dialogEl()?.contains(document.activeElement)).toBe(true);
+    }
+
+    it('closes only the dialog opened above it on Escape, then itself on the next', async () => {
+      TestBed.configureTestingModule({ providers: [provideWeeljack()] });
+      const fixture = TestBed.createComponent(OverDialogHost);
+      const host = fixture.componentInstance;
+      await fixture.whenStable();
+      try {
+        await userEvent.click(find(document, '#trigger button', HTMLElement));
+        await opened();
+        await userEvent.click(find(document, '#open-dialog', HTMLElement));
+        await dialogOpened();
+
+        await userEvent.keyboard('{Escape}');
+        await expect.poll(dialogEl).toBeNull();
+        await fixture.whenStable();
+        expect(panelEl()).not.toBeNull();
+        expect(host.dialog()).toBe(false);
+
+        await userEvent.keyboard('{Escape}');
+        await gone();
+        await expect
+          .poll(() => document.activeElement === find(document, '#trigger button', HTMLElement))
+          .toBe(true);
+      } finally {
+        host.dialog.set(false);
+        host.popover().hide();
+        await fixture.whenStable();
+        await expect.poll(dialogEl).toBeNull();
+        await gone();
+        await expect.poll(() => document.body.classList.contains('p-overflow-hidden')).toBe(false);
+      }
+    });
+
+    it('leaves a dialog below it open on its Escape', async () => {
+      TestBed.configureTestingModule({ providers: [provideWeeljack()] });
+      const fixture = TestBed.createComponent(UnderDialogHost);
+      const host = fixture.componentInstance;
+      await fixture.whenStable();
+      try {
+        await dialogOpened();
+        await userEvent.click(find(document, '#popover-opener', HTMLElement));
+        await opened();
+
+        await userEvent.keyboard('{Escape}');
+        await gone();
+        await fixture.whenStable();
+
+        expect(host.dialog()).toBe(true);
+        expect(dialogEl()).not.toBeNull();
+      } finally {
+        host.popover().hide();
+        host.dialog.set(false);
+        await fixture.whenStable();
+        await gone();
+        await expect.poll(dialogEl).toBeNull();
+        await expect.poll(() => document.body.classList.contains('p-overflow-hidden')).toBe(false);
+      }
     });
   });
 

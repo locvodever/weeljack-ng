@@ -97,7 +97,11 @@ export class WjPopover {
     _checkAriaOnHost('wj-popover', 'Use the ariaLabel or ariaLabelledBy input');
     // It has no `closable` of its own: it joins the overlay stack, so Escape reaches it, and any
     // overlay opened above it, in turn.
-    _overlayEscapeGate(this.open, () => true);
+    _overlayEscapeGate(
+      this.open,
+      () => true,
+      () => this.inner(),
+    );
   }
 
   /**

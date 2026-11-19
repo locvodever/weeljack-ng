@@ -27,13 +27,16 @@ import type { WjScrollTopBehavior, WjScrollTopPt } from './scrolltop-types';
  *
  * The button is named by `ariaLabel`, or else by the translation's `aria.scrollTop`, and appearing
  * never moves focus. Under `prefers-reduced-motion: reduce` it appears at once and a press jumps
- * to the top instead of gliding. Only the window is supported, not a scrolling parent.
+ * to the top instead of gliding. A press also moves focus to the start of the page (the button
+ * hides, so focus would otherwise be lost): `body` takes `tabindex="-1"` until it blurs, and the
+ * next Tab reaches the first control. Only the window is supported, not a scrolling parent.
  */
 @Component({
   selector: 'wj-scrolltop',
   imports: [ScrollTop],
   templateUrl: './scrolltop.html',
   styleUrl: './scrolltop.css',
+  host: { '(click)': 'focusStart()' },
 })
 export class WjScrollTop {
   /** The window's scroll position, in px, past which the button shows. */
@@ -53,6 +56,7 @@ export class WjScrollTop {
    */
   readonly pt = input<WjScrollTopPt>();
 
+  private readonly document = inject(DOCUMENT);
   private readonly reducedMotion = signal(false);
   private readonly aria = _ariaStrings();
 
@@ -84,7 +88,7 @@ export class WjScrollTop {
     _checkWeeljackSetup('wj-scrolltop');
     _checkAriaOnHost('wj-scrolltop');
 
-    const view = inject(DOCUMENT).defaultView;
+    const view = this.document.defaultView;
     let stop: (() => void) | undefined;
     afterNextRender(() => {
       const query = view?.matchMedia('(prefers-reduced-motion: reduce)');
@@ -100,5 +104,21 @@ export class WjScrollTop {
       }
     });
     inject(DestroyRef).onDestroy(() => stop?.());
+  }
+
+  /** A press hides the button, so focus goes to the page's start; the tabindex goes at its blur. */
+  protected focusStart(): void {
+    const { body } = this.document;
+    if (!body.hasAttribute('tabindex')) {
+      body.setAttribute('tabindex', '-1');
+      body.addEventListener(
+        'blur',
+        () => {
+          body.removeAttribute('tabindex');
+        },
+        { once: true },
+      );
+    }
+    body.focus({ preventScroll: true });
   }
 }

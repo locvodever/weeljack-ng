@@ -1,6 +1,7 @@
-import { NgTemplateOutlet } from '@angular/common';
+import { DOCUMENT, NgTemplateOutlet } from '@angular/common';
 import {
   Component,
+  DestroyRef,
   Injector,
   computed,
   contentChildren,
@@ -11,6 +12,7 @@ import {
   numberAttribute,
   output,
   runInInjectionContext,
+  viewChild,
 } from '@angular/core';
 import { Splitter } from '@openng/optimus-ui/splitter';
 import type { SplitterResizeEndEvent } from '@openng/optimus-ui/types/splitter';
@@ -32,12 +34,18 @@ const share = (value: number | undefined): number => (value !== undefined && val
  * order with a gutter between each pair, and a horizontal one needs only its panels' height. Name
  * the separators with `ariaLabel` or `ariaLabelledBy`. The panel set is read once, at first
  * render: render a new splitter to change it. Panels clip their content.
+ *
+ * A pointer user who cannot drag taps the handle, then taps where the line should go: the handle
+ * is armed (it draws the focus ring and the panels show a crosshair) until the next tap inside
+ * one of its two neighbouring panels places the line there. Escape, a second tap on the handle or
+ * a tap anywhere else disarms it.
  */
 @Component({
   selector: 'wj-splitter',
   imports: [Splitter, NgTemplateOutlet],
   templateUrl: './splitter.html',
   styleUrl: './splitter.css',
+  host: { '(document:keydown.escape)': 'arm()' },
 })
 export class WjSplitter {
   /** `horizontal` puts the panels side by side, `vertical` stacks them. A vertical splitter needs a height. */
@@ -66,6 +74,9 @@ export class WjSplitter {
   protected readonly panels = contentChildren(WjSplitterPanel);
   /** Set when Optimus starts a resize and cleared when it ends one. */
   protected resizing = false;
+
+  private readonly splitter = viewChild(Splitter);
+  private armed: HTMLElement | null = null;
 
   // Optimus reads its panels once, so the set drawn is the set of the first pass.
   private first?: readonly WjSplitterPanel[];
@@ -126,15 +137,74 @@ export class WjSplitter {
         }
       });
     }
+
+    this.listenForTaps();
   }
 
-  /** Optimus ends a "resize" on every key-up, so only one that started counts. */
-  protected ended(event: SplitterResizeEndEvent): void {
+  /** Arms `handle` (the gutter's focusable square), or disarms with none. */
+  protected arm(handle: HTMLElement | null = null): void {
+    this.armed?.removeAttribute('data-wj-armed');
+    this.armed = handle;
+    handle?.setAttribute('data-wj-armed', '');
+  }
+
+  /**
+   * Tap to place (WCAG 2.5.7). While a handle is armed, the next click inside a panel beside it
+   * runs Optimus's keyboard path by the distance to the line, with an event dispatched on the
+   * handle (Optimus finds its gutter from the target), and ends the resize. Any other click
+   * disarms. Capture phase, so the tap never reaches a control inside the panel.
+   */
+  private listenForTaps(): void {
+    const doc = inject(DOCUMENT);
+    const place = (event: MouseEvent): void => {
+      const gutter = this.armed?.parentElement;
+      const target = event.target as Node;
+      if (gutter && !gutter.contains(target)) {
+        const { previousElementSibling: prev, nextElementSibling: next } = gutter;
+        if (prev?.contains(target) || next?.contains(target)) {
+          event.stopPropagation();
+          event.preventDefault();
+          const line = gutter.getBoundingClientRect();
+          const moved = new MouseEvent('wj-place');
+          this.armed?.dispatchEvent(moved);
+          const inner = this.splitter();
+          inner?.repeat(
+            moved,
+            [...(gutter.parentElement?.children ?? [])].indexOf(gutter) >> 1,
+            this.orientation() === 'vertical'
+              ? line.top + line.height / 2 - event.clientY
+              : event.clientX - line.left - line.width / 2,
+          );
+          inner?.resizeEnd(moved);
+        }
+        this.arm();
+      }
+    };
+    doc.addEventListener('click', place, true);
+    inject(DestroyRef).onDestroy(() => {
+      doc.removeEventListener('click', place, true);
+    });
+  }
+
+  /**
+   * Optimus ends a "resize" on every key-up, so only one that started counts. A press and release
+   * on a handle that moved nothing arms it (a second one disarms); a drag disarms.
+   */
+  protected ended({ originalEvent, sizes }: SplitterResizeEndEvent): void {
     if (this.resizing) {
       this.resizing = false;
-      const sizes = event.sizes.map(Number);
-      this.value.set(sizes[0]);
-      this.resizeEnd.emit({ sizes });
+      const shares = sizes.map(Number);
+      const still = shares[0] === this.value();
+      this.value.set(shares[0]);
+      this.resizeEnd.emit({ sizes: shares });
+      const { type, target } = originalEvent;
+      if (/^(mouse|touch)/.test(type)) {
+        const handle =
+          target instanceof Element
+            ? target.closest<HTMLElement>('.p-splitter-gutter-handle')
+            : null;
+        this.arm(still && handle !== this.armed ? handle : null);
+      }
     }
   }
 }

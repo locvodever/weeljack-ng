@@ -13,7 +13,7 @@ import {
 } from 'weeljack-ng';
 import { WjBreadcrumb, type WjBreadcrumbPt } from 'weeljack-ng/breadcrumb';
 import { WjBreadcrumbHarness } from 'weeljack-ng/breadcrumb/testing';
-import { expectNoAxeViolations, runAxe } from '../spec-support/axe';
+import { expectNoAxeViolations } from '../spec-support/axe';
 
 const PAYLOAD = '<img src=x onerror="window.wjInjected = true">';
 const ROOT = document.documentElement;
@@ -662,11 +662,95 @@ describe('WjBreadcrumb', () => {
       expect(focused()).toBe('Docs');
       await userEvent.tab();
       expect(focused()).toBe('Menu');
-      // The current page is an `a` with no href and tabindex 0: Optimus keeps it a stop (gap).
-      await userEvent.tab();
-      expect(focused()).toBe('Breadcrumb');
+      // The current page has no link: it is not a stop, so the next Tab leaves the trail.
       await userEvent.tab();
       expect(document.querySelector('nav')?.contains(document.activeElement)).toBe(false);
+      expect(focused()).not.toBe('Breadcrumb');
+    });
+
+    it('a current page that is a link keeps its Tab stop', async () => {
+      await render((host) => {
+        host.model.set([
+          { label: 'Docs', url: '#docs' },
+          { label: 'Menu', url: '#menu' },
+          { label: 'Breadcrumb', url: '#here' },
+        ]);
+      });
+      await tabFromBefore();
+      await userEvent.tab();
+      await userEvent.tab();
+      await userEvent.tab();
+
+      expect(focused()).toBe('Breadcrumb');
+      expect(document.activeElement?.getAttribute('aria-current')).toBe('page');
+      expect(document.activeElement?.getAttribute('tabindex')).toBe('0');
+    });
+
+    it('a current page that is a routerLink keeps its Tab stop', async () => {
+      await render((host) => {
+        host.model.set([
+          { label: 'Docs', url: '#docs' },
+          { label: 'Here', routerLink: '/here' },
+        ]);
+      });
+      await tabFromBefore();
+      await userEvent.tab();
+      await userEvent.tab();
+
+      expect(focused()).toBe('Here');
+    });
+
+    it('takes the link-less current page out of the Tab order and routes no key onto the other links', async () => {
+      await render();
+
+      const current = links().at(-1);
+      expect(current?.textContent.trim()).toBe('Breadcrumb');
+      expect(current?.getAttribute('tabindex')).toBe('-1');
+      expect(current?.getAttribute('aria-current')).toBe('page');
+      expect(current?.hasAttribute('aria-disabled')).toBe(false);
+      // The home link and the other items keep Optimus's own stop, and carry no aria-disabled.
+      for (const link of links().slice(0, -1)) {
+        expect(link.getAttribute('tabindex')).toBe('0');
+        expect(link.hasAttribute('aria-disabled')).toBe(false);
+      }
+    });
+
+    it('moves the current page to the last visible item, and a hidden one is no stop', async () => {
+      const { fixture, component } = await render();
+
+      component.model.set([
+        { label: 'Docs', url: '#docs' },
+        { label: 'Menu' },
+        { label: 'Hidden', visible: false },
+      ]);
+      await fixture.whenStable();
+
+      const stops = links().map((link) => [link.textContent.trim(), link.getAttribute('tabindex')]);
+      expect(stops).toEqual([
+        ['', '0'],
+        ['Docs', '0'],
+        ['Menu', '-1'],
+      ]);
+    });
+
+    it('a consumer pt.itemLink key still lands beside the routed ones, as an object, a function or a class', async () => {
+      const { fixture, component } = await render((host) => {
+        host.pt.set({ itemLink: { 'data-from-pt': 'link' } });
+      });
+
+      expect(links().every((link) => link.getAttribute('data-from-pt') === 'link')).toBe(true);
+      expect(homeLink().getAttribute('data-from-pt')).toBe('link');
+      expect(links().at(-1)?.getAttribute('tabindex')).toBe('-1');
+
+      component.pt.set(() => ({ itemLink: () => ({ 'data-from-pt': 'fn' }) }));
+      await fixture.whenStable();
+      expect(links().every((link) => link.getAttribute('data-from-pt') === 'fn')).toBe(true);
+      expect(links().at(-1)?.getAttribute('tabindex')).toBe('-1');
+
+      component.pt.set({ itemLink: 'from-class' });
+      await fixture.whenStable();
+      expect(links().every((link) => link.classList.contains('from-class'))).toBe(true);
+      expect(links().at(-1)?.getAttribute('tabindex')).toBe('-1');
     });
 
     it('a disabled item with no link is not a Tab stop', async () => {
@@ -711,23 +795,27 @@ describe('WjBreadcrumb', () => {
       });
     });
 
-    it('gap: a disabled item with a url keeps its href, so it stays a Tab stop, and does nothing', async () => {
+    it('a disabled item with a url is announced disabled and is not a Tab stop, and does nothing', async () => {
       const run = vi.fn<(event: WjMenuItemCommandEvent) => void>();
       const { fixture } = await render((host) => {
         host.model.set([
           { label: 'Docs', url: '#docs', disabled: true, command: run },
+          { label: 'Menu', url: '#menu' },
           { label: 'Current' },
         ]);
       });
+      const docs = links()[1];
+
+      expect(docs?.getAttribute('aria-disabled')).toBe('true');
+      expect(docs?.getAttribute('tabindex')).toBe('-1');
+      // Optimus still renders the href: the link is announced, not removed.
+      expect(docs?.getAttribute('href')).toBe('#docs');
       await tabFromBefore();
       await userEvent.tab();
+      expect(focused()).toBe('Menu');
+      expect(await (await (await harnessOf(fixture)).getItems())[0]?.isFocused()).toBe(false);
 
-      expect(focused()).toBe('Docs');
-      expect(await (await (await harnessOf(fixture)).getItems())[0]?.isFocused()).toBe(true);
-      // Optimus sets no aria-disabled on it, which is the listed gap.
-      expect(document.activeElement?.hasAttribute('aria-disabled')).toBe(false);
-
-      // Enter reaches it as a click, and Optimus prevents the default: nothing runs, nothing follows.
+      // A click reaches Optimus, which prevents the default: nothing runs, nothing follows.
       let defaultPrevented: boolean | undefined;
       const read = (event: Event): void => {
         defaultPrevented = event.defaultPrevented;
@@ -736,11 +824,54 @@ describe('WjBreadcrumb', () => {
       cleanups.push(() => {
         document.removeEventListener('click', read);
       });
-      await userEvent.keyboard('{Enter}');
+      docs?.click();
 
       expect(defaultPrevented).toBe(true);
       expect(location.hash).toBe('');
       expect(run).not.toHaveBeenCalled();
+    });
+
+    it('a disabled routerLink item is announced disabled and is not a Tab stop', async () => {
+      await render((host) => {
+        host.model.set([
+          { label: 'Docs', routerLink: '/docs', disabled: true },
+          { label: 'Menu', url: '#menu' },
+          { label: 'Current' },
+        ]);
+      });
+      const docs = links()[1];
+
+      expect(docs?.getAttribute('aria-disabled')).toBe('true');
+      expect(docs?.getAttribute('tabindex')).toBe('-1');
+      await tabFromBefore();
+      await userEvent.tab();
+
+      expect(focused()).toBe('Menu');
+    });
+
+    it('a disabled home link is announced disabled and is not a Tab stop', async () => {
+      await render((host) => {
+        host.home.set({ url: '#home', disabled: true });
+      });
+
+      expect(homeLink().getAttribute('aria-disabled')).toBe('true');
+      expect(homeLink().getAttribute('tabindex')).toBe('-1');
+      await tabFromBefore();
+
+      expect(focused()).toBe('Docs');
+    });
+
+    it('a disabled item loses aria-disabled and gets its stop back when it is enabled again', async () => {
+      const { fixture, component } = await render((host) => {
+        host.model.set([{ label: 'Docs', url: '#docs', disabled: true }, { label: 'Current' }]);
+      });
+      expect(links()[1]?.getAttribute('aria-disabled')).toBe('true');
+
+      component.model.set([{ label: 'Docs', url: '#docs' }, { label: 'Current' }]);
+      await fixture.whenStable();
+
+      expect(links()[1]?.hasAttribute('aria-disabled')).toBe(false);
+      expect(links()[1]?.getAttribute('tabindex')).toBe('0');
     });
 
     it('Enter follows a link item, and the home link: each gets a click', async () => {
@@ -838,10 +969,6 @@ describe('WjBreadcrumb', () => {
         });
       }
 
-      // Tolerance, on that node only: a disabled item is dimmed (opacity 0.6) and Optimus sets no
-      // aria-disabled on it, so axe cannot tell it is an inactive component, which WCAG 1.4.3
-      // exempts. `spec-support/axe.ts` is untouched; this reads its violations and allows exactly
-      // one: `color-contrast` on the disabled item's text.
       it(`has no axe violations: a disabled item, ${scheme}`, async () => {
         const { element } = await render((host) => {
           host.model.set([
@@ -851,13 +978,7 @@ describe('WjBreadcrumb', () => {
           ]);
         }, scheme);
 
-        const violations = await runAxe(find(element, 'wj-breadcrumb', HTMLElement));
-
-        expect(
-          violations.flatMap(({ id, nodes }) =>
-            nodes.map((node) => `${id} ${node.target.join(' ')}`),
-          ),
-        ).toEqual(violations.length === 0 ? [] : ['color-contrast a[href$="#docs"] > span']);
+        await expectNoAxeViolations(find(element, 'wj-breadcrumb', HTMLElement));
       });
     }
   });

@@ -103,7 +103,11 @@ export class WjConfirmPopup {
     _registerConfirmationHost(_CONFIRM_POPUP_KEY, 'wj-confirmpopup');
     // It has no `closable` of its own: it joins the overlay stack, so Escape reaches it, and any
     // overlay opened above it, in turn.
-    _overlayEscapeGate(this.open, () => true);
+    _overlayEscapeGate(
+      this.open,
+      () => true,
+      () => this.inner(),
+    );
 
     const subscription = inject(_WJ_CONFIRMATIONS).requireConfirmation$.subscribe((request) => {
       if (request?.key === _CONFIRM_POPUP_KEY) {

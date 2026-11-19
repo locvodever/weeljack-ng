@@ -1,6 +1,6 @@
 /// <reference types="@vitest/browser-playwright" />
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
-import { Component, signal } from '@angular/core';
+import { Component, signal, viewChild } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { Dialog } from '@openng/optimus-ui/dialog';
 import type { MockInstance } from 'vitest';
@@ -15,6 +15,7 @@ import {
   type WjDrawerPt,
 } from 'weeljack-ng/drawer';
 import { WjDrawerHarness } from 'weeljack-ng/drawer/testing';
+import { WjPopover } from 'weeljack-ng/popover';
 import { _overlayEscapeGate } from 'weeljack-ng/private';
 import { WjSelect } from 'weeljack-ng/select';
 import { WjSelectHarness } from 'weeljack-ng/select/testing';
@@ -118,6 +119,24 @@ class StackedHost {
     // Joins the stack with no `closable` of its own, as the confirm dialog and the popover do.
     _overlayEscapeGate(this.above, () => true);
   }
+}
+
+/** A closable drawer whose body holds a button that opens a `wj-popover`: the upper overlay. */
+@Component({
+  selector: 'wj-drawer-popover-host',
+  imports: [WjDrawer, WjPopover],
+  template: `
+    <wj-drawer [(visible)]="drawer" header="Filters">
+      <button id="open-popover" type="button" (click)="popover.toggle($event)">Open</button>
+    </wj-drawer>
+    <wj-popover #popover ariaLabel="Help">
+      <button id="popover-action" type="button">Action</button>
+    </wj-popover>
+  `,
+})
+class PopoverInDrawerHost {
+  readonly popover = viewChild.required(WjPopover);
+  readonly drawer = signal(true);
 }
 
 type Scheme = 'light' | 'dark';
@@ -1210,6 +1229,38 @@ describe('WjDrawer, under a stacked overlay', () => {
       await fixture.whenStable();
       await expect.poll(maskEl).toBeNull();
       await expect.poll(() => document.querySelector('.p-dialog-mask')).toBeNull();
+      document.body.classList.remove('p-overflow-hidden');
+    }
+  });
+
+  it('closes only the popover opened inside it on Escape, then itself on the next', async () => {
+    TestBed.configureTestingModule({ providers: [provideWeeljack()] });
+    const fixture = TestBed.createComponent(PopoverInDrawerHost);
+    const host = fixture.componentInstance;
+    const panel = (): HTMLElement | null =>
+      document.querySelector<HTMLElement>('div[role="dialog"][data-wj-popover]');
+    try {
+      await fixture.whenStable();
+      await expect.poll(maskEl).not.toBeNull();
+      await expect.poll(() => drawerEl()?.contains(document.activeElement)).toBe(true);
+      await userEvent.click(find(document, '#open-popover', HTMLElement));
+      await expect.poll(() => panel()?.contains(document.activeElement)).toBe(true);
+
+      await userEvent.keyboard('{Escape}');
+      await expect.poll(panel).toBeNull();
+      await fixture.whenStable();
+      expect(host.drawer()).toBe(true);
+      expect(drawerEl()).not.toBeNull();
+
+      await userEvent.keyboard('{Escape}');
+      await expect.poll(() => host.drawer()).toBe(false);
+      await expect.poll(maskEl).toBeNull();
+    } finally {
+      host.popover().hide();
+      host.drawer.set(false);
+      await fixture.whenStable();
+      await expect.poll(panel).toBeNull();
+      await expect.poll(maskEl).toBeNull();
       document.body.classList.remove('p-overflow-hidden');
     }
   });

@@ -10,6 +10,7 @@ import {
 import { Button } from '@openng/optimus-ui/button';
 import { _checkAriaOnHost, _checkWeeljackSetup, _mergePartAttributes } from 'weeljack-ng/private';
 import type {
+  WjButtonAriaHasPopup,
   WjButtonPt,
   WjButtonSeverity,
   WjButtonSize,
@@ -52,6 +53,16 @@ export class WjButton {
   /** Id of the element that describes the button. Set on the focusable element. */
   readonly ariaDescribedBy = input<string>();
   /**
+   * Kind of popup the button opens (`aria-haspopup`). Set on the focusable element. Left unset, the
+   * attribute is absent.
+   */
+  readonly ariaHasPopup = input<WjButtonAriaHasPopup>();
+  /**
+   * Whether the popup the button controls is open (`aria-expanded`). Set on the focusable element,
+   * where `false` is written as `"false"`. Left unset, the attribute is absent.
+   */
+  readonly ariaExpanded = input<boolean>();
+  /**
    * Pass-through for the button's parts. Tracks Optimus: its part names and attributes follow the
    * installed `@openng/optimus-ui` minor and are outside this component's stable API; changes to
    * them ship only in the release that takes a new Optimus minor and are not breaking.
@@ -70,6 +81,8 @@ export class WjButton {
     _mergePartAttributes(this.pt(), 'root', {
       'aria-labelledby': this.ariaLabelledBy(),
       'aria-describedby': this.ariaDescribedBy(),
+      'aria-haspopup': this.ariaHasPopup(),
+      'aria-expanded': this.ariaExpanded()?.toString(),
       'aria-busy': this.loading() ? 'true' : undefined,
     }),
   );

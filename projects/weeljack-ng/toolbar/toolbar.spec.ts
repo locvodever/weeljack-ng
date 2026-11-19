@@ -5,6 +5,8 @@ import type { MockInstance } from 'vitest';
 import { userEvent } from 'vitest/browser';
 import { provideWeeljack } from 'weeljack-ng';
 import { WjButton } from 'weeljack-ng/button';
+import { WjInputText } from 'weeljack-ng/inputtext';
+import { WjSelectButton } from 'weeljack-ng/selectbutton';
 import {
   WjToolbar,
   WjToolbarCenterSlot,
@@ -39,7 +41,13 @@ const ROOT = document.documentElement;
         @if (start()) {
           <ng-template wjToolbarStart>
             @for (label of startLabels(); track label) {
-              <wj-button class="start" [label]="label" size="small" severity="secondary" />
+              <wj-button
+                class="start"
+                [label]="label"
+                [disabled]="label === disabledLabel()"
+                size="small"
+                severity="secondary"
+              />
             }
           </ng-template>
         }
@@ -69,8 +77,31 @@ class Host {
   readonly center = signal(true);
   readonly end = signal(true);
   readonly startLabels = signal(['New', 'Open']);
+  readonly disabledLabel = signal<string | undefined>(undefined);
   readonly width = signal<string | undefined>(undefined);
   readonly gap = signal<string | undefined>(undefined);
+}
+
+/** A button, a nested group, a text input and another button: controls that keep their own keys. */
+@Component({
+  selector: 'wj-toolbar-mixed-host',
+  imports: [WjToolbar, WjButton, WjSelectButton, WjInputText],
+  template: `
+    <button type="button" id="before">Before</button>
+    <wj-toolbar ariaLabel="Mixed">
+      <wj-button class="one" label="One" size="small" />
+      <wj-selectbutton ariaLabel="View" [options]="views" />
+      <input wjInputText aria-label="Search" value="abc" />
+      <wj-button class="two" label="Two" size="small" />
+    </wj-toolbar>
+    <button type="button" id="after">After</button>
+  `,
+})
+class MixedHost {
+  readonly views = [
+    { label: 'Day', value: 'day' },
+    { label: 'Week', value: 'week' },
+  ];
 }
 
 /** A toolbar with no sections at all, only default content. */
@@ -673,53 +704,144 @@ describe('WjToolbar', () => {
       return list;
     }
 
-    it('Tab moves through every control in order, and Shift+Tab walks back', async () => {
-      const { element } = await render('light', (host) => {
+    /** Renders the eight controls and Tabs into the toolbar from the button before it. */
+    async function enter(
+      setup: (host: Host) => void = () => undefined,
+    ): Promise<{ element: HTMLElement; list: HTMLElement[]; rendered: Rendered }> {
+      const rendered = await render('light', (host) => {
         host.leading.set(true);
+        setup(host);
       });
-      const list = controls(element);
+      const { element } = rendered;
+      const list = findAll(barOf(element), 'button');
       find(element, '#before', HTMLElement).focus();
-
-      for (const control of list) {
-        await userEvent.tab();
-        expect(document.activeElement).toBe(control);
-      }
       await userEvent.tab();
-      expect(document.activeElement).toBe(find(element, '#after', HTMLElement));
+      return { element, list, rendered };
+    }
+
+    const after = (element: HTMLElement): HTMLElement => find(element, '#after', HTMLElement);
+
+    it('Tab enters on the first control and the next Tab leaves the toolbar, both ways', async () => {
+      const { element, list } = await enter();
+      expect(controls(element)).toEqual(list);
+      expect(document.activeElement).toBe(list[0]);
+
+      await userEvent.tab();
+      expect(document.activeElement).toBe(after(element));
 
       await userEvent.tab({ shift: true });
-      expect(document.activeElement).toBe(list.at(-1));
-      for (const control of list.slice(0, -1).reverse()) {
-        await userEvent.tab({ shift: true });
-        expect(document.activeElement).toBe(control);
-      }
+      expect(document.activeElement).toBe(list[0]);
       await userEvent.tab({ shift: true });
       expect(document.activeElement).toBe(find(element, '#before', HTMLElement));
+      expect(list.map((control) => control.getAttribute('tabindex'))).toEqual([
+        '0',
+        ...list.slice(1).map(() => '-1'),
+      ]);
     });
 
-    it('arrow keys, Home and End move nothing: every control keeps its own Tab stop', async () => {
-      const { element } = await render('light', (host) => {
-        host.leading.set(true);
+    it('Arrow Right and Arrow Left move between the controls and wrap', async () => {
+      const { list } = await enter();
+
+      for (const control of list.slice(1)) {
+        await userEvent.keyboard('{ArrowRight}');
+        expect(document.activeElement).toBe(control);
+      }
+      await userEvent.keyboard('{ArrowRight}');
+      expect(document.activeElement).toBe(list[0]);
+      await userEvent.keyboard('{ArrowLeft}');
+      expect(document.activeElement).toBe(list.at(-1));
+      await userEvent.keyboard('{ArrowLeft}');
+      expect(document.activeElement).toBe(list.at(-2));
+    });
+
+    it('Home and End go to the first and the last control, and Up and Down do nothing', async () => {
+      const { list } = await enter();
+
+      await userEvent.keyboard('{End}');
+      expect(document.activeElement).toBe(list.at(-1));
+      await userEvent.keyboard('{ArrowDown}{ArrowUp}');
+      expect(document.activeElement).toBe(list.at(-1));
+      await userEvent.keyboard('{Home}');
+      expect(document.activeElement).toBe(list[0]);
+    });
+
+    it('re-enters on the control that had focus last', async () => {
+      const { element, list } = await enter();
+      await userEvent.keyboard('{ArrowRight}{ArrowRight}{ArrowRight}');
+      expect(document.activeElement).toBe(list[3]);
+
+      await userEvent.tab();
+      expect(document.activeElement).toBe(after(element));
+      await userEvent.tab({ shift: true });
+      expect(document.activeElement).toBe(list[3]);
+      expect(list.filter((control) => control.getAttribute('tabindex') === '0')).toEqual([list[3]]);
+    });
+
+    it('skips a disabled button with the arrows, Home and End', async () => {
+      const { element, fixture } = await render('light', (host) => {
+        host.disabledLabel.set('New');
       });
-      const list = controls(element);
-      const second = list[3];
-      second?.focus();
+      await fixture.whenStable();
+      const list = findAll(barOf(element), 'button');
+      const named = (label: string): HTMLElement | undefined =>
+        list.find((control) => control.textContent.trim() === label);
+      expect(named('New')?.hasAttribute('disabled')).toBe(true);
 
-      for (const key of [
-        '{ArrowRight}',
-        '{ArrowLeft}',
-        '{ArrowDown}',
-        '{ArrowUp}',
-        '{Home}',
-        '{End}',
-      ]) {
-        await userEvent.keyboard(key);
-        expect(document.activeElement).toBe(second);
-      }
-      for (const control of list) {
-        expect(control.getAttribute('tabindex')).not.toBe('-1');
-      }
+      named('Open')?.focus();
+      await userEvent.keyboard('{ArrowLeft}');
+      expect(document.activeElement).toBe(named('Save'));
+      await userEvent.keyboard('{Home}');
+      expect(document.activeElement).toBe(named('Open'));
     });
+
+    it('arrow keys leave a nested group and a text input to their own keys', async () => {
+      const { element } = await renderSmall(MixedHost);
+      const bar = barOf(element);
+      const one = find(bar, '.one button', HTMLElement);
+      const two = find(bar, '.two button', HTMLElement);
+      const toggles = findAll(bar, 'wj-selectbutton [role="button"]');
+      const input = find(bar, 'input', HTMLInputElement);
+      find(element, '#before', HTMLElement).focus();
+
+      await userEvent.tab();
+      expect(document.activeElement).toBe(one);
+      await userEvent.tab();
+      expect(document.activeElement).toBe(toggles[0]);
+      await userEvent.keyboard('{ArrowRight}');
+      expect(document.activeElement).toBe(toggles[1]);
+      await userEvent.tab();
+      expect(document.activeElement).toBe(input);
+      input.setSelectionRange(3, 3);
+      await userEvent.keyboard('{ArrowLeft}');
+      expect(document.activeElement).toBe(input);
+      expect(input.selectionStart).toBe(2);
+      expect(input.hasAttribute('tabindex')).toBe(false);
+      await userEvent.tab();
+      expect(document.activeElement).toBe(after(element));
+
+      one.focus();
+      await userEvent.keyboard('{ArrowRight}');
+      expect(document.activeElement).toBe(two);
+      await userEvent.keyboard('{ArrowRight}');
+      expect(document.activeElement).toBe(one);
+      expect(toggles.filter((toggle) => toggle.getAttribute('tabindex') === '0')).toHaveLength(1);
+    });
+
+    it.each<Scheme>(['light', 'dark'])(
+      'has no axe violations with a control focused by keyboard: %s',
+      async (scheme) => {
+        const { element } = await render(scheme, (host) => {
+          host.leading.set(true);
+        });
+        await userEvent.hover(document.body);
+        find(element, '#before', HTMLElement).focus();
+        await userEvent.tab();
+        await userEvent.keyboard('{ArrowRight}');
+        expect(document.activeElement).toBe(controls(element)[1]);
+
+        await expectNoAxeViolations(find(element, 'wj-toolbar', HTMLElement));
+      },
+    );
   });
 
   describe('harness', () => {

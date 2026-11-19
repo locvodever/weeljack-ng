@@ -1,6 +1,6 @@
-import { Component, computed, signal } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import type { WjMenuItem } from 'weeljack-ng';
-import { WjButton, type WjButtonPt } from 'weeljack-ng/button';
+import { WjButton } from 'weeljack-ng/button';
 import { WjTieredMenu } from 'weeljack-ng/tieredmenu';
 
 @Component({
@@ -12,7 +12,8 @@ import { WjTieredMenu } from 'weeljack-ng/tieredmenu';
         label="File"
         severity="secondary"
         variant="outlined"
-        [pt]="triggerPt()"
+        ariaHasPopup="menu"
+        [ariaExpanded]="open()"
         (click)="menu.toggle($event)"
       >
         <svg
@@ -54,9 +55,4 @@ export class TieredMenuPopupExample {
     { separator: true },
     { label: 'Print…' },
   ];
-
-  /** `wj-button` has no ARIA inputs for a popup trigger yet: set them on its button through `pt`. */
-  protected readonly triggerPt = computed<WjButtonPt>(() => ({
-    root: { 'aria-haspopup': 'menu', 'aria-expanded': String(this.open()) },
-  }));
 }

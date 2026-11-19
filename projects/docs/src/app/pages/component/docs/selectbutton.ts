@@ -68,7 +68,7 @@ export const DOC: ComponentDoc = {
     {
       key: 'Tab, Shift+Tab',
       effect:
-        'Every enabled button is a Tab stop, in order: Tab and Shift+Tab move from button to button, and out of the group after the last or before the first. A disabled button, and every button of a disabled group, is skipped.',
+        'The enabled buttons are one Tab stop: Tab enters on the picked button (the first enabled one while none is picked), and the next Tab or Shift+Tab leaves the group. A disabled button is skipped, and a disabled group is not in the Tab order.',
     },
     {
       key: 'Enter, Space',
@@ -76,9 +76,9 @@ export const DOC: ComponentDoc = {
         'Pick the focused button. On the picked button they unpick it and the value becomes `null`, unless `allowEmpty` is off. Focus stays on the button, and Space does not scroll the page.',
     },
     {
-      key: 'Arrow keys, Home, End, Escape',
+      key: 'Arrow Right, Arrow Left, Home, End',
       effect:
-        'Nothing. The arrow keys do not move between the buttons, which the WAI-ARIA radio-group pattern would have them do (see the gap below).',
+        'Move focus between the enabled buttons, wrapping at the ends, and skip a disabled one. They only move focus: the value does not change until Enter or Space. Escape, Arrow Up and Arrow Down do nothing.',
     },
     {
       key: 'Any key, while disabled',
@@ -90,10 +90,10 @@ export const DOC: ComponentDoc = {
     'There is no single focusable element, so a `<label for>` cannot name the group and there is no `inputId`. Outside a `wj-field`, name it with `ariaLabelledBy` (the id of a visible text) or `ariaLabel`. Inside a field the field renders its label as a `span` and the group gets `aria-labelledby` set to it; a consumer’s `ariaLabelledBy` wins. A click on the label does nothing.',
     'Inside a field, `aria-describedby` lists your own `ariaDescribedBy` ids first, then the hint, then the error, without duplicates.',
     'The group sets `aria-invalid="true"` while it is invalid, and Optimus draws a 1 px invalid outline around it. Inside a field that is exactly while the field shows an error, so the `invalid` input is not shown there. axe treats `aria-invalid` as global, so it is valid on a group.',
-    'Optimus never marks a disabled toggle button `aria-disabled`, and leaves it in the Tab order (`tabindex="0"` always). The component routes `aria-disabled="true"` and `tabindex="-1"` to every disabled button, whether the option or the whole group is disabled, through the `pcToggleButton` `root` part, and `aria-disabled="true"` to the group while it is disabled. That also keeps axe’s colour contrast check off the dimmed text, which WCAG exempts for an inactive component.',
+    'Optimus never marks a disabled toggle button `aria-disabled`, and leaves it in the Tab order (`tabindex="0"` always). The component routes `aria-disabled="true"` and `tabindex="-1"` to every disabled button (the enabled ones share one Tab stop, which the component sets), whether the option or the whole group is disabled, through the `pcToggleButton` `root` part, and `aria-disabled="true"` to the group while it is disabled. That also keeps axe’s colour contrast check off the dimmed text, which WCAG exempts for an inactive component.',
     'A group is touched, for `ngModel`, `FormControl` and `[formField]`, when focus leaves it: a `focusout` on the host whose `relatedTarget` is outside the host. Optimus’s own `onBlur`, the only caller of its touched callback, is bound nowhere in its template, so the component calls it itself, and moving focus between the buttons does not.',
     'Gap: `required` reaches forms validation only. A `role="group"` cannot carry `aria-required`, so assistive technology is not told the group is required. Say so in the field’s label or hint.',
-    'Gap: every enabled button is a Tab stop and the arrow keys do nothing, because Optimus’s arrow-key handler is bound nowhere. The WAI-ARIA radio-group pattern uses one Tab stop and the arrows; this is `role="group"` of `role="button"`s with `aria-pressed`, which is a different pattern, and whether a screen reader user would rather have a radio group is the open question for the NVDA pass.',
+    'Gap, fixed: Optimus’s arrow-key handler is bound nowhere, so every enabled button was a Tab stop and the arrow keys did nothing. The group is now one Tab stop with Arrow Left and Arrow Right, Home and End moving focus. This is `role="group"` of `role="button"`s with `aria-pressed`, not the WAI-ARIA radio-group pattern (which would pick on arrow), and whether a screen reader user would rather have a radio group is still the open question for the NVDA pass.',
     'Gap, fixed: a disabled toggle button takes the disabled fill and text colour, and a picked one keeps its pill in the disabled colours. Aura’s rule is `:disabled`, which never matches the `span` Optimus renders, so the preset restates it on `.p-disabled`: every button of a disabled group, and a disabled option, is at full opacity with the disabled fill, border and text, and the picked pill takes the disabled text colour as its fill and the disabled fill as its text, so the held value still shows.',
     'The picked pill, the unpicked text and the 44 / 36 / 52 px heights come from the preset-wide `togglebutton` tokens (see Styling), so every toggle button of the app reads them, `wj-selectbutton` and the later `wj-togglebutton` alike: the unpicked text is 7.03:1 on the track in light and 7.76:1 in dark, the picked pill is 4.40:1 (light) and 4.12:1 (dark) against the track, and its white text is 4.83:1 on it.',
     'Keep to two to five short, unique labels: a narrow container wraps a label at its spaces and every button grows to the tallest, and more buttons than fit in a row are better as `wj-select`.',

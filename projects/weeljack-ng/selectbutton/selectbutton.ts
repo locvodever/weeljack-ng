@@ -17,6 +17,7 @@ import {
   type _AccessorHost,
   _mergePartAttributes,
   _registerWithField,
+  _rovingFocus,
 } from 'weeljack-ng/private';
 import type { WjSelectButtonPt, WjSelectButtonSize } from './selectbutton-types';
 
@@ -38,8 +39,10 @@ function isToggleDisabled(options: unknown): boolean {
  * or `[formField]`: it is its own value accessor, and `value` is the picked option's `value`
  * (`null` while none is picked). Keep to two to five short, unique labels.
  *
- * The group has no single focusable element: every enabled button is a Tab stop and the arrow keys
- * do nothing. Name the group with `ariaLabelledBy` (the id of a visible text) or `ariaLabel`;
+ * The enabled buttons are one Tab stop: Tab enters on the picked button (the first enabled one
+ * while none is picked) and the next Tab leaves. Arrow Right and Arrow Left, Home and End move
+ * focus between the enabled buttons without picking, and wrap; Enter and Space pick the focused
+ * one. A disabled button is skipped, and a disabled group takes no Tab at all. Name the group with `ariaLabelledBy` (the id of a visible text) or `ariaLabel`;
  * inside a `wj-field` the field's label names it, and the field describes it and marks it invalid.
  * The group is touched when focus leaves it, not when focus moves between its buttons.
  */
@@ -139,8 +142,9 @@ export class WjSelectButton<T> implements ControlValueAccessor {
    * name, the description, `aria-invalid` and, while disabled, `aria-disabled` (Optimus binds none
    * of these but `aria-labelledby`).
    * On every toggle button, a child component: Optimus never marks a disabled one `aria-disabled`,
-   * and leaves it a Tab stop (`tabindex="0"` always), so a disabled button is announced as
-   * unavailable and skipped.
+   * and binds `tabindex="0"` on a disabled one too, so a disabled button is announced as
+   * unavailable and taken out of the Tab order. An enabled button's `tabindex` is not routed (the
+   * roving focus owns it, and routing `undefined` would remove Optimus's own).
    *
    * Optimus resolves a function-form `pt` once, with the group, and hands each toggle button the
    * object it returns. So the routed `root` of a toggle button is itself a function, which
@@ -169,7 +173,7 @@ export class WjSelectButton<T> implements ControlValueAccessor {
               return {
                 ...(typeof attributes === 'string' ? { class: attributes } : attributes),
                 'aria-disabled': disabled ? 'true' : undefined,
-                tabindex: disabled ? '-1' : '0',
+                ...(disabled && { tabindex: '-1' }),
               };
             },
           };
@@ -177,6 +181,15 @@ export class WjSelectButton<T> implements ControlValueAccessor {
       };
     };
   });
+
+  constructor() {
+    // The enabled toggle buttons are one Tab stop, led by the picked one.
+    _rovingFocus(
+      () => [...this.host.querySelectorAll<HTMLElement>('.p-togglebutton:not(.p-disabled)')],
+      () =>
+        this.host.querySelector<HTMLElement>('.p-togglebutton[aria-pressed="true"]') ?? undefined,
+    );
+  }
 
   /** Touched on blur: focus has left the host, rather than moved between its buttons. */
   protected leave(event: FocusEvent): void {

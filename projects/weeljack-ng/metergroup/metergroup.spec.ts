@@ -630,6 +630,32 @@ describe('WjMeterGroup', () => {
       expect(find(element, '[data-probe="fn"]', HTMLElement)).toBe(parts(element).bar);
     });
 
+    it('reaches the legend parts beside a host function part', async () => {
+      const { element } = await render('light', (host) => {
+        host.labelledBy.set('label');
+        host.value.set(STORAGE);
+        host.pt.set({
+          host: () => ({ 'data-probe': 'host' }),
+          labelList: { 'data-probe': 'list' },
+        });
+      });
+
+      expect(find(element, '[data-probe="list"]', HTMLElement)).toBe(parts(element).list);
+      expect(attributeOf(element, 'data-probe')).toBe('host');
+      expect(attributeOf(element, 'aria-labelledby')).toBe('label');
+    });
+
+    it('reaches the legend parts when pt is a function', async () => {
+      const { element } = await render('light', (host) => {
+        host.labelledBy.set('label');
+        host.value.set(STORAGE);
+        host.pt.set(() => ({ labelList: { 'data-probe': 'list' } }));
+      });
+
+      expect(find(element, '[data-probe="list"]', HTMLElement)).toBe(parts(element).list);
+      expect(attributeOf(element, 'aria-labelledby')).toBe('label');
+    });
+
     it('keeps the consumer host keys beside the routed ones', async () => {
       const { element } = await render('light', (host) => {
         host.labelledBy.set('label');

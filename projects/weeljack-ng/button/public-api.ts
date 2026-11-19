@@ -1,5 +1,6 @@
 export { WjButton } from './button';
 export type {
+  WjButtonAriaHasPopup,
   WjButtonPt,
   WjButtonSeverity,
   WjButtonSize,

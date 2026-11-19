@@ -462,19 +462,21 @@ describe('WjSplitButton', () => {
       }
     });
 
-    it('pins a gap: the menu button is 2 px wider than tall by default (6 small, 2 narrower large)', async () => {
-      const widths: [WjSplitButtonSize | undefined, number][] = [
-        [undefined, 46],
-        ['small', 42],
-        ['large', 50],
+    it('makes the menu button as wide as it is tall: 44, 36 small and 52 large', async () => {
+      const sizes: [WjSplitButtonSize | undefined, number][] = [
+        [undefined, 44],
+        ['small', 36],
+        ['large', 52],
       ];
 
-      for (const [size, width] of widths) {
+      for (const [size, side] of sizes) {
         TestBed.resetTestingModule();
         await render((host) => {
           host.size.set(size);
         });
-        expect(menuBtn().getBoundingClientRect().width).toBe(width);
+        const { width, height } = menuBtn().getBoundingClientRect();
+        expect(Math.abs(width - height)).toBeLessThan(0.5);
+        expect(height).toBe(side);
       }
     });
 

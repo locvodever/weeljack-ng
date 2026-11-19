@@ -6,7 +6,9 @@ import {
   inject,
   input,
   runInInjectionContext,
+  viewChild,
 } from '@angular/core';
+import type { PassThroughContext, PassThroughOption } from '@openng/optimus-ui/api';
 import { MeterGroup } from '@openng/optimus-ui/metergroup';
 import {
   _checkAriaOnHost,
@@ -15,6 +17,11 @@ import {
   _warnOnce,
 } from 'weeljack-ng/private';
 import type { WjMeterGroupLabelPosition, WjMeterGroupPt, WjMeterItem } from './metergroup-types';
+
+/** A part's pass-through as Optimus applies it: the function form called, `null` read as none. */
+function settle<E>(option: PassThroughOption<E>, context: PassThroughContext) {
+  return (typeof option === 'function' ? option(context) : option) ?? {};
+}
 
 /**
  * Several percentages shown as segments of one bar, with a legend, over Optimus's `p-metergroup`.
@@ -48,6 +55,8 @@ export class WjMeterGroup {
    */
   readonly pt = input<WjMeterGroupPt>();
 
+  private readonly inner = viewChild(MeterGroup);
+
   /**
    * The legend as one string, "Apps (16%), Messages (8%)": the legend sits inside `role="meter"`,
    * whose children are presentational, so this is how assistive technology hears it. Each percentage
@@ -71,26 +80,26 @@ export class WjMeterGroup {
    * `aria-valuetext`, so it is not rewritten behind this wrapper's back. It changes with the items,
    * so the merged `pt` changes with them and Optimus applies, or clears, it again.
    *
-   * Optimus hands its legend the group's `pt` without resolving the function form, so a function
-   * hides `labelList`, `label`, `labelMarker` and `labelText` from it. The merge always returns the
-   * function form; it is called here, once, when `pt` is an object with no function part, so the
-   * legend parts keep working for the common case, as they do on Optimus itself.
+   * Optimus hands its legend the group's `pt` as it receives it and reads the legend parts
+   * (`labelList`, `label`, `labelMarker`, `labelText`) only from a plain object, so Optimus always
+   * gets an object here. A top-level function is called once, with the group as its instance; the
+   * routed attributes go in as a `host` function part that settles your `host` (object or function)
+   * for the context Optimus gives it, so your `host` function still gets its context; every other
+   * part is passed as given.
    */
   protected readonly partAttributes = computed<WjMeterGroupPt>(() => {
     const pt = this.pt();
-    const attributes = {
+    const given =
+      typeof pt === 'function'
+        ? pt({ instance: this.inner(), parent: { instance: undefined } })
+        : pt;
+    const merged = _mergePartAttributes(given, 'host', {
       'aria-label': this.ariaLabel(),
       'aria-labelledby': this.ariaLabelledBy(),
       'aria-describedby': this.ariaDescribedBy(),
       'aria-valuetext': this.valueText(),
-    };
-    if (
-      typeof pt === 'function' ||
-      (pt != null && Object.values(pt).some((part: unknown) => typeof part === 'function'))
-    ) {
-      return _mergePartAttributes(pt, 'host', attributes);
-    }
-    return _mergePartAttributes(pt, 'host', attributes)(undefined);
+    });
+    return { ...given, host: (context) => settle(merged(context).host, context) };
   });
 
   constructor() {

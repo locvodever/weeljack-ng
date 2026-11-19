@@ -80,6 +80,7 @@ export const DOC: ComponentDoc = {
     '`ariaLabel`, `ariaLabelledBy` and `ariaDescribedBy` are set on the focusable `button` element, not on the `wj-button` host.',
     'Setting an `aria-*` attribute on the `wj-button` host logs the dev-mode warning `WJ0003`: use the inputs instead.',
     'While `loading`, the button sets `aria-busy="true"`.',
+    'A button that opens a popup (a menu, a popover, a dialog) sets `ariaHasPopup` (`menu`, `listbox`, `tree`, `grid` or `dialog`) and `ariaExpanded`, bound to whether the popup is open. Both are set on the `button` element and are absent until set; `ariaExpanded="false"` is written as `aria-expanded="false"`.',
     'The screen-reader pass (NVDA with Chrome) is recorded on this page before `0.1.0`.',
   ],
   stylingIntro:
@@ -89,7 +90,7 @@ export const DOC: ComponentDoc = {
     {
       part: 'root',
       description:
-        'The native `button`. `wj-button` merges `aria-labelledby`, `aria-describedby` and `aria-busy` into it, and they win over a `pt` value.',
+        'The native `button`. `wj-button` merges `aria-labelledby`, `aria-describedby`, `aria-haspopup`, `aria-expanded` and `aria-busy` into it, and they win over a `pt` value.',
     },
     { part: 'label', description: 'The label text element.' },
     { part: 'loadingIcon', description: 'The spinner shown while `loading`.' },
@@ -164,6 +165,18 @@ export const DOC: ComponentDoc = {
       weeljack: 'ariaDescribedBy',
       status: 'added',
       note: 'Set on the focusable element.',
+    },
+    {
+      optimus: 'None',
+      weeljack: 'ariaHasPopup',
+      status: 'added',
+      note: 'Set on the focusable element as `aria-haspopup`.',
+    },
+    {
+      optimus: 'None',
+      weeljack: 'ariaExpanded',
+      status: 'added',
+      note: 'Set on the focusable element as `aria-expanded`.',
     },
     dropped('dt, unstyled, ptOptions', droppedAlways),
     dropped('style, styleClass', droppedAlways),

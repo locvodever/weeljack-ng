@@ -13,6 +13,9 @@ export type WjButtonSeverity =
 /** Native `type` of the button element. A button never submits a form unless it says `submit`. */
 export type WjButtonType = 'button' | 'submit' | 'reset';
 
+/** Kind of popup a `wj-button` opens, written as `aria-haspopup`. */
+export type WjButtonAriaHasPopup = 'menu' | 'listbox' | 'tree' | 'grid' | 'dialog';
+
 /**
  * Pass-through for `wj-button`'s parts. Tracks Optimus: its part names and attributes follow the
  * installed `@openng/optimus-ui` minor and are outside this component's stable API; changes to

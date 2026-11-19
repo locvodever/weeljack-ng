@@ -1,5 +1,6 @@
 import type { Button, ButtonPassThrough, ButtonSeverity } from '@openng/optimus-ui/button';
 import type {
+  WjButtonAriaHasPopup,
   WjButtonPt,
   WjButtonSeverity,
   WjButtonSize,
@@ -19,6 +20,9 @@ describe('WjButton types', () => {
     expectTypeOf<WjButtonSeverity>().toExtend<NonNullable<ButtonSeverity>>();
     expectTypeOf<WjButtonType>().toExtend<Button['type']>();
     expectTypeOf<WjButtonPt>().toEqualTypeOf<ButtonPassThrough>();
+    expectTypeOf<WjButtonAriaHasPopup>().toEqualTypeOf<
+      'menu' | 'listbox' | 'tree' | 'grid' | 'dialog'
+    >();
 
     const size: Button['size'] = 'small' satisfies WjButtonSize;
     expect(size).toBe('small');

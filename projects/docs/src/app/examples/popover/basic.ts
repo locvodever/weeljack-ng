@@ -1,5 +1,5 @@
-import { Component, computed, signal } from '@angular/core';
-import { WjButton, type WjButtonPt } from 'weeljack-ng/button';
+import { Component, signal } from '@angular/core';
+import { WjButton } from 'weeljack-ng/button';
 import { WjPopover } from 'weeljack-ng/popover';
 
 @Component({
@@ -11,7 +11,8 @@ import { WjPopover } from 'weeljack-ng/popover';
         label="Shipping details"
         severity="secondary"
         variant="outlined"
-        [pt]="triggerPt()"
+        ariaHasPopup="dialog"
+        [ariaExpanded]="open()"
         (click)="popover.toggle($event)"
       />
     </div>
@@ -41,9 +42,4 @@ import { WjPopover } from 'weeljack-ng/popover';
 })
 export class PopoverBasicExample {
   protected readonly open = signal(false);
-
-  /** `wj-button` has no ARIA inputs for a popup trigger yet: set them on its button through `pt`. */
-  protected readonly triggerPt = computed<WjButtonPt>(() => ({
-    root: { 'aria-haspopup': 'dialog', 'aria-expanded': String(this.open()) },
-  }));
 }

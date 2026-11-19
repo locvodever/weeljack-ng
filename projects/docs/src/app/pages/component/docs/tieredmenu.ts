@@ -29,7 +29,7 @@ export const DOC: ComponentDoc = {
     {
       title: 'Popup',
       description:
-        'Set `popup` and open the menu from the app: `toggle($event)` opens a closed menu and closes an open one, aligned to the element that was clicked. Use a `wj-button` as the trigger, and show its state: `opened` and `closed` drive `aria-expanded`, and `aria-haspopup="menu"` goes on the button through its `pt` root, because `wj-button` has no inputs for a popup trigger yet. The popup closes on an outside click, Escape, Tab or running an item, and focus goes back to the trigger. Keep `wj-tieredmenu` after the row of openers, not inside it. Inside a container that clips, set `appendTo="body"`.',
+        'Set `popup` and open the menu from the app: `toggle($event)` opens a closed menu and closes an open one, aligned to the element that was clicked. Use a `wj-button` as the trigger, and show its state: `opened` and `closed` drive its `ariaExpanded` input, and `ariaHasPopup="menu"` marks it as a menu opener. The popup closes on an outside click, Escape, Tab or running an item, and focus goes back to the trigger. Keep `wj-tieredmenu` after the row of openers, not inside it. Inside a container that clips, set `appendTo="body"`.',
       sourceKey: 'tieredmenu/popup',
       component: TieredMenuPopupExample,
     },
@@ -87,7 +87,7 @@ export const DOC: ComponentDoc = {
   aria: [
     'The list is a `role="menu"` of `menuitem`s, and each submenu is a `role="menu"` too. A parent has `aria-haspopup="menu"` and an `aria-expanded` that follows its submenu. Give the root list a name with `ariaLabel` or `ariaLabelledBy`, and a description with `ariaDescribedBy`. All three are set on the root list, not on the `wj-tieredmenu` host.',
     'Setting an `aria-*` attribute on the `wj-tieredmenu` host logs the dev-mode warning `WJ0003` and is not forwarded: use the inputs instead.',
-    '`wj-button` has no ARIA inputs for a popup trigger yet. The popup example sets `aria-haspopup="menu"` and an `aria-expanded` that follows `opened` and `closed` through the button’s `pt` root. This is a gap, to be closed by a later `wj-button` minor.',
+    'Gap, fixed: a `wj-button` that opens the popup takes `ariaHasPopup` and `ariaExpanded`, set on its button element. The popup example sets `ariaHasPopup="menu"` and an `ariaExpanded` that follows `opened` and `closed`.',
     'A slotted item’s visible text must be its `label`: the menu names each item from `label`, so a different visible text fails "Label in Name".',
     'Unknown fields on an item are dropped silently: `WjMenuItem` lists what a menu takes, and a field such as `icon`, `styleClass` or `escape` on a wider object never reaches Optimus.',
     'Below a 960 px viewport, submenus open in place under their parent, indented, instead of beside it. The keys are the same.',

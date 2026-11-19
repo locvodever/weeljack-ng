@@ -19,7 +19,7 @@ export const DOC: ComponentDoc = {
     {
       title: 'Basic',
       description:
-        'A "Shipping details" button toggles a popover of text, named with `ariaLabel`. Open it from the trigger’s click with `popover.toggle($event)`: the panel opens below the trigger, or above it when there is no room, and focus moves onto the panel, because it holds no control. The trigger carries `aria-haspopup="dialog"` and `aria-expanded` through its `pt`, bound to `opened` and `closed`. Size the content yourself: the panel is as wide as what you put in it.',
+        'A "Shipping details" button toggles a popover of text, named with `ariaLabel`. Open it from the trigger’s click with `popover.toggle($event)`: the panel opens below the trigger, or above it when there is no room, and focus moves onto the panel, because it holds no control. The trigger carries `ariaHasPopup="dialog"` and `ariaExpanded`, the latter bound to `opened` and `closed`. Size the content yourself: the panel is as wide as what you put in it.',
       sourceKey: 'popover/basic',
       component: PopoverBasicExample,
     },
@@ -64,8 +64,8 @@ export const DOC: ComponentDoc = {
     'Focus never reaches Optimus’s panel on its own: it focuses only an `[autofocus]` element, and the panel sits at the end of `document.body`, so Tab from the trigger never gets there. `wj-popover` moves focus in when it opens, so a screen reader announces the dialog’s name and then the focused control, or the panel’s text when there is no control. With no control, the panel itself takes focus (`tabindex="-1"`) and shows only the browser’s own focus indication.',
     'Tab stays inside through Optimus’s focus trap while the panel holds a control. A panel with only text has nothing to cycle, so it sets no trap and Tab leaves it.',
     'Focus returns to the trigger after Escape, `hide()` and a click outside that lands on nothing focusable. When the trigger is a `wj-button`, it returns to the button inside it, because the host cannot take focus. Pass `$event` from the click on the button. If the trigger has been removed, move focus yourself. In Safari, which does not focus a button when it is clicked, focus falls back to the last pressed control.',
-    'Stacked overlays: Escape closes the popover and leaves a non-closable `wj-dialog` below it open. Optimus’s own Escape listener is document-wide: a popover that is open while another overlay is opened above it closes on that overlay’s Escape too.',
-    'Give the trigger `aria-haspopup="dialog"` and `aria-expanded` through its `pt`, as the examples do: `wj-button` has no inputs for them.',
+    'Stacked overlays: Escape closes the popover and leaves a non-closable `wj-dialog` below it open. Gap, fixed: Optimus’s own Escape listener is document-wide, so a popover that was open while another overlay opened above it closed on that overlay’s Escape too. Escape now reaches only the topmost overlay: the one above closes, and the next Escape closes the popover.',
+    'Gap, fixed: give a `wj-button` trigger `ariaHasPopup="dialog"` and `ariaExpanded`, as the examples do. They are set on the button element, and `ariaExpanded` follows `opened` and `closed`.',
     'Under reduced motion the popover opens and closes without motion. `aria-*` on `wj-popover` raises `WJ0003`: use `ariaLabel` or `ariaLabelledBy`, because the host has no focusable element to forward them to.',
     'The keyboard walk and the screen-reader passes (NVDA with Chrome, and VoiceOver on iOS Safari for overlays) are recorded here before wave 4’s release.',
   ],

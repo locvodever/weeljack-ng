@@ -42,27 +42,28 @@ export const DOC: ComponentDoc = {
     {
       key: 'Tab, Shift+Tab',
       effect:
-        'Kept as Optimus does it: every enabled step button is its own Tab stop (the tab list is not one stop, as APG Tabs would make it), and a disabled step is skipped. Tab from the last step goes on to the controls in the active panel. Listed as a gap.',
+        'The enabled step buttons are one Tab stop: Tab enters on the active step, and the next Tab goes on to the controls in the active panel. Shift+Tab walks back the same way. A disabled step is skipped, and under `linear` only the active step is enabled.',
     },
     {
       key: 'Enter, Space',
-      effect: 'Activates the focused step and shows its panel. Each press activates once.',
+      effect:
+        'Activates the focused step and shows its panel; the Tab stop follows the active step. Each press activates once.',
     },
     {
-      key: 'Arrow keys, Home, End',
+      key: 'Arrow Right, Arrow Left, Home, End',
       effect:
-        'Do nothing: Optimus has no handler, so focus stays on the step and nothing is activated. Listed as a gap.',
+        'Move focus between the enabled steps, wrapping at the ends, without activating one: activation is manual, as in APG Tabs. Arrow Up and Arrow Down do nothing.',
     },
   ],
   aria: [
-    'APG has no stepper pattern. Optimus marks the stepper up with the tab roles, so its reference is APG Tabs: each step button is a `role="tab"`, each panel a `role="tabpanel"`, and a step button points at its panel with `aria-controls`. Whether `wj-stepper` should go further is an open question for the library’s owner: either adopt the APG Tabs keyboard (roving tabindex and arrow keys) or drop the tab roles for buttons with `aria-current="step"`. Either would be a later minor. Until then `wj-stepper` keeps Optimus’s behaviour, fixes only what axe flags, and lists every other gap here.',
-    'Setting an `aria-*` attribute on the `wj-stepper`, `wj-step-list`, `wj-step`, `wj-step-panels` or `wj-step-panel` host logs the dev-mode warning `WJ0003` and is not forwarded. A step is named by its own text.',
+    'APG has no stepper pattern. Optimus marks the stepper up with the tab roles, so its reference is APG Tabs: each step button is a `role="tab"`, each panel a `role="tabpanel"`, and a step button points at its panel with `aria-controls`. `wj-stepper` adopts the APG Tabs keyboard with manual activation: one Tab stop, Arrow Left and Arrow Right, Home and End move focus, and Enter or Space activates. It fixes what axe flags and lists every other gap here.',
+    'Setting an `aria-*` attribute on the `wj-stepper`, `wj-step-list`, `wj-step`, `wj-step-panels` or `wj-step-panel` host logs the dev-mode warning `WJ0003` and is not forwarded. A step is named by its own text; name the tab list with `ariaLabel` or `ariaLabelledBy` on `wj-step-list`.',
     'Gap, fixed: Optimus makes the `p-stepper` root a `role="tablist"` although it also holds the panels, which axe rejects (`aria-required-children`). The root takes `role="presentation"` and `wj-step-list` takes `role="tablist"`, so the tab list holds only the steps. Both are routed through `pt` and win over a consumer `pt` value for `role` on those two parts.',
     'Gap, fixed: Optimus puts `aria-current="step"` on the step element, which is `role="presentation"`, and axe rejects a presentation element that carries an ARIA attribute inside a tab list. The attribute is removed from the step element and set on the step button instead, so the button announces the current step. This is the one routed removal: Optimus sets the attribute again each time a step turns active, so the wrapper re-applies the removal on every change. A consumer `pt` that sets `aria-current` on the step element keeps its value.',
     'Gap, fixed: Optimus gives the `role="tab"` step button no `aria-selected`. Every step button now carries it, `true` on the active step only.',
-    'Gap, listed: the tab list has no name. Optimus gives it none and `wj-stepper` has no input for one, so a screen reader announces an unnamed tab list; put a visible heading above the stepper.',
+    'Gap, fixed: Optimus gives the tab list no name. `wj-step-list` takes `ariaLabel` or `ariaLabelledBy` and writes it on the `role="tablist"` element (the examples set `ariaLabel`); without either a screen reader announces an unnamed tab list, so name it.',
     'Gap, listed: a panel points at its step with `aria-controls`, not `aria-labelledby`, so a panel has no accessible name of its own. Optimus builds the step button’s id from an id it generates, which the wrapper cannot reach.',
-    'Gap, listed: no roving tabindex and no arrow keys (the keyboard table above). The Back and Next buttons in your panels are the reliable way to move.',
+    'Gap, fixed: Optimus had no roving tabindex and no arrow keys, so every step was its own Tab stop and the arrows did nothing. The keyboard table above is the new behaviour; the Back and Next buttons in your panels remain the usual way to move.',
     'Every `value` is a number, and unique within one `wj-stepper`: Optimus builds the ids that a step and its panel point at from it. `value` is required, and it must stay on an existing step, or no step is active and no panel shows. Only `wj-step-list` and `wj-step-panels` children render. Anything else you write directly inside `wj-stepper`, a `wj-step` outside the step list and a `wj-step-panel` outside the panels are dropped.',
     'When your own buttons change the step, move focus to the new panel (the Basic example focuses its heading with `tabindex="-1"`): the old panel and the button that had focus hide on the change, so focus would otherwise be lost.',
     'The active step’s number is filled with the primary colour, so the current step differs from the others by more than its text colour. Keep titles short: a title wraps at spaces and is never cut off, and a row that still does not fit scrolls inside the stepper.',

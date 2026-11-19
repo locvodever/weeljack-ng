@@ -147,6 +147,8 @@ a family's own:
 - `_warnOnce(code, selector, what, fix)` is the deduped dev-mode warn in the 21 Q8 shape, behind
   `ngDevMode` (injection context). Use your family's `WJ<NNNN>` block.
 - `_checkWeeljackSetup(selector)` and `_checkAriaOnHost(selector)` go in every wrapper's constructor.
+- `_rovingFocus(items, selected?)` gives a row of buttons one Tab stop plus Arrow Left/Right, Home and
+  End (toolbar, selectbutton and stepper use it; injection context).
 
 **Budget, SSR and errors (21):**
 - A wrapper entry weighs at most the larger of 2.5 KB or 25% of the Optimus entry it wraps; an own

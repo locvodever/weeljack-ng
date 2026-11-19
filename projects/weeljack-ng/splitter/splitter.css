@@ -5,7 +5,9 @@
    Handle: the focusable square grows to 24 px across the line with matching negative margins, so
    the gutter's layout stays 4 px while the hit box overlaps each panel by 10 px (the gutter
    stacks above the panels). Optimus sets the handle's own 4 px inline, which a minimum size
-   beats; its ring then draws a circle around the line. */
+   beats; its ring then draws a circle around the line.
+   Armed (tap to place): the handle shows the same focus ring and the panels a crosshair, until the
+   next tap places the line. Nothing animates. */
 @layer wj {
   :host {
     display: block;
@@ -24,5 +26,13 @@
   :host ::ng-deep .p-splitter-vertical > .p-splitter-gutter > .p-splitter-gutter-handle {
     min-block-size: 24px;
     margin-block: -10px;
+  }
+
+  :host ::ng-deep .p-splitter-gutter-handle[data-wj-armed] {
+    outline: var(--wj-focus-ring-width) var(--wj-focus-ring-style) var(--wj-focus-ring-color);
+  }
+
+  :host:has([data-wj-armed]) {
+    cursor: crosshair;
   }
 }
