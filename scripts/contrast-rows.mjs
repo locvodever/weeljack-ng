@@ -54,6 +54,8 @@ const PAIRS = {
       'slider.handle.content.hover.background',
       NON_TEXT,
     ],
+    ['knob value arc on the range arc', 'knob.value.background', 'knob.range.background', NON_TEXT],
+    ['knob range arc on cards', 'knob.range.background', 'surface.0', NON_TEXT],
     ['switch off track', 'toggleswitch.background', 'surface.0', NON_TEXT],
     [
       'switch handle on track',
@@ -255,6 +257,8 @@ const PAIRS = {
       'slider.handle.content.hover.background',
       NON_TEXT,
     ],
+    ['knob value arc on the range arc', 'knob.value.background', 'knob.range.background', NON_TEXT],
+    ['knob range arc on cards', 'knob.range.background', 'content.background', NON_TEXT],
     ['switch off track', 'toggleswitch.background', 'content.background', NON_TEXT],
     [
       'switch handle on track',

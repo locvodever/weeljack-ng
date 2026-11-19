@@ -175,6 +175,14 @@ export const wjAlwaysOn = definePreset(aura, {
       },
       colorScheme: { dark: { handle: { hoverBackground: '{surface.400}' } } },
     },
+    /*
+     * The knob's range arc (w2-forms-choice FR-8). Aura draws it in `{content.border.color}`, 1.27:1
+     * on white and 1.70:1 on a zinc.900 card, which fails WCAG 1.4.11 for the dial's only boundary.
+     * It takes `{surface.500}`, as the slider track does (4.83 on cards in light, 3.67 in dark); the
+     * value arc stays the primary (4.12 on the range arc in light, 4.63 in dark). The slider's tokens
+     * never reach the knob, so it has its own. One value for both schemes, so it sits in the base.
+     */
+    knob: { range: { background: '{surface.500}' } },
     toggleswitch: {
       colorScheme: {
         light: {
