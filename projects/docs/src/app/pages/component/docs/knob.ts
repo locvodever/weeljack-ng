@@ -52,7 +52,7 @@ export const DOC: ComponentDoc = {
     {
       title: 'Read-only and disabled',
       description:
-        'A read-only knob shows its value and cannot be changed, and looks unchanged; it leaves the Tab order and sets `aria-readonly`. A disabled knob leaves the Tab order too, sets `aria-disabled`, and Optimus dims it to 0.6 opacity. Neither reacts to a key, a click or a drag. The first holds 72 and shows `{value}%`; the second holds 30.',
+        'A read-only knob shows its value and cannot be changed, and looks unchanged; it stays a Tab stop and sets `aria-readonly`. A disabled knob leaves the Tab order, sets `aria-disabled`, and Optimus dims it to 0.6 opacity. Neither reacts to a key, a click or a drag. The first holds 72 and shows `{value}%`; the second holds 30.',
       sourceKey: 'knob/read-only-and-disabled',
       component: KnobReadOnlyAndDisabledExample,
     },
@@ -75,7 +75,7 @@ export const DOC: ComponentDoc = {
     {
       key: 'Tab, Shift+Tab',
       effect:
-        'Move focus onto the dial and off it. A read-only or disabled knob is skipped. Focus draws the family’s 2 px ring round the dial, after a key press and not after a click.',
+        'Move focus onto the dial and off it. A disabled knob is skipped; a read-only one is a Tab stop. Focus draws the family’s 2 px ring round the dial, after a key press and not after a click.',
     },
     { key: 'Arrow Right, Arrow Up', effect: 'Add one `step`.' },
     { key: 'Arrow Left, Arrow Down', effect: 'Take one `step`.' },
@@ -85,7 +85,8 @@ export const DOC: ComponentDoc = {
     { key: 'End', effect: 'Go to `max`.' },
     {
       key: 'Any key, while read-only or disabled',
-      effect: 'The dial is not in the Tab order and the value does not change.',
+      effect:
+        'The value does not change. A disabled dial is not in the Tab order; a read-only one is, and focus on it draws the ring.',
     },
   ],
   aria: [
@@ -97,7 +98,7 @@ export const DOC: ComponentDoc = {
     '`null` shows `min` in the arc and the text, and `aria-valuenow` reads `min`. The form keeps `null` until the user changes the value.',
     'A `[formField]` schema’s `min` and `max` rules are pushed into the `min` and `max` inputs, so the dial’s range follows the validators.',
     'Gap, fixed: while a knob is invalid (`invalid`, or a field’s error), a 1 px ring in the invalid colour shows around the dial (4.83:1 on cards in light, 6.40:1 in dark). Optimus 2.0.2 has no invalid rule for it, so the preset’s `@layer wj` rule keys on `aria-invalid`. The arcs stay as they are, because a red range arc would put the dark value arc under 3:1. Still pair the knob with the field’s error text, which is how the In a field example shows it.',
-    'Gap: a read-only knob is out of the Tab order (Optimus sets `tabindex="-1"` on it), so a keyboard user does not reach it. A screen reader user reads it in browse mode, where it is announced with `aria-readonly` and its value.',
+    'Gap, fixed: a read-only knob was out of the Tab order (Optimus sets `tabindex="-1"` on it), so a keyboard user did not reach it. `wj-knob` routes `tabindex="0"` onto a read-only, enabled dial, so it takes focus and is announced with `aria-readonly` and its value; its keys stay inert. A disabled knob stays out of the Tab order.',
     'The dial is the `diameter` square, 100 px by default, well above the 24 px hit box. The range arc is 4.83:1 on cards in light and 3.67:1 in dark; the value arc is 4.12:1 on the range arc in light and 4.63:1 in dark; the text is 4.83:1 in light and 6.91:1 in dark.',
     'Motion: the dial’s own colour changes follow `--wj-transition-duration`, which is 0 under `prefers-reduced-motion: reduce`. The range arc has a 0.1 s stroke fade of its own in Optimus, which the component also turns off under reduced motion.',
     'The keyboard walk and the screen-reader pass (NVDA with Chrome) are recorded on this page before `0.2.0`.',

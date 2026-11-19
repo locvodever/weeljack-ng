@@ -151,6 +151,18 @@ export class WjInputNumber implements ControlValueAccessor {
     }),
   );
 
+  /**
+   * Home and End to a bound of 0. Optimus tests `if (this.min())`, so a 0 bound is skipped; its own
+   * handler has already run by the time this bubbles, and left the key alone.
+   */
+  protected reachZero(event: KeyboardEvent): void {
+    const bound = event.key === 'Home' ? this.min() : event.key === 'End' ? this.max() : undefined;
+    if (bound === 0 && !event.defaultPrevented) {
+      this.inner()?.updateModel(event, 0);
+      event.preventDefault();
+    }
+  }
+
   declare registerOnChange: _AccessorHost<number | null>['registerOnChange'];
   declare registerOnTouched: _AccessorHost<number | null>['registerOnTouched'];
   declare setDisabledState: _AccessorHost<number | null>['setDisabledState'];

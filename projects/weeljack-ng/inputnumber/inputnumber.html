@@ -21,6 +21,7 @@
   [suffix]="suffix()"
   [showButtons]="showButtons()"
   [pt]="partAttributes()"
+  (keydown)="reachZero($event)"
 >
   <ng-template #decrementbuttonicon><svg data-p-icon="minus"></svg></ng-template>
   <ng-template #incrementbuttonicon><svg data-p-icon="plus"></svg></ng-template>

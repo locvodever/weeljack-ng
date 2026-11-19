@@ -505,7 +505,7 @@ describe('WjRating', () => {
       await expect.poll(() => rating.getValue()).toBe(1);
     });
 
-    it('Space on the picked star changes nothing: no key clears a rating', async () => {
+    it('Space and Enter on the picked star change nothing: only Backspace and Delete clear', async () => {
       const { fixture, component, element } = await render((host) => {
         host.value.set(3);
       });
@@ -521,6 +521,88 @@ describe('WjRating', () => {
       expect(component.log).toEqual([]);
       expect(await rating.getValue()).toBe(3);
       expect(getComputedStyle(starOf(element, 2)).outlineStyle).toBe('solid');
+    });
+
+    describe.each([['Backspace'], ['Delete']])('%s', (key) => {
+      it('clears a focused, rated rating: the model, valueChange and the checked star', async () => {
+        const { fixture, component, element } = await render((host) => {
+          host.value.set(3);
+        });
+        const rating = await harnessOf(fixture);
+        byId(element, 'before').focus();
+        await userEvent.tab();
+        await expect.poll(() => rating.isFocused()).toBe(true);
+
+        await userEvent.keyboard(`{${key}}`);
+
+        await expect.poll(() => component.value()).toBeNull();
+        expect(component.log).toEqual([null]);
+        await expect.poll(() => rating.getValue()).toBeNull();
+      });
+
+      it('does nothing on an unrated rating', async () => {
+        const { fixture, component, element } = await render();
+        const rating = await harnessOf(fixture);
+        byId(element, 'before').focus();
+        await userEvent.tab();
+        await expect.poll(() => rating.isFocused()).toBe(true);
+
+        await userEvent.keyboard(`{${key}}`);
+        await fixture.whenStable();
+
+        expect(component.value()).toBeNull();
+        expect(component.log).toEqual([]);
+      });
+
+      it('is ignored by a read-only rating', async () => {
+        const { fixture, component, element } = await render((host) => {
+          host.value.set(3);
+          host.readonly.set(true);
+        });
+        const rating = await harnessOf(fixture);
+        byId(element, 'before').focus();
+        await userEvent.tab();
+        await expect.poll(() => rating.isFocused()).toBe(true);
+
+        await userEvent.keyboard(`{${key}}`);
+        await fixture.whenStable();
+
+        expect(component.value()).toBe(3);
+        expect(component.log).toEqual([]);
+        expect(await rating.getValue()).toBe(3);
+      });
+
+      it('is ignored by a disabled rating', async () => {
+        const { fixture, component, element } = await render((host) => {
+          host.value.set(3);
+          host.disabled.set(true);
+        });
+        // A disabled radio cannot take focus, so the key is dispatched at it directly.
+        radioOf(element, 2).dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true }));
+        await fixture.whenStable();
+
+        expect(component.value()).toBe(3);
+        expect(component.log).toEqual([]);
+      });
+
+      it('keeps the focus on the star, and a later Space picks a star again', async () => {
+        const { fixture, component, element } = await render((host) => {
+          host.value.set(3);
+        });
+        const rating = await harnessOf(fixture);
+        byId(element, 'before').focus();
+        await userEvent.tab();
+        await expect.poll(() => rating.isFocused()).toBe(true);
+
+        await userEvent.keyboard(`{${key}}`);
+        await expect.poll(() => component.value()).toBeNull();
+        expect(document.activeElement).toBe(radioOf(element, 2));
+        await expect.poll(() => getComputedStyle(starOf(element, 2)).outlineStyle).toBe('solid');
+
+        await userEvent.keyboard(' ');
+        await expect.poll(() => component.value()).toBe(3);
+        expect(component.log).toEqual([null, 3]);
+      });
     });
 
     it('still clears on a click of the current star after keys were used', async () => {
@@ -998,6 +1080,22 @@ describe('WjRating', () => {
         await expect.poll(() => rating.getValue()).toBeNull();
       });
 
+      it('Backspace clears the focused rating, and Delete does too', async () => {
+        const { fixture, component } = await renderAs(NgModelHost);
+        const rating = await harnessOf(fixture);
+        await expect.poll(() => rating.getValue()).toBe(3);
+        await rating.focus();
+
+        await userEvent.keyboard('{Backspace}');
+        await expect.poll(() => component.value()).toBeNull();
+
+        component.value.set(4);
+        await expect.poll(() => rating.getValue()).toBe(4);
+        await rating.focus();
+        await userEvent.keyboard('{Delete}');
+        await expect.poll(() => component.value()).toBeNull();
+      });
+
       it('disables the rating, and is touched only once focus leaves it', async () => {
         const { fixture, component } = await renderAs(NgModelHost);
         const rating = await harnessOf(fixture);
@@ -1030,6 +1128,18 @@ describe('WjRating', () => {
         component.control.setValue(null);
         await expect.poll(() => rating.getValue()).toBeNull();
         expect(consoleError).not.toHaveBeenCalled();
+      });
+
+      it('Backspace clears the focused rating to null and marks the control dirty', async () => {
+        const { fixture, component } = await renderAs(ReactiveHost);
+        const rating = await harnessOf(fixture);
+        await expect.poll(() => rating.getValue()).toBe(4);
+        await rating.focus();
+
+        await userEvent.keyboard('{Backspace}');
+
+        await expect.poll(() => component.control.value).toBeNull();
+        expect(component.control.dirty).toBe(true);
       });
 
       it('does not mark the control dirty for a value the form wrote', async () => {
@@ -1125,6 +1235,17 @@ describe('WjRating', () => {
         component.model.delivery().value.set(5);
         await fixture.whenStable();
         await expect.poll(() => at(1).getValue()).toBe(5);
+      });
+
+      it('Delete clears the focused rating to null in the form', async () => {
+        const { fixture, component } = await renderAs(SignalHost);
+        const at = await allHarnessesOf(fixture);
+        await expect.poll(() => at(1).getValue()).toBe(2);
+        await at(1).focus();
+
+        await userEvent.keyboard('{Delete}');
+
+        await expect.poll(() => component.value().delivery).toBeNull();
       });
 
       it('disables the rating from the form, and marks the field touched when focus leaves it', async () => {

@@ -30,8 +30,8 @@ import type { WjKnobPt } from './knob-types';
  * The dial is one focusable element, a `role="slider"`. Name it with `ariaLabelledBy` (the id of a
  * visible text) or `ariaLabel`; inside a `wj-field` the field's label names it, and the field
  * describes it and marks it invalid. The keys follow `step`: an arrow moves one step, Page Up and
- * Page Down ten, Home and End go to `min` and `max`. A read-only or disabled knob is out of the Tab
- * order. Optimus paints no invalid look on a knob.
+ * Page Down ten, Home and End go to `min` and `max`. A disabled knob is out of the Tab order; a
+ * read-only one is still a Tab stop, its keys inert. Optimus paints no invalid look on a knob.
  */
 @Component({
   selector: 'wj-knob',
@@ -50,7 +50,7 @@ export class WjKnob implements ControlValueAccessor {
   readonly max = input<number>();
   /** The grid the value moves on, from `min`: what a key and a drag change it by. Default 1. */
   readonly step = input(1, { transform: numberAttribute });
-  /** Shows the value but lets nobody change it. Out of the Tab order. */
+  /** Shows the value but lets nobody change it. Still a Tab stop, its keys inert. */
   readonly readonly = input(false, { transform: booleanAttribute });
   /** Makes the knob inert. A form can disable it too. */
   readonly disabled = input(false, { transform: booleanAttribute });
@@ -112,7 +112,8 @@ export class WjKnob implements ControlValueAccessor {
   /**
    * `pt` forwarded as given, plus what this wrapper routes onto the dial, none of which Optimus
    * binds: its id, its description, `aria-invalid`, and while inert `aria-disabled` or
-   * `aria-readonly`. Never `aria-valuenow`: Optimus keeps it current, and shows `min` for `null`.
+   * `aria-readonly`, and `tabindex` 0 while read-only and enabled (Optimus sets -1). Never
+   * `aria-valuenow`: Optimus keeps it current, and shows `min` for `null`.
    */
   protected readonly partAttributes = computed<WjKnobPt>(() =>
     _mergePartAttributes(this.pt(), 'svg', {
@@ -121,6 +122,10 @@ export class WjKnob implements ControlValueAccessor {
       'aria-invalid': this.field.invalid() ? 'true' : undefined,
       'aria-disabled': this.isDisabled() ? 'true' : undefined,
       'aria-readonly': this.readonly() ? 'true' : undefined,
+      // Optimus takes a read-only dial out of the Tab order; a read-only slider stays a stop unless
+      // it is disabled too. The key is left out otherwise: an `undefined` one would remove Optimus's
+      // own tabindex.
+      ...(this.readonly() && { tabindex: this.isDisabled() ? '-1' : '0' }),
     }),
   );
 
