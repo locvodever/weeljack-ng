@@ -1,5 +1,6 @@
 import { DOCUMENT } from '@angular/common';
 import { Component, inject } from '@angular/core';
+import { Router, RouterLink } from '@angular/router';
 import { WjButton } from 'weeljack-ng/button';
 import exampleSources from '../../../generated/examples.json';
 import theme from '../../../generated/theme.json';
@@ -36,12 +37,15 @@ const LAYER_ORDER_CSS = '@layer base, wj, utilities;';
 /** `/guides/theming` (FR-19 ... FR-22): content in the PRD's order, tables from `npm run generate`. */
 @Component({
   selector: 'docs-theming-page',
-  imports: [CodeBlock, WjButton],
+  imports: [CodeBlock, RouterLink, WjButton],
   templateUrl: './theming.html',
   styleUrl: './theming.css',
 })
 export class ThemingPage {
   private readonly document = inject(DOCUMENT);
+
+  /** Links are written relative to the root route, so the base href decides where they point. */
+  protected readonly root = inject(Router).routerState.root;
 
   /** The in-page list, in the order of the sections below. */
   protected readonly sections = [

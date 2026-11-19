@@ -1,0 +1,90 @@
+<h1 tabindex="-1">Platform support</h1>
+<p class="purpose">
+  The Angular, Optimus and browser versions WeeljackNg is built and tested for, and what it does not
+  claim.
+</p>
+<nav aria-label="On this page">
+  <ul class="toc">
+    @for (section of sections; track section.id) {
+      <li>
+        <a [href]="'platform-support#' + section.id" (click)="jump($event, section.id)">{{
+          section.title
+        }}</a>
+      </li>
+    }
+  </ul>
+</nav>
+
+<section aria-labelledby="angular-and-optimus">
+  <h2 id="angular-and-optimus" tabindex="-1">Angular and Optimus</h2>
+  <p>
+    Each WeeljackNg line is built on one Angular range and one Optimus UI line, and it is tested
+    only against them.
+  </p>
+  <docs-compatibility-table />
+  <p>
+    The browser set below is Angular's own for this range, so it moves when the Angular pin, now
+    <code>{{ angular }}</code>, moves.
+  </p>
+</section>
+
+<section aria-labelledby="change-detection">
+  <h2 id="change-detection" tabindex="-1">Change detection</h2>
+  <p>
+    Every <code>wj-*</code> component is OnPush and correct without zone.js. These are hard rules,
+    and every spec runs zoneless. An app that uses zone.js is neither tested nor blocked.
+  </p>
+</section>
+
+<section aria-labelledby="server-rendering">
+  <h2 id="server-rendering" tabindex="-1">Server rendering</h2>
+  <p>
+    Server-side rendering is supported: no component touches a browser global outside
+    <code>afterNextRender</code> or <code>isPlatformBrowser</code>, and a server-render smoke test
+    covers every exported <code>wj-*</code> component.
+  </p>
+  <p>
+    Hydration is untested. An app that hits a hydration mismatch puts
+    <code>ngSkipHydration</code> on the <code>wj-*</code> host.
+  </p>
+  <docs-code-block [code]="skipHydration" label="ngSkipHydration example" />
+</section>
+
+<section aria-labelledby="browsers">
+  <h2 id="browsers" tabindex="-1">Browsers</h2>
+  <p>
+    WeeljackNg supports exactly Angular's default browsers for the pinned Angular. Today that is
+    baseline widely available on 2026-05-07:
+  </p>
+  <ul>
+    <li>Chrome, Edge and Firefox ≥ 119</li>
+    <li>Safari and iOS Safari ≥ 17.0</li>
+  </ul>
+  <p>
+    There is no <code>.browserslistrc</code>: neither the library nor this docs app ships one.
+    Component CSS and DOM APIs stay inside that set.
+  </p>
+</section>
+
+<section aria-labelledby="size">
+  <h2 id="size" tabindex="-1">Size</h2>
+  <ul>
+    <li>A wrapper weighs at most the larger of 2.5 KB or 25% of the Optimus entry it wraps.</li>
+    <li>
+      An own entry, such as <code>wj-sheet</code> or <code>wj-field</code>, weighs at most 5 KB.
+    </li>
+    <li>Both are measured as esbuild minify plus gzip level 6.</li>
+    <li>There is no app-level size, latency or load target.</li>
+  </ul>
+</section>
+
+<section aria-labelledby="errors-and-warnings">
+  <h2 id="errors-and-warnings" tabindex="-1">Errors and warnings</h2>
+  <p>
+    An error that Optimus throws is never caught, swallowed or re-wrapped: it reaches your
+    application's <code>ErrorHandler</code> exactly as Optimus threw it. WeeljackNg's own problems
+    are development-only <code>console.warn</code> lines in this shape: a code, the selector, what
+    is wrong, what to do, and where to find more.
+  </p>
+  <docs-code-block [code]="messageShape" label="warning message shape" />
+</section>

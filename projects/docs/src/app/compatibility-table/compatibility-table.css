@@ -1,0 +1,34 @@
+:host {
+  display: block;
+}
+
+.scroll {
+  overflow-x: auto;
+  margin-block: 16px;
+  border: 1px solid var(--wj-content-border-color);
+  border-radius: 12px;
+  background: var(--wj-content-background);
+}
+
+table {
+  inline-size: 100%;
+  border-collapse: collapse;
+  font-size: 0.9375rem;
+}
+
+th,
+td {
+  padding: 8px 12px;
+  border-block-end: 1px solid var(--wj-content-border-color);
+  text-align: start;
+  vertical-align: top;
+}
+
+tbody tr:last-child > * {
+  border-block-end: 0;
+}
+
+/* A cell that holds one token stays on one line; the region scrolls instead. */
+.token {
+  white-space: nowrap;
+}

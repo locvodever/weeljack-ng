@@ -21,7 +21,8 @@ import ts from 'typescript';
  *   and nothing in those lists is missing from Optimus (a 03-vs-Optimus name mismatch);
  * - every shipped entry is a target or `own`;
  * - `planned` is exactly the targets minus the shipped entries, and every planned row is a target;
- * - every shipped entry has a `DOC` whose `title` and `purpose` read as string literals.
+ * - every shipped entry has a `DOC` whose `title` and `purpose` read as string literals;
+ * - README's compatibility table (FR-18, 14 Q3) gives the manifest's Angular and Optimus peer ranges.
  *
  * @typedef {{ id: string, label: string, wave: number }} CoverageGroup
  * @typedef {{ entries: string[], label: string, why: string, useInstead: string }} NotWrapped
@@ -355,6 +356,52 @@ if (major === undefined) {
   failures.push(`the API index version "${apiIndex.version}" is not a semver version.`);
 }
 
+// --- Guard: README's compatibility table matches the manifest's peers (FR-18, 14 Q3) ----------
+/** The line above README's table, which is also the docs' address (20 owed). */
+const PAGES_URL = 'https://locvodever.github.io/weeljack-ng/';
+const releaseLine = major === '0' ? '0.x' : `${String(major)}.x`;
+
+/** @param {string} line @returns {string[]} the cells of a Markdown table row, backticks removed */
+function cellsOf(line) {
+  return line
+    .split('|')
+    .slice(1, -1)
+    .map((cell) => cell.trim().replaceAll('`', ''));
+}
+
+const readmeLines = readFileSync(join(root, 'README.md'), 'utf8')
+  .replace(/\r\n/g, '\n')
+  .split('\n');
+const urlLine = readmeLines.findIndex((line) => line.includes(PAGES_URL));
+const headerLine =
+  urlLine === -1
+    ? -1
+    : readmeLines.findIndex(
+        (line, index) =>
+          index > urlLine && /^\|\s*WeeljackNg\s*\|\s*Angular\s*\|\s*Optimus UI\s*\|/.test(line),
+      );
+if (headerLine === -1) {
+  failures.push(
+    `README.md has no compatibility table (WeeljackNg | Angular | Optimus UI) under the ${PAGES_URL} line.`,
+  );
+} else {
+  const rows = [];
+  // The row after the header is the `| --- |` rule; the table ends at the first non-row line.
+  for (let index = headerLine + 2; (readmeLines[index] ?? '').startsWith('|'); index += 1) {
+    rows.push(cellsOf(readmeLines[index] ?? ''));
+  }
+  const row = rows.find((cells) => cells[0] === releaseLine);
+  const angular = peers['@angular/core'];
+  const optimus = peers['@openng/optimus-ui'];
+  if (row === undefined) {
+    failures.push(`README.md's compatibility table has no row for the ${releaseLine} line.`);
+  } else if (row[1] !== angular || row[2] !== optimus) {
+    failures.push(
+      `README.md's compatibility table says Angular ${String(row[1])} and Optimus UI ${String(row[2])}, but the manifest's peers are ${String(angular)} and ${String(optimus)}. Fix the README row to the manifest.`,
+    );
+  }
+}
+
 if (groups.every((group) => group.rows.length === 0) || cov.notWrapped.length === 0) {
   failures.push('the catalog is empty.');
 }
@@ -388,7 +435,7 @@ writeFileSync(
   `${JSON.stringify(
     {
       version: apiIndex.version,
-      releaseLine: major === '0' ? '0.x' : `${String(major)}.x`,
+      releaseLine,
       peers,
     },
     null,

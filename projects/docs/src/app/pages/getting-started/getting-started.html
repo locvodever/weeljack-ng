@@ -1,0 +1,110 @@
+<h1 tabindex="-1">Get started</h1>
+<p class="purpose">Install WeeljackNg, provide it once, and render a first component.</p>
+<nav aria-label="On this page">
+  <ul class="toc">
+    @for (section of sections; track section.id) {
+      <li>
+        <a [href]="'getting-started#' + section.id" (click)="jump($event, section.id)">{{
+          section.title
+        }}</a>
+      </li>
+    }
+  </ul>
+</nav>
+
+<section aria-labelledby="install">
+  <h2 id="install" tabindex="-1">Install</h2>
+  <docs-code-block [code]="install" label="install line" />
+  <p>
+    npm installs the peer dependencies below along with <code>weeljack-ng</code>, so your app lists
+    only <code>weeljack-ng</code> in its <code>package.json</code>. The peer ranges are:
+  </p>
+  <ul>
+    @for (peer of peers; track peer[0]) {
+      <li>
+        <code>{{ peer[0] }}</code>&ngsp;<code>{{ peer[1] }}</code>
+      </li>
+    }
+  </ul>
+</section>
+
+<section aria-labelledby="provide">
+  <h2 id="provide" tabindex="-1">Provide</h2>
+  <p>Add <code>provideWeeljack()</code> to your application config, once.</p>
+  <docs-code-block [code]="examples.provide" label="provideWeeljack example" />
+  <p>
+    <strong>Never call <code>provideOptimus</code>.</strong>
+    <code>provideWeeljack</code> already calls it once, inside. A second call silently overwrites
+    the prefix, the layer and the dark-mode setting that WeeljackNg set, so the components lose
+    their theme. In development mode, a <code>wj-*</code> component warns when the theme has lost
+    the <code>wj</code> prefix.
+  </p>
+</section>
+
+<section aria-labelledby="a-first-component">
+  <h2 id="a-first-component" tabindex="-1">A first component</h2>
+  <p>
+    Import the component from its own entry, <code>weeljack-ng/button</code> for
+    <code>wj-button</code>, and use it in a template.
+  </p>
+  <div class="live docs-live">
+    <docs-getting-started-first-component-example />
+  </div>
+  <docs-code-block [code]="examples.firstComponent" label="first component example source" />
+</section>
+
+<section aria-labelledby="another-language">
+  <h2 id="another-language" tabindex="-1">Another language</h2>
+  <p>
+    The strings WeeljackNg renders itself are English by default. To switch them to Vietnamese, pass
+    <code>vi</code> from <code>weeljack-ng/locale</code> as the <code>translation</code> option.
+  </p>
+  <docs-code-block [code]="examples.anotherLanguage" label="translation example" />
+  <p>
+    WeeljackNg sets neither <code>LOCALE_ID</code> nor <code>&lt;html lang&gt;</code>. Both stay
+    yours.
+  </p>
+</section>
+
+<section aria-labelledby="keep-optimus-out-of-your-imports">
+  <h2 id="keep-optimus-out-of-your-imports" tabindex="-1">Keep Optimus out of your imports</h2>
+  <p>
+    An app never imports <code>&#64;openng/*</code>: everything it needs comes from
+    <code>weeljack-ng</code>. npm puts the Optimus packages in your tree as peers, so only lint
+    stops a direct import. Once no <code>&#64;openng</code> import is left in your app, paste this
+    rule into your flat config.
+  </p>
+  <docs-code-block [code]="lintConfig" label="ESLint flat config example" />
+  <p>
+    Flat config keeps only the last <code>no-restricted-imports</code> options for a file. A block
+    added as its own config object replaces any <code>no-restricted-imports</code> you already set
+    for the same files, so if you have one, merge this pattern into it instead.
+  </p>
+</section>
+
+<section aria-labelledby="compatibility">
+  <h2 id="compatibility" tabindex="-1">Compatibility</h2>
+  <p>
+    WeeljackNg numbers its own lines. Each line names the Angular range and the Optimus UI line it
+    builds on.
+  </p>
+  <docs-compatibility-table />
+  <p>
+    These docs are at <a [href]="pagesUrl" rel="noopener">{{ pagesUrl }}</a>.
+  </p>
+</section>
+
+<section aria-labelledby="next-steps">
+  <h2 id="next-steps" tabindex="-1">Next steps</h2>
+  <ul class="steps">
+    <li>
+      <a routerLink="guides/theming" [relativeTo]="root">Next: Theming</a>
+    </li>
+    <li>
+      <a routerLink="components" [relativeTo]="root">Browse: Components</a>
+    </li>
+    <li>
+      <a routerLink="platform-support" [relativeTo]="root">Platform support</a>
+    </li>
+  </ul>
+</section>

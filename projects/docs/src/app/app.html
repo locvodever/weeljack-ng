@@ -9,6 +9,16 @@
       <li>
         <a
           class="page-link"
+          routerLink="getting-started"
+          routerLinkActive
+          [routerLinkActiveOptions]="{ exact: true }"
+          ariaCurrentWhenActive="page"
+          >Get started</a
+        >
+      </li>
+      <li>
+        <a
+          class="page-link"
           routerLink="components"
           routerLinkActive
           [routerLinkActiveOptions]="{ exact: true }"

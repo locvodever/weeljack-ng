@@ -48,6 +48,12 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/home/home').then((m) => m.HomePage),
   },
   {
+    path: 'getting-started',
+    title: `Get started · ${SITE}`,
+    loadComponent: () =>
+      import('./pages/getting-started/getting-started').then((m) => m.GettingStartedPage),
+  },
+  {
     path: 'components',
     pathMatch: 'full',
     title: `Components · ${SITE}`,
@@ -66,9 +72,20 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/theming/theming').then((m) => m.ThemingPage),
   },
   {
+    path: 'guides/styling',
+    title: `Styling · ${SITE}`,
+    loadComponent: () => import('./pages/styling/styling').then((m) => m.StylingPage),
+  },
+  {
     path: 'guides/from-optimus',
     title: `Coming from Optimus · ${SITE}`,
     loadComponent: () => import('./pages/from-optimus/from-optimus').then((m) => m.FromOptimusPage),
+  },
+  {
+    path: 'platform-support',
+    title: `Platform support · ${SITE}`,
+    loadComponent: () =>
+      import('./pages/platform-support/platform-support').then((m) => m.PlatformSupportPage),
   },
   {
     path: '**',
