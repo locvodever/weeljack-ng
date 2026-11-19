@@ -142,6 +142,14 @@ describe('provideWeeljack', () => {
       expect(variable('--wj-transition-duration')).toBe('0.2s');
     });
 
+    it('draws the submenu indicator in zinc.500, one step darker when active (FR-13)', async () => {
+      await render();
+
+      expect(variable('--wj-navigation-submenu-icon-color')).toBe('#71717a');
+      expect(variable('--wj-navigation-submenu-icon-focus-color')).toBe('#52525b');
+      expect(variable('--wj-navigation-submenu-icon-active-color')).toBe('#52525b');
+    });
+
     it('moves light severity fills to 700 with white text', async () => {
       const fixture = await render();
       const button = (fixture.nativeElement as HTMLElement).querySelector('button');
@@ -259,6 +267,17 @@ describe('provideWeeljack', () => {
       expect(variable('--wj-form-field-invalid-border-color')).toBe('#f87171');
       expect(variable('--wj-error-color')).toBe('#f87171');
       expect(variable('--wj-content-background')).toBe('#18181b');
+    });
+  });
+
+  describe('darkMode "class" menus', () => {
+    it("keeps Aura's submenu indicator in .wj-dark (FR-13)", async () => {
+      await render({ darkMode: 'class' });
+      ROOT.classList.add('wj-dark');
+
+      expect(variable('--wj-navigation-submenu-icon-color')).toBe('#71717a');
+      expect(variable('--wj-navigation-submenu-icon-focus-color')).toBe('#a1a1aa');
+      expect(variable('--wj-navigation-submenu-icon-active-color')).toBe('#a1a1aa');
     });
   });
 

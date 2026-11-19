@@ -107,6 +107,15 @@ export const wjAlwaysOn = definePreset(aura, {
           invalidBorderColor: '{red.600}',
         },
         error: { color: '{red.700}' },
+        // AA: the submenu indicator reaches 3:1 on the menu (zinc.400 on white was 2.56:1, now
+        // zinc.500 at 4.83:1); the focused and open states stay one step darker. Dark is Aura's.
+        navigation: {
+          submenuIcon: {
+            color: '{surface.500}',
+            focusColor: '{surface.600}',
+            activeColor: '{surface.600}',
+          },
+        },
       },
       dark: {
         formField: {

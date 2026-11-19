@@ -1,15 +1,19 @@
-import { Component, computed, input } from '@angular/core';
+import { Component, computed, input, type Type } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { Checkbox } from '@openng/optimus-ui/checkbox';
 import { ColorPicker } from '@openng/optimus-ui/colorpicker';
 import { DatePicker } from '@openng/optimus-ui/datepicker';
+import type { MenuItem } from '@openng/optimus-ui/api';
 import { InputText } from '@openng/optimus-ui/inputtext';
 import { Knob } from '@openng/optimus-ui/knob';
+import { Menubar } from '@openng/optimus-ui/menubar';
+import { Paginator } from '@openng/optimus-ui/paginator';
 import { Rating } from '@openng/optimus-ui/rating';
 import { Select } from '@openng/optimus-ui/select';
 import { Slider } from '@openng/optimus-ui/slider';
 import { Textarea } from '@openng/optimus-ui/textarea';
+import { TieredMenu } from '@openng/optimus-ui/tieredmenu';
 import { ToggleButton } from '@openng/optimus-ui/togglebutton';
 import { ToggleSwitch } from '@openng/optimus-ui/toggleswitch';
 import { userEvent } from 'vitest/browser';
@@ -111,6 +115,55 @@ class DisabledDaysHost {
   protected readonly bound = new Date(2030, 0, 15);
 }
 
+const MENU_ITEMS: MenuItem[] = [
+  { label: 'New' },
+  { label: 'Open', items: [{ label: 'Recent' }] },
+  { label: 'Print' },
+];
+
+/** A static tiered menu (FR-12). */
+@Component({
+  selector: 'wj-tiered-focus-host',
+  imports: [TieredMenu],
+  template: `<p-tieredmenu [model]="items" />`,
+})
+class TieredFocusHost {
+  protected readonly items = MENU_ITEMS;
+}
+
+/** A menubar, at a width that keeps the desktop layout (FR-12). */
+@Component({
+  selector: 'wj-menubar-focus-host',
+  imports: [Menubar],
+  template: `<p-menubar [model]="items" breakpoint="0px" />`,
+})
+class MenubarFocusHost {
+  protected readonly items = MENU_ITEMS;
+}
+
+/** A pager with a rows-per-page list (FR-15). */
+@Component({
+  selector: 'wj-rows-per-page-host',
+  imports: [Paginator],
+  template: `<p-paginator [totalRecords]="50" [rows]="10" [rowsPerPageOptions]="[10, 20]" />`,
+})
+class RowsPerPageHost {}
+
+/** The five Optimus text buttons that set no font of their own (FR-16), in a 16px container. */
+@Component({
+  selector: 'wj-text-buttons-host',
+  template: `
+    <div id="page" style="font: 16px Georgia, serif">
+      <button type="button" class="p-datepicker-select-month">Month</button>
+      <button type="button" class="p-datepicker-select-year">Year</button>
+      <button type="button" class="p-fieldset-toggle-button">Legend</button>
+      <button type="button" class="p-paginator-page">1</button>
+      <button type="button" class="p-step-header">Step</button>
+    </div>
+  `,
+})
+class TextButtonsHost {}
+
 async function mount<T>(type: new () => T, dark: boolean): Promise<ComponentFixture<T>> {
   TestBed.configureTestingModule({ providers: [provideWeeljack({ darkMode: 'class' })] });
   const fixture = TestBed.createComponent(type);
@@ -143,6 +196,45 @@ async function settled<T extends Element>(element: T): Promise<T> {
   getComputedStyle(element).getPropertyValue('color'); // a style read starts any transition
   await expect.poll(() => element.getAnimations().length, { timeout: 2000 }).toBe(0);
   return element;
+}
+
+/** Every rule below `list`, flattened through `@layer` / `@media` nesting. */
+function flatten(list: CSSRuleList): CSSRule[] {
+  return Array.from(list).flatMap((rule) =>
+    rule instanceof CSSGroupingRule ? [rule, ...flatten(rule.cssRules)] : [rule],
+  );
+}
+
+/**
+ * Widens the shipped reduced-motion rule that holds `fragment` to `all`, in place, so its cascade
+ * position is what is tested (the tooltip spec's pattern, never media emulation). Returns the undo.
+ */
+function widenReducedMotion(fragment: string): () => void {
+  const rule = Array.from(document.styleSheets)
+    .flatMap((sheet) => flatten(sheet.cssRules))
+    .find(
+      (candidate): candidate is CSSMediaRule =>
+        candidate instanceof CSSMediaRule &&
+        candidate.conditionText.includes('prefers-reduced-motion') &&
+        candidate.cssText.includes(fragment),
+    );
+  if (!rule) {
+    throw new Error(`the reduced-motion block has no ${fragment} rule`);
+  }
+  const original = rule.media.mediaText;
+  rule.media.mediaText = 'all';
+  return () => {
+    rule.media.mediaText = original;
+  };
+}
+
+/** Tabs onto the menu's own list (a bounded walk, as the entry specs do), then presses Arrow Down. */
+async function activateFirstItem(role: 'menu' | 'menubar'): Promise<void> {
+  for (let tabs = 0; tabs < 3 && document.activeElement?.getAttribute('role') !== role; tabs++) {
+    await userEvent.tab();
+  }
+  await expect.poll(() => document.activeElement?.getAttribute('role')).toBe(role);
+  await userEvent.keyboard('{ArrowDown}');
 }
 
 describe('layer styles', () => {
@@ -312,6 +404,36 @@ describe('layer styles', () => {
       });
     });
 
+    describe('keyboard focus in a menu (FR-12)', () => {
+      const ring = (): string => resolved('color', '--wj-focus-ring-color');
+
+      it.each<{ name: string; host: Type<unknown>; role: 'menu' | 'menubar'; item: string }>([
+        { name: 'tiered menu', host: TieredFocusHost, role: 'menu', item: 'tieredmenu' },
+        { name: 'menubar', host: MenubarFocusHost, role: 'menubar', item: 'menubar' },
+      ])('rings the active item of a $name inside its fill', async ({ host, role, item }) => {
+        const fixture = await mount(host, dark);
+
+        await activateFirstItem(role);
+        const content = query(fixture, `.p-focus > .p-${item}-item-content`);
+
+        await expect.poll(() => getComputedStyle(content).outlineStyle).toBe('solid');
+        expect(getComputedStyle(content).outlineWidth).toBe('2px');
+        expect(getComputedStyle(content).outlineOffset).toBe('-2px');
+        expect(getComputedStyle(content).outlineColor).toBe(ring());
+      });
+
+      it('draws no ring after a pointer click', async () => {
+        const fixture = await mount(TieredFocusHost, dark);
+        const root = fixture.nativeElement as HTMLElement;
+
+        await userEvent.click(query(fixture, '.p-tieredmenu-item-content'));
+        await expect.poll(() => root.querySelector('.p-focus')).not.toBeNull();
+
+        const focused = query(fixture, '.p-focus > .p-tieredmenu-item-content');
+        expect(getComputedStyle(focused).outlineStyle).toBe('none');
+      });
+    });
+
     describe('a hovered invalid control (FR-9)', () => {
       const invalid = (): string => resolved('color', INVALID);
 
@@ -369,5 +491,75 @@ describe('layer styles', () => {
         await expectNoAxeViolations(fixture.nativeElement as HTMLElement);
       });
     });
+  });
+});
+
+describe('menus, motion and text buttons', () => {
+  afterEach(() => {
+    document.body.replaceChildren();
+    document.head.querySelectorAll('style[data-optimus-style-id]').forEach((style) => {
+      style.remove();
+    });
+  });
+
+  it('does not animate the narrow-layout chevron under reduced motion (FR-14)', async () => {
+    await mount(TieredFocusHost, false); // loads the tiered menu's styles
+    const narrow = document.createElement('div');
+    narrow.className = 'p-tieredmenu-mobile';
+    narrow.innerHTML =
+      '<div class="p-tieredmenu-item"><div class="p-tieredmenu-item-content">' +
+      '<span class="p-tieredmenu-submenu-icon"></span></div></div>';
+    document.body.append(narrow);
+    const icon = narrow.querySelector('.p-tieredmenu-submenu-icon');
+    if (!icon) {
+      throw new Error('the narrow structure has no indicator');
+    }
+
+    expect(getComputedStyle(icon).transitionDuration).toBe('0.2s');
+    const restore = widenReducedMotion('p-tieredmenu-submenu-icon');
+    try {
+      expect(getComputedStyle(icon).transitionDuration).toBe('0s');
+    } finally {
+      restore();
+    }
+    expect(getComputedStyle(icon).transitionDuration).toBe('0.2s');
+  });
+
+  it('opens and closes the rows-per-page list without animating under reduced motion (FR-15)', async () => {
+    const fixture = await mount(RowsPerPageHost, false);
+    const probe = document.createElement('div');
+    probe.className = 'p-anchored-overlay-enter-active';
+    document.body.append(probe);
+    const restore = widenReducedMotion('p-anchored-overlay-enter-active');
+    try {
+      expect(getComputedStyle(probe).animationName).toBe('none');
+      probe.className = 'p-anchored-overlay-leave-active';
+      expect(getComputedStyle(probe).animationName).toBe('none');
+
+      await userEvent.click(query(fixture, 'p-select'));
+      await expect.poll(() => document.querySelector('.p-select-overlay')).not.toBeNull();
+      expect(document.querySelector('.p-select-overlay')?.getAnimations()).toEqual([]);
+
+      await userEvent.keyboard('{Escape}');
+      await expect.poll(() => document.querySelector('.p-select-overlay')).toBeNull();
+    } finally {
+      restore();
+    }
+    probe.className = 'p-anchored-overlay-enter-active';
+    expect(getComputedStyle(probe).animationName).toBe('p-animate-anchored-overlay-enter');
+  });
+
+  it('gives the five Optimus text buttons the page font (FR-16)', async () => {
+    const fixture = await mount(TextButtonsHost, false);
+    const page = query(fixture, '#page');
+    const buttons = Array.from(page.querySelectorAll('button'));
+
+    expect(buttons).toHaveLength(5);
+    for (const button of buttons) {
+      expect(getComputedStyle(button).fontSize, button.className).toBe('16px');
+      expect(getComputedStyle(button).fontFamily, button.className).toBe(
+        getComputedStyle(page).fontFamily,
+      );
+    }
   });
 });

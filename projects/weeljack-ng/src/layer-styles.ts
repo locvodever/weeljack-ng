@@ -36,8 +36,25 @@
  *   to be out-ranked. The datepicker rule takes exactly the day, month and year: Optimus dims
  *   them with the class's 0.6 opacity and shows no disabled state, while a generic `.p-disabled`
  *   rule would undim disabled selects and menus. It matches `datepicker.css`'s local rule.
+ * - Menu focus: Optimus marks the active descendant with `.p-focus` and fills it with a surface
+ *   about 1.1:1 against the menu, and outlines the list itself `0`. The rule draws the preset's 2px
+ *   ring, inset (offset minus the width) so a menu's own clipping never cuts it, on that item's
+ *   content, only while an ancestor is `:focus-visible`: a pointer click leaves the list focused but
+ *   not focus-visible, so hover alone never draws it. Optimus sets no `outline` on the content, so
+ *   (0,3,0) wins without `!important`. The panel menu's header takes the same ring when it is the
+ *   `:focus-visible` element.
  * - Reduced motion: transitions keep Aura's 0.2s on named properties; reduced motion drops them to
  *   none.
+ * - The narrow-layout submenu indicator turns with a hard-coded `transition: transform 0.2s`, not on
+ *   `--wj-transition-duration`, from selectors up to (0,5,0): only an important declaration
+ *   inside the layer beats them without copying them. The mark still turns, it just does not
+ *   animate. Reduced motion also drops the anchored overlays' 300ms keyframes, which a select list
+ *   (the pager's rows-per-page list takes no per-instance motion option) otherwise plays. The
+ *   overlay's motion reads the computed duration, so it still finishes and leaves the DOM.
+ * - Text buttons: Optimus renders the datepicker's month and year, the fieldset legend, the page
+ *   numbers and the step header as `<button>`s with no font rule, so they take the browser's 13.33px
+ *   control font. `:where()` has no specificity, so it beats only the browser's own style and any
+ *   Optimus class that sets a size or weight still wins. Weight and line height are untouched.
  * - Optimus injects the icon-spin rule unlayered, and an unlayered rule beats any layered one,
  *   so only an important declaration inside the layer stops the button's loading spinner.
  * - wjRipple: Optimus's press handler returns early when the ink is not displayed.
@@ -76,6 +93,16 @@ export const wjLayerStyles = `
 .p-autocomplete.p-invalid .p-autocomplete-input-multiple:not(.p-disabled):hover,
 :is(.p-checkbox, .p-radiobutton, .p-toggleswitch).p-invalid.p-invalid:not(.p-disabled):has(input:hover) > :is(.p-checkbox-box, .p-radiobutton-box, .p-toggleswitch-slider) {
   border-color: var(--wj-form-field-invalid-border-color);
+}
+
+:focus-visible .p-focus > :is(.p-menu-item-content,.p-tieredmenu-item-content,.p-menubar-item-content,.p-megamenu-item-content,.p-contextmenu-item-content,.p-panelmenu-item-content),
+.p-panelmenu-header:focus-visible > .p-panelmenu-header-content {
+  outline: var(--wj-focus-ring-width) var(--wj-focus-ring-style) var(--wj-focus-ring-color);
+  outline-offset: calc(-1 * var(--wj-focus-ring-width));
+}
+:where(.p-datepicker-select-month,.p-datepicker-select-year,.p-fieldset-toggle-button,.p-paginator-page,.p-step-header) {
+  font-family: inherit;
+  font-size: inherit;
 }
 
 .p-togglebutton.p-togglebutton.p-disabled {
@@ -129,6 +156,15 @@ export const wjLayerStyles = `
 
   .p-tooltip {
     opacity: 1 !important;
+  }
+
+  :is(.p-menubar-submenu-icon,.p-megamenu-submenu-icon,.p-tieredmenu-submenu-icon,.p-contextmenu-submenu-icon) {
+    transition: none !important;
+  }
+
+  .p-anchored-overlay-enter-active,
+  .p-anchored-overlay-leave-active {
+    animation: none;
   }
 }
 `;

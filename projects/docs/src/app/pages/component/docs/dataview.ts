@@ -84,7 +84,7 @@ export const DOC: ComponentDoc = {
     'Items are your markup: give an item interactive content only if it needs it, and name it. The view adds no role to an item beyond the `li`. A layout switch in the header slot needs its own accessible name; changing `layout` moves no focus.',
     'While the view is `loading`, Optimus shows its mask and spinner over the items; the view adds no `aria-busy`, so announce the wait in your own status text if it matters.',
     'The pager is Optimus’s own, not a `wj-paginator`: its button names come from the translation, and it has no page report and no name of its own (use a `wj-paginator` for those). Optimus gap: with `paginator` on, Optimus 2.0.2 leaves its “First Page” button in the Tab order on the first page, where it is dimmed and does nothing. Tab past it.',
-    'Motion gap: the rows-per-page list is an Optimus overlay that takes no per-instance motion option, and `provideWeeljack` sets no global overlay motion, so its open and close are not switched off under reduced motion. The view adds no animation of its own, and a layout change is an instant re-flow.',
+    'Motion gap, fixed: under reduced motion the rows-per-page list opens and closes without animating.',
     'The keyboard walk and the screen-reader pass are recorded on this page before `0.3.0`.',
   ],
   stylingIntro:

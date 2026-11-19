@@ -86,7 +86,7 @@ export const DOC: ComponentDoc = {
     'Optimus gap: on the first page Optimus 2.0.2 dims its "First Page" button and does nothing on a click, but does not disable it, so it stays in the Tab order. Tab past it.',
     'Translation gap: the English default of `currentPageReportTemplate`, "{currentPage} of {totalPages}", is not part of the translation, so it stays English. Pass your own wording, in the language of the page.',
     'The rows-per-page list is an overlay, so it is part of the screen-reader pass.',
-    'Motion gap: the rows-per-page list is an Optimus overlay that takes no per-instance motion option, and `provideWeeljack` sets no global overlay motion, so its open and close are not switched off under reduced motion. The paginator adds no animation of its own.',
+    'Motion gap, fixed: under reduced motion the rows-per-page list opens and closes without animating.',
     'With `alwaysShow` off and a single page, the pager renders nothing, and takes no room. With no records it shows no page buttons, and its previous, next and last buttons and the select are disabled.',
     'The keyboard walk and the screen-reader pass are recorded on this page before `0.3.0`.',
   ],

@@ -137,7 +137,7 @@ export const DOC: ComponentDoc = {
     'Gap: a row marked `selectable: false` cannot be picked or checked directly, but checking all its children checks it, and checking a parent checks it, since Optimus propagates a check without asking.',
     'Gap: a selection set from code checks and selects the rows, but a parent’s partial mark is drawn only while Optimus propagates a click, so it is not redrawn for a selection you set. A new `value` keeps the marks it already drew.',
     'Gap: Optimus counts the root nodes of `value` itself, so `totalRecords` has no effect while the table is not lazy; it is accepted for the day lazy paging returns.',
-    'Gap: the rows-per-page select inside the pager has no motion input, so its overlay animation does not follow `safe: true`; it is listed on `wj-table` as well. “First Page” stays a Tab stop on page 1, as on `wj-table`.',
+    'Motion gap, fixed: under reduced motion the rows-per-page list opens and closes without animating. Gap: “First Page” stays a Tab stop on page 1, as on `wj-table`.',
     'Gap: the English `emptyMessage` reads “No available options”. Set `translation: { emptyMessage }` in `provideWeeljack`, or give a `wjTreeTableEmpty` template.',
     'The table scrolls sideways inside its host when its columns do not fit, and the page never does. The wrapper adds no Tab stop, since the rows are focusable. Expanding, collapsing, sorting and paging are instant, and the table adds no animation; the loading spinner stops under reduced motion.',
     'Give every node a `key`, unique in the tree: a node without one toggles on screen only, and loses its state on a new `value`. The caption does not name the table; point `ariaLabelledBy` at its title.',
