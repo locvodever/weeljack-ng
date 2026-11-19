@@ -38,15 +38,11 @@ export interface WjOwnStrings {
   toggleOn?: string;
   /** `wj-togglebutton`'s label while it is off, when the app sets no `offLabel`. */
   toggleOff?: string;
-  /**
-   * The name of `wj-colorpicker`'s colour area, the saturation and brightness slider in its panel.
-   * Reserved: no component reads it yet, because the panel stays pointer-only until its keyboard
-   * fix fits the entry's size limit.
-   */
+  /** The name of `wj-colorpicker`'s colour area, the saturation and brightness slider in its panel. */
   colorArea?: string;
-  /** The area's spoken value; `{s}` is the saturation and `{b}` the brightness, both in percent. Reserved, as `colorArea`. */
+  /** The area's spoken value; `{s}` is the saturation and `{b}` the brightness, both in percent. */
   colorAreaValue?: string;
-  /** The name of `wj-colorpicker`'s hue slider in its panel. Reserved, as `colorArea`. */
+  /** The name of `wj-colorpicker`'s hue slider in its panel. */
   colorHue?: string;
 }
 
