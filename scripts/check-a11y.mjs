@@ -16,8 +16,8 @@ import { BASE, prerenderedPagePaths, startDocsServer } from './serve-docs.mjs';
  *
  * Three states beyond the pages (FR-27), each light and dark: the "Couldn't load this page" banner
  * (one lazy chunk request is aborted during one navigation to another component page, and routing
- * is restored afterwards), `components/chart` (not wrapped), and the first planned slug of
- * `catalog.json` while one exists.
+ * is restored afterwards), the first not-wrapped slug and the first planned slug of
+ * `catalog.json`, each while one exists (a line says so when it is skipped).
  *
  * Needs Playwright's Chromium (`npx playwright install chromium`) or `CHROME_BIN`.
  */
@@ -28,28 +28,39 @@ const axeSource = createRequire(import.meta.url).resolve('axe-core/axe.min.js');
 const pages = [
   ...prerenderedPagePaths().map((path) => ({ label: path, path, heading: null })),
   { label: 'not-found (unknown URL)', path: `${BASE}no-such-page`, heading: 'No page here' },
-  {
-    label: 'not-found (not wrapped: chart)',
-    path: `${BASE}components/chart`,
-    heading: 'No page here',
-  },
 ];
 
-/** The first row `catalog.json` marks planned, or `undefined` once every target has shipped. */
-const catalog = /** @type {{ groups: { rows: { entry: string, status: string }[] }[] }} */ (
-  JSON.parse(
-    readFileSync(new URL('../projects/docs/src/generated/catalog.json', import.meta.url), 'utf8'),
-  )
-);
+/**
+ * The first planned row and the first not-wrapped row of `catalog.json`, each `undefined` once none
+ * is left (every target shipped; no not-wrapped entry), so no slug is hard-coded here.
+ */
+const catalog =
+  /** @type {{ groups: { rows: { entry: string, status: string }[] }[],
+   *   notWrapped: { entries: string[] }[] }} */ (
+    JSON.parse(
+      readFileSync(new URL('../projects/docs/src/generated/catalog.json', import.meta.url), 'utf8'),
+    )
+  );
 const planned = catalog.groups
   .flatMap((group) => group.rows)
   .find((row) => row.status === 'planned');
 if (planned === undefined) {
-  console.log('check:a11y: no planned slug in catalog.json, skipping the planned state');
+  console.log('check:a11y: no planned entry; planned state skipped');
 } else {
   pages.push({
     label: `not-found (planned: ${planned.entry})`,
     path: `${BASE}components/${planned.entry}`,
+    heading: 'No page here',
+  });
+}
+// The not-found page matches `components/<slug>` against a row's `entries` (`notWrappedFor`).
+const notWrappedSlug = catalog.notWrapped.flatMap((row) => row.entries)[0];
+if (notWrappedSlug === undefined) {
+  console.log('check:a11y: no not-wrapped entry; not-wrapped state skipped');
+} else {
+  pages.push({
+    label: `not-found (not wrapped: ${notWrappedSlug})`,
+    path: `${BASE}components/${notWrappedSlug}`,
     heading: 'No page here',
   });
 }
