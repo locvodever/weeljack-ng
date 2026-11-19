@@ -12,8 +12,8 @@ import { provideWeeljack, type WjColorScale, type WjThemeOptions } from './publi
 })
 class BrandHost {}
 
-/** quanoi's primary and light surface (`apps/owner/src/app/app.config.ts`), copied as fixtures. */
-const QUANOI: WjThemeOptions = {
+/** An app's primary and light surface, as fixtures. */
+const APP_BRAND: WjThemeOptions = {
   primary: {
     50: '#fff3ef',
     100: '#ffd9c7',
@@ -86,10 +86,10 @@ describe('WJ0010 brand contrast warning', () => {
     vi.unstubAllGlobals();
   });
 
-  it("names exactly the two surface pairs on quanoi's values", async () => {
+  it("names exactly the two surface pairs on an app's values", async () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
 
-    await bootstrap(QUANOI);
+    await bootstrap(APP_BRAND);
 
     const messages = warnings(warn).filter((message) => message.startsWith('WJ0010'));
     expect(messages).toHaveLength(1);
@@ -164,7 +164,7 @@ describe('WJ0010 brand contrast warning', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
     vi.stubGlobal('ngDevMode', false);
 
-    await bootstrap(QUANOI);
+    await bootstrap(APP_BRAND);
 
     expect(warnings(warn).filter((m) => m.startsWith('WJ0010'))).toEqual([]);
   });

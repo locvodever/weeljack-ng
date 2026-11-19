@@ -5,7 +5,7 @@
     "note": "Hand-kept: 03's decisions only. scripts/extract-catalog.mjs guards this file against Optimus's own entry points and 03's counts. Shipped status is never listed here: it comes from generated/api/index.json."
   },
   "groups": [
-    { "id": "W1", "label": "What quanoi uses", "wave": 1 },
+    { "id": "W1", "label": "Essentials", "wave": 1 },
     { "id": "W2", "label": "Other form controls", "wave": 2 },
     { "id": "W3", "label": "Data", "wave": 3 },
     { "id": "W4", "label": "Overlays, menus, panels", "wave": 4 },

@@ -576,7 +576,7 @@ describe('WjToggleSwitch', () => {
 
       expect(await toggle.getId()).toMatch(/^wj-toggleswitch-\d+$/);
       expect(label?.getAttribute('for')).toBe(await toggle.getId());
-      // quanoi's item-sheet case: the label reaches the inner role=switch input, not the host.
+      // An item-sheet case: the label reaches the inner role=switch input, not the host.
       expect(inputOf(element).id).toBe(label?.getAttribute('for'));
       expect(inputOf(element).getAttribute('role')).toBe('switch');
       expect(find(element, 'wj-toggleswitch', HTMLElement).id).toBe('');
