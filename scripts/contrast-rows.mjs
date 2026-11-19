@@ -211,6 +211,12 @@ const PAIRS = {
       NON_TEXT,
     ],
     ['tooltip text', 'tooltip.color', 'tooltip.background', TEXT],
+    [
+      'colour panel handles and focus ring on the panel',
+      'colorpicker.handle.color',
+      'colorpicker.panel.background',
+      NON_TEXT,
+    ],
   ],
   dark: [
     ['body text', 'text.color', 'content.background', TEXT],
@@ -449,6 +455,12 @@ const PAIRS = {
       NON_TEXT,
     ],
     ['tooltip text', 'tooltip.color', 'tooltip.background', TEXT],
+    [
+      'colour panel handles and focus ring on the panel',
+      'colorpicker.handle.color',
+      'colorpicker.panel.background',
+      NON_TEXT,
+    ],
   ],
 };
 

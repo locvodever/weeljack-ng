@@ -42,6 +42,9 @@ const OWN_STRINGS = {
     terminalCommand: 'Command',
     toggleOn: 'Yes',
     toggleOff: 'No',
+    colorArea: 'Saturation and brightness',
+    colorAreaValue: 'Saturation {s}%, brightness {b}%',
+    colorHue: 'Hue',
   },
   vi: {
     breadcrumb: 'Đường dẫn',
@@ -57,6 +60,9 @@ const OWN_STRINGS = {
     terminalCommand: 'Lệnh',
     toggleOn: 'Có',
     toggleOff: 'Không',
+    colorArea: 'Độ bão hòa và độ sáng',
+    colorAreaValue: 'Độ bão hòa {s}%, độ sáng {b}%',
+    colorHue: 'Sắc độ',
   },
 };
 

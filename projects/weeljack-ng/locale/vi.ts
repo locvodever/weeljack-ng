@@ -188,5 +188,8 @@ export const vi: WjTranslation = {
     terminalCommand: 'Lệnh',
     toggleOn: 'Có',
     toggleOff: 'Không',
+    colorArea: 'Độ bão hòa và độ sáng',
+    colorAreaValue: 'Độ bão hòa {s}%, độ sáng {b}%',
+    colorHue: 'Sắc độ',
   },
 };
