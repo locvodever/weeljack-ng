@@ -150,21 +150,6 @@ class MenubarFocusHost {
 })
 class RowsPerPageHost {}
 
-/** The five Optimus text buttons that set no font of their own (FR-16), in a 16px container. */
-@Component({
-  selector: 'wj-text-buttons-host',
-  template: `
-    <div id="page" style="font: 16px Georgia, serif">
-      <button type="button" class="p-datepicker-select-month">Month</button>
-      <button type="button" class="p-datepicker-select-year">Year</button>
-      <button type="button" class="p-fieldset-toggle-button">Legend</button>
-      <button type="button" class="p-paginator-page">1</button>
-      <button type="button" class="p-step-header">Step</button>
-    </div>
-  `,
-})
-class TextButtonsHost {}
-
 /** A dock with an enabled and a disabled tile, in a positioned box (FR-17). */
 @Component({
   selector: 'wj-dock-surface-host',
@@ -609,19 +594,5 @@ describe('menus, motion and text buttons', () => {
     }
     probe.className = 'p-anchored-overlay-enter-active';
     expect(getComputedStyle(probe).animationName).toBe('p-animate-anchored-overlay-enter');
-  });
-
-  it('gives the five Optimus text buttons the page font (FR-16)', async () => {
-    const fixture = await mount(TextButtonsHost, false);
-    const page = query(fixture, '#page');
-    const buttons = Array.from(page.querySelectorAll('button'));
-
-    expect(buttons).toHaveLength(5);
-    for (const button of buttons) {
-      expect(getComputedStyle(button).fontSize, button.className).toBe('16px');
-      expect(getComputedStyle(button).fontFamily, button.className).toBe(
-        getComputedStyle(page).fontFamily,
-      );
-    }
   });
 });

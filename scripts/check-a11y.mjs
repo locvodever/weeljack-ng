@@ -96,7 +96,10 @@ async function axeBothSchemes(page, label) {
   let count = 0;
   for (const scheme of /** @type {const} */ (['light', 'dark'])) {
     if (scheme === 'dark') {
-      await page.getByRole('button', { name: 'Dark mode' }).click();
+      await page
+        .getByRole('banner')
+        .getByRole('button', { name: 'Dark mode', exact: true })
+        .click();
       await page.waitForSelector('html.wj-dark');
     }
     // The page-side `axe` global is untyped from here; the result is axe's own `Result[]`.

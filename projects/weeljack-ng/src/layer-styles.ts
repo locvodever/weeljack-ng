@@ -7,7 +7,7 @@
  * cannot inline a loose `.css` file into an entry's TypeScript.
  *
  * Each entry that adds a control to the 44px family adds its Optimus class to the
- * `line-height` rule below; T0 has the button and the text input; textarea and the select label join it.
+ * `line-height` rule below.
  *
  * Optimus injects each component's styles after this css, in the same layer, so an equal
  * specificity loses to Optimus. The invalid rules therefore out-rank the rule they beat:
@@ -54,10 +54,7 @@
  * - Dock tile: Optimus gives `.p-dock-item` no hover rule and no hover token, so the tile takes the
  *   card hover fill. A disabled tile (`.p-disabled`) takes none. Under reduced motion `wj-dock`
  *   already zeroes the tile's transition.
- * - Text buttons: Optimus renders the datepicker's month and year, the fieldset legend, the page
- *   numbers and the step header as `<button>`s with no font rule, so they take the browser's 13.33px
- *   control font. `:where()` has no specificity, so it beats only the browser's own style and any
- *   Optimus class that sets a size or weight still wins. Weight and line height are untouched.
+ * - Text buttons: the font rule for them (FR-16) was stopped for the root budget (about 0.06 KB).
  * - Optimus injects the icon-spin rule unlayered, and an unlayered rule beats any layered one,
  *   so only an important declaration inside the layer stops the button's loading spinner.
  * - wjRipple: Optimus's press handler returns early when the ink is not displayed.
@@ -75,7 +72,6 @@ export const wjLayerStyles = `
 :is(.p-inputtext,.p-textarea).p-invalid:enabled:hover,:is(.p-select,.p-multiselect,.p-cascadeselect,.p-treeselect).p-invalid:not(.p-disabled):hover,.p-autocomplete.p-invalid .p-autocomplete-input-multiple:not(.p-disabled):hover,:is(.p-checkbox,.p-radiobutton,.p-toggleswitch).p-invalid.p-invalid:not(.p-disabled):has(input:hover) > :is(.p-checkbox-box,.p-radiobutton-box,.p-toggleswitch-slider){border-color: var(--wj-form-field-invalid-border-color)}
 :focus-visible .p-focus > :is(.p-menu-item-content,.p-tieredmenu-item-content,.p-menubar-item-content,.p-megamenu-item-content,.p-contextmenu-item-content,.p-panelmenu-item-content),.p-panelmenu-header:focus-visible > .p-panelmenu-header-content{outline: var(--wj-focus-ring-width) var(--wj-focus-ring-style) var(--wj-focus-ring-color);outline-offset: calc(-1 * var(--wj-focus-ring-width))}
 .p-dock-item:not(.p-disabled):hover{background: var(--wj-content-hover-background)}
-:where(.p-datepicker-select-month,.p-datepicker-select-year,.p-fieldset-toggle-button,.p-paginator-page,.p-step-header){font-family: inherit;font-size: inherit}
 .p-togglebutton.p-togglebutton.p-disabled{opacity: 1;cursor: default;background: var(--wj-togglebutton-disabled-background);border-color: var(--wj-togglebutton-disabled-border-color);color: var(--wj-togglebutton-disabled-color)}
 .p-togglebutton.p-togglebutton.p-disabled:not(.p-togglebutton-checked) .p-togglebutton-icon{color: var(--wj-togglebutton-icon-disabled-color)}
 .p-togglebutton-checked.p-disabled .p-togglebutton-content{background: var(--wj-togglebutton-disabled-color);color: var(--wj-togglebutton-disabled-background)}
