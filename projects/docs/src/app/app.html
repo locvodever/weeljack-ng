@@ -55,6 +55,40 @@
     </div>
   </nav>
 </header>
+<div class="alert-slot" role="alert">
+  @if (failed() !== null) {
+    <div class="banner">
+      <p>Couldn't load this page.</p>
+      <button #reload type="button" class="action" (click)="loadFailedPage()">Reload</button>
+    </div>
+  }
+</div>
 <main id="main" tabindex="-1">
   <router-outlet />
 </main>
+<footer class="footer">
+  <div class="footer-inner">
+    <nav aria-label="Footer">
+      <ul class="footer-links">
+        <li><a routerLink="platform-support">Platform support</a></li>
+        <li><a routerLink="errors">Errors</a></li>
+        <li><a routerLink="guides/from-optimus">Coming from Optimus</a></li>
+        <li><a href="https://github.com/locvodever/weeljack-ng" rel="noopener">GitHub</a></li>
+      </ul>
+    </nav>
+    <div class="lineage">
+      <p>
+        WeeljackNg is built on Optimus UI by OpenNG, an MIT-licensed fork of PrimeNG v21 by
+        PrimeTek. Their licences:
+        <a href="https://github.com/openng-org/optimus-ui/blob/main/LICENSE.md" rel="noopener"
+          >Optimus UI</a
+        >
+        and
+        <a href="https://github.com/primefaces/primeng/blob/21.0.0/LICENSE.md" rel="noopener"
+          >PrimeNG v21</a
+        >.
+      </p>
+      <p>WeeljackNg is not affiliated with or endorsed by OpenNG or PrimeTek.</p>
+    </div>
+  </div>
+</footer>

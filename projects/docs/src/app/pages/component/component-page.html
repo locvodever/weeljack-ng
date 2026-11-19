@@ -12,7 +12,7 @@
           <p><docs-text [value]="example.description" /></p>
           @if (example.component) {
             <div class="live docs-live">
-              <ng-container [ngComponentOutlet]="example.component" />
+              <docs-example-frame [component]="example.component" />
             </div>
           }
           <docs-code-block [code]="example.source" [label]="example.title + ' example source'" />

@@ -1,10 +1,10 @@
-import { NgComponentOutlet } from '@angular/common';
 import { Component, computed, inject, input } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import exampleSources from '../../../generated/examples.json';
 import type { ApiClass, ApiMember } from '../../api/api-types';
 import { CATALOG } from '../../catalog/catalog';
 import { CodeBlock } from '../../code-block/code-block';
+import { ExampleFrame } from '../../example-frame/example-frame';
 import { DocsText } from '../../text/text';
 import type { ComponentPageData } from './component-doc';
 
@@ -38,7 +38,7 @@ const isSlot = (item: ApiClass): boolean =>
  */
 @Component({
   selector: 'docs-component-page',
-  imports: [NgComponentOutlet, RouterLink, CodeBlock, DocsText],
+  imports: [RouterLink, CodeBlock, DocsText, ExampleFrame],
   templateUrl: './component-page.html',
   styleUrl: './component-page.css',
 })

@@ -57,8 +57,11 @@ projects/weeljack-ng/          library (sourceRoot)
 projects/docs/                 the docs app (static prerender)
   src/app/pages/component/docs/<entry>.ts   one page's content, `export const DOC: ComponentDoc`
   src/app/examples/<entry>/    the page's live examples
-  src/generated/               GITIGNORED (`npm run generate`): API JSON, example sources, registries
-scripts/                       build, check and dev scripts
+  src/generated/               GITIGNORED (`npm run generate`): API JSON, example sources, registries,
+                               `catalog.json`, `errors.json`, `changelog.json`
+projects/docs/coverage.json    03's hand-kept data: wave groups, targets, "not wrapped" entries
+scripts/                       build, check and dev scripts (`extract-catalog.mjs`,
+                               `extract-errors.mjs`, `extract-changelog.mjs` write the generated files above)
 docs/adr/                      architecture decisions
 ```
 
@@ -199,6 +202,9 @@ a family's own:
   gets Inputs, Outputs and Two-way models tables like a component; only an `ng-template[...]`
   directive is a slot. `check:ssr` counts an `ng-template[...]` slot selector as covered when a
   component selector of the same entry is.
+- The Components index, the sidebar, Coming from Optimus and the error pages are generated from the
+  API, the changelog and the `DOC` files, so a new entry edits none of them. Only a new **Optimus**
+  entry point needs a row in `projects/docs/coverage.json`.
 - Registries (`COMPONENT_DOCS`, `API_DOCUMENTS`) and the API index are generated from those files.
   The registries map each entry to a lazy loader, and the `components/:entry` route resolves the
   page's `DOC` and API, so a new entry adds nothing to the docs app's initial bundle.

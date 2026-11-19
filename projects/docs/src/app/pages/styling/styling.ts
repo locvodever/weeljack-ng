@@ -3,6 +3,7 @@ import { Component, inject } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import exampleSources from '../../../generated/examples.json';
 import { CodeBlock } from '../../code-block/code-block';
+import { ExampleFrame } from '../../example-frame/example-frame';
 import { StylingHostClassAndPtExample } from '../../examples/styling/host-class-and-pt';
 
 const SOURCES: ReadonlyMap<string, string> = new Map(Object.entries(exampleSources));
@@ -26,7 +27,7 @@ const HOST_HTML = '<wj-button class="save-button" style="margin-block: 8px" labe
 /** `/guides/styling` (FR-15): host attributes, variables, the `pt` escape hatch, what is absent. */
 @Component({
   selector: 'docs-styling-page',
-  imports: [RouterLink, CodeBlock, StylingHostClassAndPtExample],
+  imports: [RouterLink, CodeBlock, ExampleFrame],
   templateUrl: './styling.html',
   styleUrl: './styling.css',
 })
@@ -46,6 +47,7 @@ export class StylingPage {
     { id: 'per-component', title: 'Per component' },
   ] as const;
 
+  protected readonly hostClassAndPtExample = StylingHostClassAndPtExample;
   protected readonly hostCss = HOST_CSS;
   protected readonly hostHtml = HOST_HTML;
   protected readonly exampleSource = example('host-class-and-pt');

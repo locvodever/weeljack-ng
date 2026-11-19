@@ -5,6 +5,7 @@ import exampleSources from '../../../generated/examples.json';
 import site from '../../../generated/site.json';
 import { CodeBlock } from '../../code-block/code-block';
 import { CompatibilityTable } from '../../compatibility-table/compatibility-table';
+import { ExampleFrame } from '../../example-frame/example-frame';
 import { GettingStartedFirstComponentExample } from '../../examples/getting-started/first-component';
 
 const SOURCES: ReadonlyMap<string, string> = new Map(Object.entries(exampleSources));
@@ -48,7 +49,7 @@ const PAGES_URL = 'https://locvodever.github.io/weeljack-ng/';
 /** `/getting-started` (FR-14): install, provide, a first component, a language, lint, compatibility. */
 @Component({
   selector: 'docs-getting-started-page',
-  imports: [RouterLink, CodeBlock, CompatibilityTable, GettingStartedFirstComponentExample],
+  imports: [RouterLink, CodeBlock, CompatibilityTable, ExampleFrame],
   templateUrl: './getting-started.html',
   styleUrl: './getting-started.css',
 })
@@ -69,6 +70,7 @@ export class GettingStartedPage {
     { id: 'next-steps', title: 'Next steps' },
   ] as const;
 
+  protected readonly firstComponentExample = GettingStartedFirstComponentExample;
   protected readonly install = INSTALL;
   protected readonly lintConfig = LINT_CONFIG;
   protected readonly pagesUrl = PAGES_URL;
