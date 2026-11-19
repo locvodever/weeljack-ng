@@ -106,6 +106,11 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/errors/error-code').then((m) => m.ErrorCodePage),
   },
   {
+    path: 'changelog',
+    title: `Changelog · ${SITE}`,
+    loadComponent: () => import('./pages/changelog/changelog').then((m) => m.ChangelogPage),
+  },
+  {
     path: '**',
     title: `No page here · ${SITE}`,
     loadComponent: () => import('./pages/not-found/not-found').then((m) => m.NotFoundPage),
