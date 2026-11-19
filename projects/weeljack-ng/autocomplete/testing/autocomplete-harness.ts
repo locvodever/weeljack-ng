@@ -23,7 +23,7 @@ export class WjAutoCompleteHarness extends ComponentHarness {
 
   private readonly input = this.locatorFor('[role="combobox"]');
   private readonly suggestions = this.locatorForAll('[role="option"][aria-selected]');
-  private readonly empty = this.locatorForOptional('[role="option"]:not([aria-selected])');
+  private readonly empty = this.locatorForOptional('li[role="presentation"]');
 
   /** Finds the autocompletes that match `options`. */
   static with(options: WjAutoCompleteHarnessFilters = {}): HarnessPredicate<WjAutoCompleteHarness> {

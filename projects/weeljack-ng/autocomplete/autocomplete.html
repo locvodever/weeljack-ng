@@ -15,4 +15,9 @@
   [size]="size()"
   [motionOptions]="motion"
   [pt]="partAttributes()"
+  (onShow)="open.set(true)"
+  (onHide)="open.set(false)"
 />
+<span data-wj-announcer class="wj-announcer" role="status" aria-live="polite">{{
+  announcement()
+}}</span>

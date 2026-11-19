@@ -96,12 +96,19 @@ export class WjPassword implements ControlValueAccessor {
     this.text(this.shown() ? 'hidePassword' : 'showPassword'),
   );
 
-  /** `pt` forwarded as given, plus the ARIA attributes this wrapper routes to the `input`. */
+  /**
+   * `pt` forwarded as given, plus the ARIA attributes this wrapper routes to the `input`, and a
+   * polite status role on the strength text, which Optimus leaves silent.
+   */
   protected readonly partAttributes = computed<WjPasswordPt>(() => {
-    return _mergePartAttributes(this.pt(), 'pcInputText.root', {
-      'aria-describedby': this.field.describedBy(),
-      'aria-invalid': this.field.invalid() ? 'true' : undefined,
-    });
+    return _mergePartAttributes(
+      _mergePartAttributes(this.pt(), 'pcInputText.root', {
+        'aria-describedby': this.field.describedBy(),
+        'aria-invalid': this.field.invalid() ? 'true' : undefined,
+      }),
+      'meterText',
+      { role: 'status', 'aria-live': 'polite' },
+    );
   });
 
   declare registerOnChange: _AccessorHost<string | null>['registerOnChange'];

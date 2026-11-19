@@ -19,6 +19,12 @@ import { WjField } from 'weeljack-ng/field';
 import { WjFieldHarness } from 'weeljack-ng/field/testing';
 import { vi as viLocale } from 'weeljack-ng/locale';
 import { expectNoAxeViolations } from '../spec-support/axe';
+import {
+  announcedText,
+  expectAnnouncerEmpty,
+  expectEmptyRowAnnounced,
+  expectPoliteStatus,
+} from '../spec-support/empty-row';
 
 const PAYLOAD = '<img src=x onerror="window.wjInjected = true">';
 const ROOT = document.documentElement;
@@ -402,8 +408,9 @@ const hostOf = (element: HTMLElement): HTMLElement => find(element, 'wj-autocomp
 const inputOf = (element: HTMLElement): HTMLInputElement =>
   find(element, '[role="combobox"]', HTMLInputElement);
 
+/** The list: a listbox, or a group while it holds only the empty message. */
 const listOf = (element: HTMLElement): HTMLElement =>
-  find(element, '[role="listbox"]', HTMLElement);
+  find(element, '[role="listbox"], [role="group"].p-autocomplete-list', HTMLElement);
 
 const byId = (element: HTMLElement, id: string): HTMLElement =>
   find(element, `#${id}`, HTMLElement);
@@ -482,7 +489,7 @@ async function closeList(autocomplete: WjAutoCompleteHarness, element: HTMLEleme
   }
   await autocomplete.close();
   await expect.poll(() => autocomplete.isOpen()).toBe(false);
-  await expect.poll(() => element.querySelector('[role="listbox"]')).toBeNull();
+  await expect.poll(() => element.querySelector('.p-autocomplete-list')).toBeNull();
 }
 
 /** The label of the option the input points at with `aria-activedescendant`, or `null`. */
@@ -645,7 +652,8 @@ describe('WjAutoComplete', () => {
 
       expect(await autocomplete.getEmptyMessage()).toBe('No results found');
       expect(await autocomplete.getSuggestionLabels()).toEqual([]);
-      expect(listOf(element).querySelectorAll('[role="option"]')).toHaveLength(1);
+      expect(listOf(element).getAttribute('role')).toBe('group');
+      expect(listOf(element).querySelectorAll('[role="option"]')).toHaveLength(0);
       expect(element.querySelector('.p-autocomplete-loader')).toBeNull();
 
       await closeList(autocomplete, element);
@@ -1024,7 +1032,7 @@ describe('WjAutoComplete', () => {
       await expect.poll(() => autocomplete.getText()).toBe('Brazil');
       await expect.poll(() => autocomplete.isOpen()).toBe(false);
       expect(await autocomplete.isFocused()).toBe(true);
-      await expect.poll(() => element.querySelector('[role="listbox"]')).toBeNull();
+      await expect.poll(() => element.querySelector('.p-autocomplete-list')).toBeNull();
     });
 
     it('reads the picked option as selected, and its row takes the picked state', async () => {
@@ -1062,6 +1070,101 @@ describe('WjAutoComplete', () => {
 
       await autocomplete.selectSuggestion('Australia');
       await expect.poll(() => autocomplete.isOpen()).toBe(false);
+    });
+  });
+
+  describe('announcements', () => {
+    const EMPTY_ROW = '.p-autocomplete-empty-message';
+
+    it('the empty row is not an option, and its text is read once by the wrapper’s live region', async () => {
+      const { fixture, element } = await render();
+      const autocomplete = await openWith(fixture, element, 'zz');
+
+      await expectEmptyRowAnnounced(hostOf(element), EMPTY_ROW, 'No results found');
+
+      await closeList(autocomplete, element);
+      await expectAnnouncerEmpty(hostOf(element));
+    });
+
+    it('the routed role wins over the static role="option", and a consumer pt on the row is kept', async () => {
+      const { fixture, element } = await render((host) => {
+        host.pt.set({ emptyMessage: { 'data-empty': 'g' } });
+      });
+      const autocomplete = await openWith(fixture, element, 'zz');
+
+      const row = find(element, EMPTY_ROW, HTMLElement);
+      expect(row.getAttribute('role')).not.toBe('option');
+      expect(row.getAttribute('data-empty')).toBe('g');
+
+      await closeList(autocomplete, element);
+    });
+
+    it('reads the empty message from a vi override', async () => {
+      const { fixture, element } = await renderAs(Host, () => undefined, 'light', {
+        translation: viLocale,
+      });
+      const autocomplete = await openWith(fixture, element, 'zz');
+
+      await expectEmptyRowAnnounced(hostOf(element), EMPTY_ROW, 'Không tìm thấy kết quả');
+
+      await closeList(autocomplete, element);
+    });
+
+    it('reads the number of suggestions, follows the answer, and is silent once the list closes', async () => {
+      const { fixture, element } = await render();
+      expectPoliteStatus(hostOf(element));
+      expect(announcedText(hostOf(element))).toBe('');
+
+      const autocomplete = await openWith(fixture, element, 'a');
+      await expect.poll(() => announcedText(hostOf(element))).toBe('3 results are available');
+
+      await userEvent.keyboard('u');
+      await expect.poll(() => announcedText(hostOf(element))).toBe('2 results are available');
+      // The count is never shown: the panel still lists only the suggestions.
+      expect(await autocomplete.getSuggestionLabels()).toEqual(['Australia', 'Austria']);
+
+      await closeList(autocomplete, element);
+      await expectAnnouncerEmpty(hostOf(element));
+    });
+
+    it('reads the count from a vi override', async () => {
+      const { fixture, element } = await renderAs(Host, () => undefined, 'light', {
+        translation: viLocale,
+      });
+      const autocomplete = await openWith(fixture, element, 'a');
+
+      await expect.poll(() => announcedText(hostOf(element))).toBe('3 kết quả khả dụng');
+
+      await closeList(autocomplete, element);
+    });
+
+    it('leaves Optimus’s own selection region alone', async () => {
+      const { fixture, element } = await render();
+      const autocomplete = await openWith(fixture, element, 'au');
+
+      const own = [...element.querySelectorAll('[role="status"]')].filter(
+        (region) => !region.hasAttribute('data-wj-announcer'),
+      );
+      expect(own.map((region) => region.textContent.trim())).toEqual(['No selected item']);
+
+      await closeList(autocomplete, element);
+    });
+
+    describe.each<Scheme>(['light', 'dark'])('axe, %s', (scheme) => {
+      it('finds nothing with the panel open on results, and open on none', async () => {
+        const { fixture, element } = await render(undefined, scheme);
+        const autocomplete = await openWith(fixture, element, 'au');
+        await expect.poll(() => announcedText(hostOf(element))).toBe('2 results are available');
+        await expectNoAxeViolations(hostOf(element));
+        await closeList(autocomplete, element);
+
+        await autocomplete.clear();
+        await userEvent.keyboard('zz');
+        await expect.poll(() => autocomplete.isOpen()).toBe(true);
+        await overlayOpen(element);
+        await expectEmptyRowAnnounced(hostOf(element), EMPTY_ROW, 'No results found');
+        await closeList(autocomplete, element);
+      });
     });
   });
 
@@ -1113,7 +1216,7 @@ describe('WjAutoComplete', () => {
       expect(component.value()).toBe(BRAZIL);
       await expect.poll(() => autocomplete.getText()).toBe('Brazil');
       // Optimus resets the input when the list's leave ends, so typing waits for the list to go.
-      await expect.poll(() => element.querySelector('[role="listbox"]')).toBeNull();
+      await expect.poll(() => element.querySelector('.p-autocomplete-list')).toBeNull();
 
       await autocomplete.focus();
       await userEvent.keyboard('{End}x');
@@ -1135,7 +1238,7 @@ describe('WjAutoComplete', () => {
 
       expect(component.value()).toBe(BRAZIL);
       await expect.poll(() => autocomplete.getText()).toBe('Brazil');
-      await expect.poll(() => element.querySelector('[role="listbox"]')).toBeNull();
+      await expect.poll(() => element.querySelector('.p-autocomplete-list')).toBeNull();
     });
 
     it('clears text that matches no suggestion, and the value, when focus leaves', async () => {
@@ -1153,7 +1256,7 @@ describe('WjAutoComplete', () => {
 
       await expect.poll(() => autocomplete.getText()).toBe('');
       await expect.poll(() => component.value()).toBeNull();
-      await expect.poll(() => element.querySelector('[role="listbox"]')).toBeNull();
+      await expect.poll(() => element.querySelector('.p-autocomplete-list')).toBeNull();
     });
 
     it('clears the value when the input is emptied', async () => {

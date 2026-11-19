@@ -20,6 +20,12 @@ import {
 } from 'weeljack-ng/select';
 import { WjSelectHarness } from 'weeljack-ng/select/testing';
 import { expectNoAxeViolations } from '../spec-support/axe';
+import {
+  announcedText,
+  expectAnnouncerEmpty,
+  expectEmptyRowAnnounced,
+  expectPoliteStatus,
+} from '../spec-support/empty-row';
 
 const PAYLOAD = '<img src=x onerror="window.wjInjected = true">';
 const ROOT = document.documentElement;
@@ -302,8 +308,9 @@ const rootOf = (element: HTMLElement): HTMLElement => find(element, 'p-select', 
 const comboboxOf = (element: HTMLElement): HTMLElement =>
   find(element, '[role="combobox"]', HTMLElement);
 
+/** The list: a listbox, or a group while it holds only the empty message. */
 const listOf = (element: HTMLElement): HTMLElement =>
-  find(element, '[role="listbox"]', HTMLElement);
+  find(element, '[role="listbox"], [role="group"].p-select-list', HTMLElement);
 
 const byId = (element: HTMLElement, id: string): HTMLElement =>
   find(element, `#${id}`, HTMLElement);
@@ -346,7 +353,7 @@ async function overlayOpen(element: HTMLElement): Promise<void> {
 async function closeList(select: WjSelectHarness, element: HTMLElement): Promise<void> {
   await select.close();
   await expect.poll(() => select.isOpen()).toBe(false);
-  await expect.poll(() => element.querySelector('[role="listbox"]')).toBeNull();
+  await expect.poll(() => element.querySelector('.p-select-list')).toBeNull();
 }
 
 /** The label of the option the combobox points at with `aria-activedescendant`, or `null`. */
@@ -714,7 +721,8 @@ describe('WjSelect', () => {
 
       expect(await select.getEmptyMessage()).toBe('No available options');
       expect(await select.getOptionLabels()).toEqual([]);
-      expect(listOf(element).querySelectorAll('[role="option"]')).toHaveLength(1);
+      expect(listOf(element).getAttribute('role')).toBe('group');
+      expect(listOf(element).querySelectorAll('[role="option"]')).toHaveLength(0);
 
       await closeList(select, element);
     });
@@ -776,6 +784,87 @@ describe('WjSelect', () => {
       await expect.poll(() => select.isOpen()).toBe(false);
       expect(await select.isFocused()).toBe(true);
       await expect.poll(() => element.querySelector('[role="listbox"]')).toBeNull();
+    });
+  });
+
+  describe('announcements', () => {
+    const EMPTY_ROW = '.p-select-empty-message';
+    const hostOf = (element: HTMLElement): HTMLElement => find(element, 'wj-select', HTMLElement);
+    const renderEmpty = (scheme: Scheme = 'light', pt?: WjSelectPt): Promise<Rendered<Host>> =>
+      render((host) => {
+        host.options.set([]);
+        host.pt.set(pt);
+      }, scheme);
+
+    it('the empty row is not an option, and its text is read once by the wrapper’s live region', async () => {
+      const { fixture, element } = await renderEmpty();
+      const select = await harnessOf(fixture);
+      await select.open();
+      await overlayOpen(element);
+
+      await expectEmptyRowAnnounced(hostOf(element), EMPTY_ROW, 'No available options');
+
+      await closeList(select, element);
+      await expectAnnouncerEmpty(hostOf(element));
+    });
+
+    it('the routed role wins over the static role="option", and a consumer pt on the row is kept', async () => {
+      const { fixture, element } = await renderEmpty('light', {
+        emptyMessage: { 'data-empty': 'g' },
+      });
+      const select = await harnessOf(fixture);
+      await select.open();
+      await overlayOpen(element);
+
+      const row = find(element, EMPTY_ROW, HTMLElement);
+      expect(row.getAttribute('role')).not.toBe('option');
+      expect(row.getAttribute('data-empty')).toBe('g');
+
+      await closeList(select, element);
+    });
+
+    it('reads the empty message from a vi override', async () => {
+      const { fixture, element } = await renderAs(
+        Host,
+        (host) => {
+          host.options.set([]);
+        },
+        'light',
+        { translation: viLocale },
+      );
+      const select = await harnessOf(fixture);
+      await select.open();
+      await overlayOpen(element);
+
+      await expectEmptyRowAnnounced(hostOf(element), EMPTY_ROW, 'Không có tùy chọn nào');
+
+      await closeList(select, element);
+    });
+
+    it('is silent while the list has options, open or closed', async () => {
+      const { fixture, element } = await render();
+      expectPoliteStatus(hostOf(element));
+      const select = await harnessOf(fixture);
+      await select.open();
+      await overlayOpen(element);
+
+      expect(announcedText(hostOf(element))).toBe('');
+      expect(listOf(element).getAttribute('role')).toBe('listbox');
+
+      await closeList(select, element);
+    });
+
+    describe.each<Scheme>(['light', 'dark'])('axe, %s', (scheme) => {
+      it('finds nothing with the list open on no options', async () => {
+        const { fixture, element } = await renderEmpty(scheme);
+        const select = await harnessOf(fixture);
+        await select.open();
+        await overlayOpen(element);
+        await expect.poll(() => announcedText(hostOf(element))).toBe('No available options');
+
+        await expectNoAxeViolations(hostOf(element));
+        await closeList(select, element);
+      });
     });
   });
 

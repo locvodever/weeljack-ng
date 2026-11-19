@@ -88,7 +88,7 @@ export const DOC: ComponentDoc = {
     'Inside a `wj-field` the input is named by the field’s label: `<label for>` points at the input’s `id`, which is your `inputId` or a generated one. `aria-describedby` lists your own `ariaDescribedBy` ids first, then the hint, then the error, without duplicates.',
     'The input sets `aria-invalid="true"` while it is invalid. Inside a field that is exactly while the field shows an error, so the `invalid` input is not shown there. Outside a field it follows `invalid`.',
     'The mask toggle is a real `button` after the input, with a hit box of 28, 36 or 44 px. Its name is the translation’s `wj.showPassword` while the text is masked and `wj.hidePassword` while it shows, and `aria-pressed` is `true` while the text shows. It is disabled with the control.',
-    'Gap: Optimus does not announce the strength text. The overlay is visual only, so the strength is not read out as the user types.',
+    'Gap, fixed: Optimus does not announce the strength text, so the strength was not read out as the user typed. `wj-password` routes `role="status"` and `aria-live="polite"` onto the strength text, so each change (weak, medium, strong) is announced.',
     'Gap: while the strength overlay is open it covers whatever sits below the input, including a field’s error message. The message stays in the input’s description, so a screen reader still reads it.',
     'The strength meter’s fill grows over one second in Optimus. Under `prefers-reduced-motion: reduce` it does not animate.',
     'The screen-reader pass (NVDA with Chrome, VoiceOver on iOS for the overlay) is recorded on this page before `0.1.0`.',
