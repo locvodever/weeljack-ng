@@ -20,7 +20,7 @@ export const DOC: ComponentDoc = {
     {
       title: 'Basic',
       description:
-        'A panel is a bordered box with a title and content. Every panel needs a title: set `header`, or fill the `wjPanelHeader` slot. A panel with neither still draws an empty header band.',
+        'A panel is a bordered box with a title and content. Give a titled panel a title: set `header`, or fill the `wjPanelHeader` slot. A panel with no title, no toggle and no `wjPanelHeader` or `wjPanelIcons` slot draws no header band, only its content box; for an untitled box, `wj-card` is the better fit.',
       sourceKey: 'panel/basic',
       component: PanelBasicExample,
     },
@@ -60,7 +60,7 @@ export const DOC: ComponentDoc = {
   ],
   aria: [
     'The toggle is a real `button` with `aria-expanded` and `aria-controls`, and the content is a `role="region"` labelled by the header (the APG Disclosure pattern). The panel takes no ARIA input: the header names it.',
-    'Always give a panel a `header`, or fill the `wjPanelHeader` slot. A toggleable panel with neither logs the dev-mode warning `WJ0110` once (it never throws): its toggle button has no accessible name. A panel that is not toggleable is not warned about, but it still draws an empty header band.',
+    'Always give a panel a `header`, or fill the `wjPanelHeader` slot. A toggleable panel with neither logs the dev-mode warning `WJ0110` once (it never throws): its toggle button has no accessible name. A panel that is not toggleable is not warned about: with no title and no slot it draws no header at all.',
     'Setting an `aria-*` attribute on the `wj-panel` host logs the dev-mode warning `WJ0003` and is not forwarded.',
     'Name an icon-only button you put in the `wjPanelIcons` slot yourself.',
     'Gap, fixed: with a `wjPanelHeader` slot and no `header` text, Optimus leaves the toggle button with no name. `wj-panel` wraps the slot’s content in an element with a unique id and points the toggle button’s and the region’s `aria-labelledby` at it. With `header` text, both point at the title.',
@@ -73,7 +73,7 @@ export const DOC: ComponentDoc = {
     'The keyboard walk and the screen-reader pass (NVDA with Chrome) are recorded on this page before `1.0.0`.',
   ],
   stylingIntro:
-    'Colours, radius, borders and spacing come from the `--wj-*` variables that `provideWeeljack` emits. The host is a block, so its width is yours. A long title wraps and is never truncated. Where `wj-panel` routes its own attributes onto a part (the title’s `id`, the toggle button’s `aria-labelledby`, `aria-expanded` and `aria-controls`, the region’s `aria-labelledby`, the toggle host’s `role`), the routed value wins over the same attribute in your `pt`; every other key you set is kept. `pt` reaches the parts of the Optimus panel underneath, and the nested toggle button as `pcToggleButton`. It tracks Optimus 2.0: part names and attributes follow the installed `@openng/optimus-ui` minor and are outside the stable API of `wj-panel`. Changes to them ship only in the release that takes a new Optimus minor, and are not breaking. `pt.motion` is merged under the component’s own safe motion, so it cannot turn reduced motion off.',
+    'Colours, radius, borders and spacing come from the `--wj-*` variables that `provideWeeljack` emits. The host is a block, so its width is yours. A long title wraps and is never truncated, at a 1.25 line height so its lines do not touch. Where `wj-panel` routes its own attributes onto a part (the title’s `id`, the toggle button’s `aria-labelledby`, `aria-expanded` and `aria-controls`, the region’s `aria-labelledby`, the toggle host’s `role`), the routed value wins over the same attribute in your `pt`; every other key you set is kept. `pt` reaches the parts of the Optimus panel underneath, and the nested toggle button as `pcToggleButton`. It tracks Optimus 2.0: part names and attributes follow the installed `@openng/optimus-ui` minor and are outside the stable API of `wj-panel`. Changes to them ship only in the release that takes a new Optimus minor, and are not breaking. `pt.motion` is merged under the component’s own safe motion, so it cannot turn reduced motion off.',
   parts: [
     { part: 'host', description: 'The `p-panel` element, as the host of the Optimus panel.' },
     { part: 'root', description: 'The `p-panel` element: the bordered box.' },
@@ -146,8 +146,12 @@ export const DOC: ComponentDoc = {
     dropped('#headericons', 'Icon slot: icons are not exposed.'),
     dropped('p-header, p-footer facets', 'Use the slots.'),
     dropped(
-      'iconPos, toggler, showHeader, toggleButtonProps, id',
+      'iconPos, toggler, toggleButtonProps, id',
       'Exposed by need: Optimus’s defaults apply (`toggler="icon"`), and Optimus generates the id.',
+    ),
+    dropped(
+      'showHeader',
+      'Set by the wrapper: the header shows when there is `header` text, a `wjPanelHeader` or `wjPanelIcons` slot, or `toggleable` (its button lives in the header).',
     ),
     dropped('motionOptions', 'Bound to `{ safe: true }`, so motion respects reduced motion.'),
     dropped('transitionOptions', 'Deprecated alias.'),

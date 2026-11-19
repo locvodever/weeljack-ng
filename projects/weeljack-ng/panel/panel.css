@@ -11,6 +11,11 @@
     gap: 0.5rem;
   }
 
+  /* Optimus sets the title at line-height 1, so the lines of a wrapped title touch. */
+  :host ::ng-deep .p-panel-title {
+    line-height: 1.25;
+  }
+
   [data-wj-part='panel-header'] {
     margin-inline-end: auto;
   }

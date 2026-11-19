@@ -1,10 +1,12 @@
 /* Optimus draws no focus indicator: its input is `outline: 0 none`. The whole box draws the default
    look's ring while the input holds focus (2 px solid, 2 px offset, from the preset's variables), the
    input is 24 px tall (target size, 22 Q3), and long text wraps anywhere so nothing scrolls sideways
-   (WCAG 1.4.10). */
+   (WCAG 1.4.10). The host sets a monospace stack, which Optimus's input and prompt inherit; an app's
+   unlayered `font-family` on `wj-terminal` beats it. */
 @layer wj {
   :host {
     display: block;
+    font-family: ui-monospace, SFMono-Regular, menlo, consolas, 'Liberation Mono', monospace;
     overflow-wrap: anywhere;
   }
 

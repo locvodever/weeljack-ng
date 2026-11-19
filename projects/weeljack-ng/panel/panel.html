@@ -1,5 +1,6 @@
 <p-panel
   [header]="header()"
+  [showHeader]="hasHeader()"
   [toggleable]="toggleable()"
   [collapsed]="toggleable() && collapsed()"
   (collapsedChange)="collapsed.set($event === true)"

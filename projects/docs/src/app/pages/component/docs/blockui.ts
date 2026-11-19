@@ -60,10 +60,10 @@ export const DOC: ComponentDoc = {
     'Focus inside the region is lost when it becomes `inert`. On unblock it goes back to the element that had it, if that is still in the page and not `inert`.',
     'The mask’s content is not announced to a screen reader. Announce the status yourself, with `wj-toast` or a live region, as the example’s status line does.',
     'Never put text straight on the mask: in light mode Aura’s mask text colour over the 40% black mask reaches only about 2.2:1. Put the message on a surface card, as the examples do (about 10:1 in light and 17:1 in dark).',
-    'Block a static or relatively positioned element. Optimus sets `position: relative` on the target when it blocks and never removes it.',
+    'Gap, fixed: Optimus sets `position: relative` inline on the target when it blocks and never removes it. `wj-blockui` records the target’s own inline `position` before the block and writes it back once the mask has left (or removes the property when the target had none). The target is `position: relative` while blocked, so block a static or relatively positioned element. A block that starts again before the mask has left keeps the first recorded value.',
     'Under reduced motion the mask appears and leaves without a fade, and unblocking completes.',
     'Destroying `wj-blockui` while it is blocked releases the scroll lock, removes the mask and takes `inert` and `aria-busy` off the region.',
-    'On the page, Optimus keeps its 12px corner radius on the mask, so the four corners of the viewport show a sliver of unmasked page.',
+    'Gap, fixed: Optimus’s 12px radius also applied to the page mask, so the four corners of the viewport showed a sliver of unmasked page. The page mask now has no radius; a target’s mask keeps the radius of a card.',
     'The keyboard walk and the screen-reader passes (NVDA with Chrome, and VoiceOver on iOS Safari for overlays) are recorded here before wave 4’s release.',
   ],
   stylingIntro:

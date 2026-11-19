@@ -13,6 +13,13 @@
     display: none;
   }
 
+  /* The page mask covers the viewport: Optimus's card radius would leave its corners unmasked. A
+     target's mask keeps the radius. The mask is moved into the body, but it is this component's own
+     element, so its emulated attribute travels with it. */
+  .p-blockui-mask-document {
+    border-radius: 0;
+  }
+
   .content {
     margin: auto;
     max-inline-size: calc(100% - 2rem);

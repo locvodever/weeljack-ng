@@ -65,6 +65,11 @@ export class WjPanel {
 
   private readonly inner = viewChild(Panel);
 
+  /** No title, no toggle and no slot: there is nothing for a header to hold, so it is not drawn. */
+  protected readonly hasHeader = computed(
+    () => !!this.header() || this.toggleable() || !!this.headerSlot() || !!this.iconsSlot(),
+  );
+
   /**
    * `pt` forwarded as given, plus what this wrapper routes (FR-38's gap fixes): a unique title id
    * (Optimus gives the title and the toggle one id); the toggle named by the title or by the header

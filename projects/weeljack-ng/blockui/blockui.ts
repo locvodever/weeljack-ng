@@ -6,6 +6,7 @@ import {
   afterRenderEffect,
   booleanAttribute,
   computed,
+  effect,
   inject,
   input,
   viewChild,
@@ -19,8 +20,8 @@ import type { WjBlockUIPt } from './blockui-types';
  * Optimus's mask blocks only the pointer, so while `blocked` the region's content is also
  * `inert` and the region is `aria-busy`. Put the message on a surface card inside it: text
  * straight on the mask is too faint in light mode. The mask's content is not announced, so tell
- * the user the status yourself. Block a static or relatively positioned element: Optimus leaves
- * `position: relative` on its target.
+ * the user the status yourself. The target is `position: relative` while blocked; its own inline
+ * `position` is back once the mask has left.
  */
 @Component({
   selector: 'wj-blockui',
@@ -56,10 +57,22 @@ export class WjBlockUI {
     read: ElementRef,
   });
   private moved: HTMLElement | undefined;
+  /** The target's own inline `position`, recorded before Optimus's block sets `relative` on it. */
+  private saved: { element: HTMLElement; position: string } | undefined;
+  private leave: MutationObserver | undefined;
 
   constructor() {
     _checkWeeljackSetup('wj-blockui');
     const document = inject(DOCUMENT);
+
+    // Runs before the template hands `blocked` to Optimus, which sets `position: relative` on the
+    // target and never takes it back. A block that starts again before the restore keeps the first value.
+    effect(() => {
+      const target = this.target();
+      if (this.blocked() && target && !this.saved) {
+        this.saved = { element: target, position: target.style.position };
+      }
+    });
 
     // Runs after Optimus has moved its mask in, in a browser only. The cleanup runs on unblock
     // and on destroy: it removes only what was set here, so an app's own `inert` stays.
@@ -75,12 +88,22 @@ export class WjBlockUI {
         (child) => child !== mask && !child.hasAttribute('inert'),
       );
       this.moved = mask;
+      this.leave?.disconnect();
       for (const child of covered) {
         child.setAttribute('inert', '');
       }
       region.setAttribute('aria-busy', 'true');
 
       onCleanup(() => {
+        // Optimus ends the leave on `animationend`, when the mask loses `p-overlay-mask`.
+        if (this.saved) {
+          this.leave = new MutationObserver(() => {
+            if (!mask.classList.contains('p-overlay-mask')) {
+              this.restorePosition();
+            }
+          });
+          this.leave.observe(mask, { attributes: true, attributeFilter: ['class'] });
+        }
         for (const child of covered) {
           child.removeAttribute('inert');
         }
@@ -107,6 +130,17 @@ export class WjBlockUI {
     // host goes: take it away, or the mask outlives its owner. Optimus itself releases the scroll lock.
     inject(DestroyRef).onDestroy(() => {
       this.moved?.remove();
+      this.restorePosition();
     });
+  }
+
+  /** Writes the target's own inline `position` back (an empty one removes the property). */
+  private restorePosition(): void {
+    this.leave?.disconnect();
+    this.leave = undefined;
+    if (this.saved) {
+      this.saved.element.style.position = this.saved.position;
+      this.saved = undefined;
+    }
   }
 }

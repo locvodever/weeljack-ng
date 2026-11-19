@@ -298,6 +298,13 @@ const STATES: [string, (host: Host) => void][] = [
     },
   ],
   [
+    'untitled, not toggleable, no slot (no header)',
+    (host) => {
+      host.header.set(undefined);
+      host.toggleable.set(false);
+    },
+  ],
+  [
     'header slot with no header text',
     (host) => {
       host.header.set(undefined);
@@ -377,6 +384,48 @@ describe('WjPanel', () => {
       expect(await panel.isCollapsed()).toBe(true);
       expect(getComputedStyle(regionOf(element)).display).toBe('none');
       expect(await panel.getContentText()).toBe('Ships in two working days.');
+    });
+
+    describe('the header band', () => {
+      const header = (element: HTMLElement): Element | null =>
+        element.querySelector('.p-panel-header');
+
+      it('draws no header for an untitled panel with no toggle and no slot', async () => {
+        const { element } = await renderSmall(PlainHost);
+
+        expect(header(element)).toBeNull();
+        expect(element.querySelector('[data-pc-section="content"]')?.textContent).toBe(
+          'Just content',
+        );
+      });
+
+      it('keeps the header for a titled panel, a toggleable one and either slot', async () => {
+        const { host, element } = await render('light', (instance) => {
+          instance.toggleable.set(false);
+        });
+        expect(header(element)).not.toBeNull();
+
+        host.header.set(undefined);
+        await expect.poll(() => header(element)).toBeNull();
+
+        host.toggleable.set(true);
+        await expect.poll(() => header(element)).not.toBeNull();
+        host.toggleable.set(false);
+        await expect.poll(() => header(element)).toBeNull();
+
+        host.headerSlot.set('Slot title');
+        await expect.poll(() => header(element)).not.toBeNull();
+        host.headerSlot.set(undefined);
+        await expect.poll(() => header(element)).toBeNull();
+
+        host.icons.set(true);
+        await expect.poll(() => header(element)).not.toBeNull();
+        host.icons.set(false);
+        await expect.poll(() => header(element)).toBeNull();
+
+        host.header.set('Back');
+        await expect.poll(() => header(element)).not.toBeNull();
+      });
     });
 
     it('is a block with no box of its own', async () => {
@@ -473,8 +522,10 @@ describe('WjPanel', () => {
       ]);
     });
 
-    it('leaves the actions area empty for a plain panel', async () => {
-      const { element } = await renderSmall(PlainHost);
+    it('leaves the actions area empty for a titled panel with no toggle', async () => {
+      const { element } = await render('light', (host) => {
+        host.toggleable.set(false);
+      });
 
       expect(actionsOf(element).children.length).toBe(0);
     });
@@ -773,6 +824,13 @@ describe('WjPanel', () => {
       expect(Math.abs(header.right - 18 - actions.right)).toBeLessThanOrEqual(1);
       expect(edit.right).toBeLessThanOrEqual(toggle.left);
       expect(toggle.right).toBeLessThanOrEqual(actions.right + 0.5);
+    });
+
+    it('sets the title at a 1.25 line height, so wrapped lines do not touch', async () => {
+      const { element } = await render();
+      const style = getComputedStyle(titleOf(element));
+
+      expect(parseFloat(style.lineHeight)).toBeCloseTo(parseFloat(style.fontSize) * 1.25, 1);
     });
 
     it('lets a long title wrap, never truncating it', async () => {
