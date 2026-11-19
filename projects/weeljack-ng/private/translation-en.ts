@@ -190,5 +190,8 @@ export const _WJ_EN = {
     terminalCommand: 'Command',
     toggleOn: 'Yes',
     toggleOff: 'No',
+    colorArea: 'Saturation and brightness',
+    colorAreaValue: 'Saturation {s}%, brightness {b}%',
+    colorHue: 'Hue',
   },
 };

@@ -20,6 +20,9 @@ const OWN_KEYS = [
   'terminalCommand',
   'toggleOn',
   'toggleOff',
+  'colorArea',
+  'colorAreaValue',
+  'colorHue',
 ] as const satisfies readonly (keyof WjOwnStrings)[];
 
 function keys(value: object | undefined): string[] {
@@ -62,6 +65,9 @@ describe('weeljack-ng/locale', () => {
       terminalCommand: 'Lệnh',
       toggleOn: 'Có',
       toggleOff: 'Không',
+      colorArea: 'Độ bão hòa và độ sáng',
+      colorAreaValue: 'Độ bão hòa {s}%, độ sáng {b}%',
+      colorHue: 'Sắc độ',
     });
   });
 
