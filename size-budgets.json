@@ -28,6 +28,12 @@
       "note": "wj-sheet: Optimus Dialog on wide screens, the bottom Drawer on narrow ones."
     },
     {
+      "entry": "weeljack-ng/splitter",
+      "optimus": "splitter",
+      "kb": 2.75,
+      "note": "Raise under CLAUDE.md section 5's rule (2026-11-19): 2.50 -> 2.75 KB, measured 2.75 KB gzip (2.74 on the first run). Bought tap to place (WCAG 2.5.7, GF3 FR-16): the single-pointer way to move the line."
+    },
+    {
       "entry": "weeljack-ng/locale",
       "optimus": "own",
       "note": "Complete UI translations: vi's data, and en re-exported from private."

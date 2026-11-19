@@ -799,6 +799,176 @@ describe('WjSplitter', () => {
     });
   });
 
+  describe('tap to place (FR-16)', () => {
+    const ARMED = 'data-wj-armed';
+    const isArmed = (element: HTMLElement): boolean =>
+      handlesOf(element)[0]?.hasAttribute(ARMED) ?? false;
+
+    /** Presses and releases the first handle where it stands, which arms it. */
+    async function arm(element: HTMLElement): Promise<void> {
+      await userEvent.click(handlesOf(element)[0] ?? element);
+      await expect.poll(() => isArmed(element)).toBe(true);
+    }
+
+    /** The first panel's share as the last `resizeEnd` reported it. */
+    const lastShare = (host: Host): number | undefined => host.sizes().at(-1)?.sizes[0];
+
+    const fifty = (host: Host): void => {
+      host.size.set(50);
+    };
+
+    it('places the line where the next tap lands in the first panel, and reports it once', async () => {
+      const { element, host, splitter } = await render('light', fifty);
+      await arm(element);
+      const emitted = host.sizes().length;
+      const panel = panelsOf(element)[0] ?? element;
+
+      await userEvent.click(panel, { position: { x: 180, y: 150 } });
+
+      await expect
+        .poll(async () => Math.abs(((await splitter.getPanelSizes())[0] ?? 0) - 30) <= 1)
+        .toBe(true);
+      expect(host.sizes()).toHaveLength(emitted + 1);
+      expect(Math.abs((lastShare(host) ?? 0) - 30)).toBeLessThanOrEqual(1);
+      expect(isArmed(element)).toBe(false);
+    });
+
+    it('places it from a tap in the second panel too', async () => {
+      const { element, host, splitter } = await render('light', fifty);
+      await arm(element);
+
+      const second = panelsOf(element)[1] ?? element;
+      const root = rootOf(element).getBoundingClientRect();
+      const tapped = (second.getBoundingClientRect().left + 100 - root.left) / root.width;
+
+      await userEvent.click(second, { position: { x: 100, y: 150 } });
+
+      await expect.poll(() => host.sizes().length).toBeGreaterThan(1);
+      const [first = 0] = await splitter.getPanelSizes();
+      expect(Math.abs(first - 100 * tapped)).toBeLessThanOrEqual(1.5);
+    });
+
+    it('works for a vertical splitter, measured down the page', async () => {
+      const { element, host, splitter } = await render('light', (h) => {
+        fifty(h);
+        h.orientation.set('vertical');
+        h.height.set('400px');
+      });
+      await arm(element);
+
+      await userEvent.click(panelsOf(element)[0] ?? element, { position: { x: 100, y: 120 } });
+
+      await expect.poll(() => host.sizes().length).toBeGreaterThan(1);
+      expect(Math.abs(((await splitter.getPanelSizes())[0] ?? 0) - 30)).toBeLessThanOrEqual(1);
+    });
+
+    it('moves nothing and disarms when the tap would break a minSize', async () => {
+      const { element, splitter } = await render('light', (host) => {
+        fifty(host);
+        host.minSize.set(40);
+      });
+      await arm(element);
+
+      await userEvent.click(panelsOf(element)[0] ?? element, { position: { x: 100, y: 150 } });
+
+      await expect.poll(() => isArmed(element)).toBe(false);
+      expect(Math.abs(((await splitter.getPanelSizes())[0] ?? 0) - 50)).toBeLessThanOrEqual(1);
+    });
+
+    it('is disarmed by Escape, by a second press and by a tap outside the panels', async () => {
+      const { element, splitter } = await render('light', fifty);
+
+      await arm(element);
+      await userEvent.keyboard('{Escape}');
+      await expect.poll(() => isArmed(element)).toBe(false);
+
+      await arm(element);
+      await userEvent.click(handlesOf(element)[0] ?? element);
+      await expect.poll(() => isArmed(element)).toBe(false);
+
+      await arm(element);
+      await userEvent.click(byId(element, 'caption'));
+      await expect.poll(() => isArmed(element)).toBe(false);
+
+      // Nothing was placed by any of them.
+      expect(Math.abs(((await splitter.getPanelSizes())[0] ?? 0) - 50)).toBeLessThanOrEqual(1);
+    });
+
+    it('does not place after it is disarmed', async () => {
+      const { element, splitter } = await render('light', fifty);
+      await arm(element);
+      await userEvent.keyboard('{Escape}');
+      await expect.poll(() => isArmed(element)).toBe(false);
+
+      await userEvent.click(panelsOf(element)[0] ?? element, { position: { x: 100, y: 150 } });
+
+      expect(Math.abs(((await splitter.getPanelSizes())[0] ?? 0) - 50)).toBeLessThanOrEqual(1);
+    });
+
+    it('keeps the placing tap from reaching a button inside the panel', async () => {
+      const { element, host } = await render('light', fifty);
+      const clicked = vi.fn();
+      const open = find(element, '.pane button', HTMLButtonElement);
+      open.addEventListener('click', clicked);
+      await arm(element);
+      const emitted = host.sizes().length;
+
+      await userEvent.click(open);
+
+      await expect.poll(() => host.sizes().length).toBe(emitted + 1);
+      expect(clicked).not.toHaveBeenCalled();
+      expect(isArmed(element)).toBe(false);
+    });
+
+    it('still resizes by a drag, and a drag does not arm', async () => {
+      const { element, host } = await render('light', fifty);
+      const [handle] = handlesOf(element);
+      const box = handle?.getBoundingClientRect();
+      const x = (box?.left ?? 0) + 12;
+      const y = (box?.top ?? 0) + 12;
+      const event = (type: string, left: number): MouseEvent =>
+        new (type.startsWith('pointer') ? PointerEvent : MouseEvent)(type, {
+          bubbles: true,
+          cancelable: true,
+          clientX: left,
+          clientY: y,
+        });
+
+      handle?.dispatchEvent(event('pointerdown', x));
+      handle?.dispatchEvent(event('mousedown', x));
+      document.dispatchEvent(event('mousemove', x + 60));
+      document.dispatchEvent(event('mouseup', x + 60));
+      document.dispatchEvent(event('pointerup', x + 60));
+
+      await expect.poll(() => host.sizes().length).toBe(1);
+      expect(host.sizes()[0]?.sizes[0]).toBeGreaterThan(55);
+      expect(isArmed(element)).toBe(false);
+    });
+
+    it('draws the armed handle with the focus ring and the panels with a crosshair', async () => {
+      const { element } = await render('light', fifty);
+      const [handle] = handlesOf(element);
+      expect(getComputedStyle(hostOf(element)).cursor).toBe('auto');
+
+      await arm(element);
+      await userEvent.hover(byId(element, 'caption'));
+
+      const ring = getComputedStyle(handle ?? element);
+      expect(ring.outlineWidth).toBe('2px');
+      expect(ring.outlineStyle).toBe('solid');
+      expect(ring.outlineColor).toBe(resolveColour(element, 'var(--wj-focus-ring-color)'));
+      expect(getComputedStyle(hostOf(element)).cursor).toBe('crosshair');
+    });
+
+    it.each<Scheme>(['light', 'dark'])('has no axe violations while armed, %s', async (scheme) => {
+      const { element } = await render(scheme, fifty);
+      await arm(element);
+      await userEvent.hover(byId(element, 'caption'));
+
+      await expectNoAxeViolations(hostOf(element));
+    });
+  });
+
   describe('ARIA', () => {
     it('makes the handle the one separator of its gutter, with a value, a range and a name', async () => {
       const { element, splitter } = await render();

@@ -48,6 +48,19 @@ class Host {
 })
 class AriaOnHostHost {}
 
+/** A first button (fixed, so focusing it never scrolls the page up), a tall page, the scroll-top and a button after. */
+@Component({
+  selector: 'wj-scrolltop-focus-host',
+  imports: [WjScrollTop],
+  template: `
+    <button id="first" type="button" style="position: fixed; inset: 0 auto auto 0">First</button>
+    <div style="block-size: 4000px"></div>
+    <wj-scrolltop />
+    <button id="last" type="button">Last</button>
+  `,
+})
+class FocusHost {}
+
 type Scheme = 'light' | 'dark';
 
 interface Rendered {
@@ -501,6 +514,65 @@ describe('WjScrollTop', () => {
       expect(target.getAttribute('aria-describedby')).toBe(PAYLOAD);
       expect(rendered.element.querySelector('img')).toBeNull();
       expect('wjInjected' in window).toBe(false);
+    });
+  });
+
+  describe('focus after a press (FR-17)', () => {
+    /** Renders the focus host, scrolls past the threshold and waits for the button. */
+    async function renderFocusHost(): Promise<HTMLButtonElement> {
+      TestBed.configureTestingModule({ providers: [provideWeeljack({ darkMode: 'class' })] });
+      const fixture = TestBed.createComponent(FocusHost);
+      await fixture.whenStable();
+      scrollTo(600);
+      await expect.poll(button).not.toBeNull();
+      return theButton();
+    }
+
+    const byId = (id: string): HTMLElement => {
+      const found = document.getElementById(id);
+      if (!found) {
+        throw new Error(`#${id} is missing`);
+      }
+      return found;
+    };
+
+    it('moves focus to the start of the page on Enter: the next Tab reaches the first button', async () => {
+      await renderFocusHost();
+      await userEvent.tab();
+      expect(document.activeElement).toBe(byId('first'));
+      await userEvent.tab();
+      expect(document.activeElement).toBe(theButton());
+
+      await userEvent.keyboard('{Enter}');
+
+      await expect.poll(() => document.activeElement).toBe(document.body);
+      expect(document.body.getAttribute('tabindex')).toBe('-1');
+      await userEvent.tab();
+      expect(document.activeElement).toBe(byId('first'));
+    });
+
+    it('does the same for a pointer press, and drops the body tabindex once it blurs', async () => {
+      const target = await renderFocusHost();
+
+      await userEvent.click(target);
+
+      await expect.poll(() => document.activeElement).toBe(document.body);
+      expect(window.scrollY).toBe(0);
+      await userEvent.tab();
+      expect(document.activeElement).toBe(byId('first'));
+      expect(document.body.hasAttribute('tabindex')).toBe(false);
+    });
+
+    it('leaves a tabindex the page set on the body alone', async () => {
+      document.body.setAttribute('tabindex', '0');
+      const target = await renderFocusHost();
+
+      await userEvent.click(target);
+      await expect.poll(() => document.activeElement).toBe(document.body);
+      byId('last').focus();
+
+      expect(document.body.getAttribute('tabindex')).toBe('0');
+      document.body.removeAttribute('tabindex');
     });
   });
 
