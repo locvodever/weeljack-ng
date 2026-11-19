@@ -702,6 +702,10 @@ describe('WjCascadeSelect', () => {
       await select.selectOption(['Two']);
       await fixture.whenStable();
       expect(component.value()).toBe('two');
+      // The pick closes the list. The harness's `open()` skips its click while `aria-expanded` is
+      // still true, so the reopen below waits for that close to end, as `closeList` does.
+      await expect.poll(() => select.isOpen()).toBe(false);
+      await expect.poll(() => element.querySelector('[role="tree"]')).toBeNull();
 
       component.options.set(DEEP);
       await fixture.whenStable();
