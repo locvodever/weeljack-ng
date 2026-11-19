@@ -930,15 +930,16 @@ describe('WjRating', () => {
       });
     });
 
-    it('paints no invalid look: an invalid rating keeps its star colours and has no outline', async () => {
+    it('turns the unpicked stars invalid, keeps the picked ones primary and draws no outline', async () => {
       const { element } = await render((host) => {
         host.value.set(2);
         host.invalid.set(true);
       });
 
-      expect(getComputedStyle(find(element, '.p-rating-off-icon', SVGElement)).color).toBe(
-        LOOK.light.off,
-      );
+      // The preset's `aria-invalid` rule (`--wj-form-field-invalid-border-color`, #dc2626 in light).
+      await expect
+        .poll(() => getComputedStyle(find(element, '.p-rating-off-icon', SVGElement)).color)
+        .toBe('rgb(220, 38, 38)');
       expect(getComputedStyle(find(element, '.p-rating-on-icon', SVGElement)).color).toBe(
         LOOK.light.on,
       );
