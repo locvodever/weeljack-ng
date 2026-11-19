@@ -224,6 +224,12 @@ const PAIRS = {
       'togglebutton.checked.background',
       NON_TEXT,
     ],
+    [
+      'toggle button, disabled and picked: pill on the track',
+      'togglebutton.disabled.color',
+      'togglebutton.disabled.background',
+      NON_TEXT,
+    ],
     ['tooltip text', 'tooltip.color', 'tooltip.background', TEXT],
     [
       'colour panel handles and focus ring on the panel',
@@ -490,6 +496,12 @@ const PAIRS = {
       'toggle button, picked: pill on the track',
       'togglebutton.content.checked.background',
       'togglebutton.checked.background',
+      NON_TEXT,
+    ],
+    [
+      'toggle button, disabled and picked: pill on the track',
+      'togglebutton.disabled.color',
+      'togglebutton.disabled.background',
       NON_TEXT,
     ],
     ['tooltip text', 'tooltip.color', 'tooltip.background', TEXT],

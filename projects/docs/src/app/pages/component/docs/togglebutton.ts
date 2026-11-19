@@ -52,7 +52,7 @@ export const DOC: ComponentDoc = {
     {
       title: 'Disabled',
       description:
-        'A disabled button leaves the Tab order and ignores every key and click. It is dimmed by Optimus’s opacity, and its pill stays when it is on, so the held value still shows: the second button is on.',
+        'A disabled button leaves the Tab order and ignores every key and click. It takes the disabled fill and text colour, and its pill stays when it is on, so the held value still shows: the second button is on.',
       sourceKey: 'togglebutton/disabled',
       component: ToggleButtonDisabledExample,
     },
@@ -89,7 +89,7 @@ export const DOC: ComponentDoc = {
     'The button sets `aria-invalid="true"` while it is invalid, and Optimus draws a 1 px invalid border. Inside a field that is exactly while the field shows an error, so the `invalid` input is not shown there.',
     'Optimus leaves a disabled button in the Tab order and never marks it `aria-disabled`: its `tabindex` stays `0` unless it is told otherwise. The component binds `tabindex="-1"` and routes `aria-disabled="true"` to the button while it is disabled, so it is skipped and announced as unavailable. That also keeps axe’s colour contrast check off the dimmed text, which WCAG exempts for an inactive component.',
     'The button is touched, for `ngModel`, `FormControl` and `[formField]`, when focus leaves it: a `focusout` on the host whose `relatedTarget` is outside the host. Optimus’s own `onBlur` is bound nowhere in its template, so the component calls the touched callback itself. Optimus also marks the control touched on every flip.',
-    'Gap: Aura’s disabled fill and text colour never apply to a toggle button, because its rule is `:disabled` and a toggle button is a `span`. A disabled button is dimmed by Optimus’s opacity instead, so it looks like an enabled one, only fainter, and its pill stays.',
+    'Gap, fixed: a disabled toggle button takes the disabled fill and text colour, and a picked one keeps its pill in the disabled colours. Aura’s rule is `:disabled`, which never matches the `span` Optimus renders, so the preset restates it on `.p-disabled`: the button is at full opacity, its fill, border and text are the disabled tokens, and the picked pill takes the disabled text colour as its fill and the disabled fill as its text, so the held value still shows.',
     'The pill, the unpicked text and the 44 / 36 / 52 px heights come from the preset-wide `togglebutton` tokens (see Styling), shared with `wj-selectbutton`: the unpicked text is 7.03:1 on the track in light and 7.76:1 in dark, the pill is 4.40:1 (light) and 4.12:1 (dark) against the track, and its white text is 4.83:1 on it.',
     'Give the host an inline size when the two labels differ in length, so the button keeps one width. A narrow container wraps a long label at its spaces and the button grows taller.',
     'The screen-reader pass (NVDA with Chrome) and the wording of the Vietnamese “Có” and “Không” are recorded on this page before `0.2.0`.',

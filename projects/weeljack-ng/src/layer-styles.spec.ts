@@ -3,12 +3,14 @@ import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { Checkbox } from '@openng/optimus-ui/checkbox';
 import { ColorPicker } from '@openng/optimus-ui/colorpicker';
+import { DatePicker } from '@openng/optimus-ui/datepicker';
 import { InputText } from '@openng/optimus-ui/inputtext';
 import { Knob } from '@openng/optimus-ui/knob';
 import { Rating } from '@openng/optimus-ui/rating';
 import { Select } from '@openng/optimus-ui/select';
 import { Slider } from '@openng/optimus-ui/slider';
 import { Textarea } from '@openng/optimus-ui/textarea';
+import { ToggleButton } from '@openng/optimus-ui/togglebutton';
 import { ToggleSwitch } from '@openng/optimus-ui/toggleswitch';
 import { userEvent } from 'vitest/browser';
 import { expectNoAxeViolations } from '../spec-support/axe';
@@ -68,6 +70,45 @@ class InvalidLooksHost {
 })
 class InvalidHoverHost {
   protected readonly options = ['Red', 'Green'];
+}
+
+/** Disabled toggle buttons, off and on, with an icon each (FR-10). */
+@Component({
+  selector: 'wj-disabled-toggle-host',
+  imports: [FormsModule, ToggleButton],
+  template: `
+    <p-togglebutton
+      id="off"
+      [ngModel]="false"
+      [disabled]="true"
+      aria-disabled="true"
+      onLabel="On"
+      offLabel="Off"
+      onIcon="pi pi-check"
+      offIcon="pi pi-times"
+    />
+    <p-togglebutton
+      id="on"
+      [ngModel]="true"
+      [disabled]="true"
+      aria-disabled="true"
+      onLabel="On"
+      offLabel="Off"
+      onIcon="pi pi-check"
+      offIcon="pi pi-times"
+    />
+  `,
+})
+class DisabledToggleHost {}
+
+/** An inline date picker whose earlier days cannot be picked (FR-11). */
+@Component({
+  selector: 'wj-disabled-days-host',
+  imports: [DatePicker],
+  template: `<p-datepicker [inline]="true" [defaultDate]="bound" [minDate]="bound" />`,
+})
+class DisabledDaysHost {
+  protected readonly bound = new Date(2030, 0, 15);
 }
 
 async function mount<T>(type: new () => T, dark: boolean): Promise<ComponentFixture<T>> {
@@ -201,6 +242,71 @@ describe('layer styles', () => {
 
       it('has no axe violations with all four invalid', async () => {
         const fixture = await mount(InvalidLooksHost, dark);
+
+        await expectNoAxeViolations(fixture.nativeElement as HTMLElement);
+      });
+    });
+
+    describe('disabled looks (FR-10, FR-11)', () => {
+      it('gives a disabled toggle button the disabled tokens at full opacity', async () => {
+        const fixture = await mount(DisabledToggleHost, dark);
+        const off = query(fixture, 'p-togglebutton#off');
+        const icon = off.querySelector<HTMLElement>('.p-togglebutton-icon');
+        await settled(off);
+
+        expect(getComputedStyle(off).opacity).toBe('1');
+        expect(getComputedStyle(off).cursor).toBe('default');
+        expect(getComputedStyle(off).backgroundColor).toBe(
+          resolved('background-color', '--wj-togglebutton-disabled-background'),
+        );
+        expect(getComputedStyle(off).borderTopColor).toBe(
+          resolved('color', '--wj-togglebutton-disabled-border-color'),
+        );
+        expect(getComputedStyle(off).color).toBe(
+          resolved('color', '--wj-togglebutton-disabled-color'),
+        );
+        expect(getComputedStyle(icon ?? off).color).toBe(
+          resolved('color', '--wj-togglebutton-icon-disabled-color'),
+        );
+      });
+
+      it('keeps the picked pill visible on a disabled toggle button', async () => {
+        const fixture = await mount(DisabledToggleHost, dark);
+        const on = query(fixture, 'p-togglebutton#on');
+        const pill = query(fixture, 'p-togglebutton#on .p-togglebutton-content');
+        const icon = query(fixture, 'p-togglebutton#on .p-togglebutton-icon');
+        await settled(pill);
+
+        expect(getComputedStyle(on).opacity).toBe('1');
+        expect(getComputedStyle(pill).backgroundColor).toBe(
+          resolved('background-color', '--wj-togglebutton-disabled-color'),
+        );
+        expect(getComputedStyle(pill).color).toBe(
+          resolved('color', '--wj-togglebutton-disabled-background'),
+        );
+        expect(getComputedStyle(icon).color).toBe(
+          resolved('color', '--wj-togglebutton-disabled-background'),
+        );
+      });
+
+      it('shows a day that cannot be picked in the muted colour at full opacity', async () => {
+        const fixture = await mount(DisabledDaysHost, dark);
+        const day = query(fixture, '.p-datepicker-day.p-disabled');
+        await settled(day);
+
+        expect(getComputedStyle(day).opacity).toBe('1');
+        expect(getComputedStyle(day).color).toBe(resolved('color', '--wj-text-muted-color'));
+        expect(getComputedStyle(day).cursor).toBe('default');
+      });
+
+      it('has no axe violations on disabled toggle buttons', async () => {
+        const fixture = await mount(DisabledToggleHost, dark);
+
+        await expectNoAxeViolations(fixture.nativeElement as HTMLElement);
+      });
+
+      it('has no axe violations on an inline date picker with days that cannot be picked', async () => {
+        const fixture = await mount(DisabledDaysHost, dark);
 
         await expectNoAxeViolations(fixture.nativeElement as HTMLElement);
       });

@@ -23,10 +23,30 @@
  *   (ours 0,6,1, the doubled `.p-invalid` also beats the checked hover rule). The autocomplete's
  *   chips input ties at (0,3,0), so ours adds the root (0,5,0). Only `border-color` is set.
  *
- * CSS comments inside the string ship in the bundle: keep them out of it.
+ * Notes on the rules below, moved out of the string because CSS comments inside it ship in the
+ * bundle (keep them out of it):
+ * - 44px controls (22 Q3): the form-field padding tokens assume a 1.5 line-height.
+ * - Invalid looks: the rating, slider, knob, colour picker and hovered-invalid rules.
+ * - Disabled looks: Aura styles a disabled toggle button with `:disabled`, which never matches the
+ *   `span` Optimus renders, so the rule restates it on `.p-disabled`. The doubled
+ *   `.p-togglebutton` (0,3,0) beats the checked rule (0,2,0). The picked pill
+ *   (`.p-togglebutton-content`, (0,3,0) over (0,2,0)) swaps the two disabled colours, so it stays
+ *   visible, and its icon (0,4,0 over 0,3,0) inherits the pill's text colour. A pointer never
+ *   reaches a disabled button (`.p-disabled` sets `pointer-events: none`), so no hover rule needs
+ *   to be out-ranked. The datepicker rule takes exactly the day, month and year: Optimus dims
+ *   them with the class's 0.6 opacity and shows no disabled state, while a generic `.p-disabled`
+ *   rule would undim disabled selects and menus. It matches `datepicker.css`'s local rule.
+ * - Reduced motion: transitions keep Aura's 0.2s on named properties; reduced motion drops them to
+ *   none.
+ * - Optimus injects the icon-spin rule unlayered, and an unlayered rule beats any layered one,
+ *   so only an important declaration inside the layer stops the button's loading spinner.
+ * - wjRipple: Optimus's press handler returns early when the ink is not displayed.
+ * - wjAnimateOnScroll: nothing is held or animated. The important beats the inline opacity: 0
+ *   that Optimus writes on a held element.
+ * - Optimus fades the tooltip bubble in from JavaScript, writing an inline opacity on every
+ *   step, so only an important declaration inside the layer shows it fully opaque at once.
  */
 export const wjLayerStyles = `
-/* 44px controls (22 Q3): the form-field padding tokens assume a 1.5 line-height. */
 .p-inputtext,
 .p-textarea,
 .p-select-label,
@@ -38,7 +58,6 @@ export const wjLayerStyles = `
   line-height: 1.5;
 }
 
-/* Invalid looks. */
 .p-rating[aria-invalid='true'] .p-rating-option:not(.p-rating-option-active) .p-rating-icon {
   color: var(--wj-form-field-invalid-border-color);
 }
@@ -59,8 +78,30 @@ export const wjLayerStyles = `
   border-color: var(--wj-form-field-invalid-border-color);
 }
 
+.p-togglebutton.p-togglebutton.p-disabled {
+  opacity: 1;
+  cursor: default;
+  background: var(--wj-togglebutton-disabled-background);
+  border-color: var(--wj-togglebutton-disabled-border-color);
+  color: var(--wj-togglebutton-disabled-color);
+}
+.p-togglebutton.p-togglebutton.p-disabled:not(.p-togglebutton-checked) .p-togglebutton-icon {
+  color: var(--wj-togglebutton-icon-disabled-color);
+}
+.p-togglebutton-checked.p-disabled .p-togglebutton-content {
+  background: var(--wj-togglebutton-disabled-color);
+  color: var(--wj-togglebutton-disabled-background);
+}
+.p-togglebutton-checked.p-disabled.p-disabled .p-togglebutton-icon {
+  color: inherit;
+}
+:is(.p-datepicker-day, .p-datepicker-month, .p-datepicker-year).p-disabled {
+  opacity: 1;
+  color: var(--wj-text-muted-color);
+  cursor: default;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  /* Transitions keep Aura's 0.2s on named properties; reduced motion drops them to none. */
   :root,
   :host {
     --wj-transition-duration: 0s;
@@ -72,33 +113,20 @@ export const wjLayerStyles = `
     animation: none;
   }
 
-  /*
-   * Optimus injects the icon-spin rule unlayered, and an unlayered rule beats any layered one,
-   * so only an important declaration inside the layer stops the button's loading spinner.
-   */
   .p-icon-spin {
     animation: none !important;
   }
 
-  /* wjRipple: Optimus's press handler returns early when the ink is not displayed. */
   .p-ripple > .p-ink {
     display: none;
   }
 
-  /*
-   * wjAnimateOnScroll: nothing is held or animated. The important beats the inline opacity: 0
-   * that Optimus writes on a held element.
-   */
   .p-animateonscroll {
     opacity: 1 !important;
     animation: none !important;
     transition: none !important;
   }
 
-  /*
-   * Optimus fades the tooltip bubble in from JavaScript, writing an inline opacity on every
-   * step, so only an important declaration inside the layer shows it fully opaque at once.
-   */
   .p-tooltip {
     opacity: 1 !important;
   }
