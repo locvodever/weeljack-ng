@@ -196,6 +196,37 @@ const VIEWPORT = '.p-virtualscroller';
 /** A key scroll over 480,000 px animates in the browser for longer than a poll's default second. */
 const SCROLL = { timeout: 5000 };
 
+/**
+ * The region's `scrollTop` once a key's smooth scroll has stopped: two polls in a row read the same
+ * value. Read mid-animation, it can sit a pixel short of where the scroll ends.
+ */
+async function settledScrollTop(viewport: HTMLElement): Promise<number> {
+  let last = Number.NaN;
+  await expect
+    .poll(() => {
+      const now = viewport.scrollTop;
+      const settled = now === last;
+      last = now;
+      return settled;
+    }, SCROLL)
+    .toBe(true);
+  return last;
+}
+
+/**
+ * Presses `key` until the region scrolls above `limit`. Chrome sometimes drops a scroll key pressed
+ * while the previous key's smooth scroll is settling, as the End and Home spec found; a second press
+ * of an upward key only scrolls further up, which the assertion still holds for.
+ */
+async function pressUntilAbove(viewport: HTMLElement, key: string, limit: number): Promise<void> {
+  await vi.waitFor(async () => {
+    if (viewport.scrollTop >= limit) {
+      await userEvent.keyboard(key);
+    }
+    expect(viewport.scrollTop).toBeLessThan(limit);
+  }, SCROLL);
+}
+
 /** The documented states: default, scrolled to the middle, horizontal, lazy while loading, empty. */
 const STATES: [string, (host: Host) => void, ((scroller: WjScrollerHarness) => Promise<void>)?][] =
   [
@@ -812,10 +843,9 @@ describe('WjScroller', () => {
 
       await userEvent.keyboard('{ArrowDown}');
       await expect.poll(() => viewport.scrollTop).toBeGreaterThan(0);
-      const down = viewport.scrollTop;
+      const down = await settledScrollTop(viewport);
 
-      await userEvent.keyboard('{ArrowUp}');
-      await expect.poll(() => viewport.scrollTop).toBeLessThan(down);
+      await pressUntilAbove(viewport, '{ArrowUp}', down);
     });
 
     it('PageDown and PageUp scroll the region by about a viewport, and the window follows', async () => {
@@ -825,7 +855,7 @@ describe('WjScroller', () => {
 
       await userEvent.keyboard('{PageDown}');
       await expect.poll(() => viewport.scrollTop).toBeGreaterThan(200);
-      const down = viewport.scrollTop;
+      const down = await settledScrollTop(viewport);
       await expect
         .poll(() =>
           scroller
@@ -834,8 +864,7 @@ describe('WjScroller', () => {
         )
         .toBe(true);
 
-      await userEvent.keyboard('{PageUp}');
-      await expect.poll(() => viewport.scrollTop).toBeLessThan(down);
+      await pressUntilAbove(viewport, '{PageUp}', down);
     });
 
     it('End and Home scroll the region to its last and first item', async () => {
