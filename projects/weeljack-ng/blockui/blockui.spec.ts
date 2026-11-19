@@ -7,6 +7,7 @@ import { provideWeeljack } from 'weeljack-ng';
 import { WjBlockUI, type WjBlockUIPt } from 'weeljack-ng/blockui';
 import { WjBlockUIHarness } from 'weeljack-ng/blockui/testing';
 import { expectNoAxeViolations } from '../spec-support/axe';
+import { afterOverlay } from '../spec-support/teardown';
 
 const ROOT = document.documentElement;
 
@@ -155,15 +156,21 @@ function maskMotionRule(): CSSMediaRule {
 }
 
 describe('WjBlockUI', () => {
-  afterEach(async () => {
-    // A block left on holds the scroll lock, `inert` and `aria-busy` past the fixture: release it.
-    if (current?.component.blocked()) {
-      await unblock(current);
-    }
-    current = undefined;
-    ROOT.classList.remove('wj-dark');
-    document.body.style.backgroundColor = '';
-  });
+  afterEach(() =>
+    afterOverlay(
+      async () => {
+        // A block left on holds the scroll lock, `inert` and `aria-busy` past the fixture: release it.
+        if (current?.component.blocked()) {
+          await unblock(current);
+        }
+      },
+      () => {
+        current = undefined;
+        ROOT.classList.remove('wj-dark');
+        document.body.style.backgroundColor = '';
+      },
+    ),
+  );
 
   describe('not blocked', () => {
     it('is a block with no height, and nothing of the mask or its content shows', async () => {

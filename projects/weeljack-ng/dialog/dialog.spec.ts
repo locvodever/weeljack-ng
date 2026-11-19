@@ -12,6 +12,7 @@ import { WjDialogHarness } from 'weeljack-ng/dialog/testing';
 import { WjSelect } from 'weeljack-ng/select';
 import { WjSelectHarness } from 'weeljack-ng/select/testing';
 import { expectNoAxeViolations } from '../spec-support/axe';
+import { afterOverlay } from '../spec-support/teardown';
 
 const PAYLOAD = '<img src=x onerror="window.wjInjected = true">';
 const ROOT = document.documentElement;
@@ -233,20 +234,26 @@ describe('WjDialog', () => {
     reduceMotion(true);
   });
 
-  afterEach(async () => {
-    // An overlay left open at teardown would reach the next spec: close it and wait for the leave.
-    if (current && dialogEl()) {
-      await close(current);
-    }
-    current = undefined;
-    ROOT.classList.remove('wj-dark');
-    document.body.style.backgroundColor = '';
-    document.head.querySelectorAll('style[data-optimus-style-id]').forEach((style) => {
-      style.remove();
-    });
-    Reflect.deleteProperty(window, 'wjInjected');
-    await page.viewport(viewport.width, viewport.height);
-  });
+  afterEach(() =>
+    afterOverlay(
+      async () => {
+        // An overlay left open at teardown would reach the next spec: close it and wait for the leave.
+        if (current && dialogEl()) {
+          await close(current);
+        }
+      },
+      async () => {
+        current = undefined;
+        ROOT.classList.remove('wj-dark');
+        document.body.style.backgroundColor = '';
+        document.head.querySelectorAll('style[data-optimus-style-id]').forEach((style) => {
+          style.remove();
+        });
+        Reflect.deleteProperty(window, 'wjInjected');
+        await page.viewport(viewport.width, viewport.height);
+      },
+    ),
+  );
 
   describe('inputs', () => {
     it('renders nothing while closed, in a host that is a block with no height', async () => {

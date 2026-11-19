@@ -13,6 +13,7 @@ import {
 } from 'weeljack-ng/galleria';
 import { WjGalleriaHarness } from 'weeljack-ng/galleria/testing';
 import { expectNoAxeViolations } from '../spec-support/axe';
+import { afterOverlay } from '../spec-support/teardown';
 
 const PAYLOAD = '<img src=x onerror="window.wjInjected = true">';
 const ROOT = document.documentElement;
@@ -342,23 +343,29 @@ describe('WjGalleria', () => {
     await page.viewport(1280, 1000);
   });
 
-  afterEach(async () => {
+  afterEach(() => {
     // A full screen left open at teardown would reach the next spec: close it and wait for the leave.
     const left = current;
     current = undefined;
-    if (left && maskEl()) {
-      await userEvent.keyboard('{Escape}');
-      await gone();
-    }
-    left?.fixture.destroy();
-    vi.useRealTimers();
-    ROOT.classList.remove('wj-dark');
-    document.body.style.backgroundColor = '';
-    document.head.querySelectorAll('style[data-optimus-style-id]').forEach((style) => {
-      style.remove();
-    });
-    Reflect.deleteProperty(window, 'wjInjected');
-    await page.viewport(viewport.width, viewport.height);
+    return afterOverlay(
+      async () => {
+        if (left && maskEl()) {
+          await userEvent.keyboard('{Escape}');
+          await gone();
+        }
+      },
+      async () => {
+        left?.fixture.destroy();
+        vi.useRealTimers();
+        ROOT.classList.remove('wj-dark');
+        document.body.style.backgroundColor = '';
+        document.head.querySelectorAll('style[data-optimus-style-id]').forEach((style) => {
+          style.remove();
+        });
+        Reflect.deleteProperty(window, 'wjInjected');
+        await page.viewport(viewport.width, viewport.height);
+      },
+    );
   });
 
   describe('inputs', () => {
