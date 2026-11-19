@@ -8,6 +8,7 @@ import { page, userEvent } from 'vitest/browser';
 import { provideWeeljack } from 'weeljack-ng';
 import { WjButton } from 'weeljack-ng/button';
 import { WjButtonHarness } from 'weeljack-ng/button/testing';
+import { WjDialog } from 'weeljack-ng/dialog';
 import { WjOverlay, type WjOverlayPt } from 'weeljack-ng/overlay';
 import { WjOverlayHarness } from 'weeljack-ng/overlay/testing';
 import { _overlayEscapeGate } from 'weeljack-ng/private';
@@ -99,6 +100,62 @@ class LowerHost {
   constructor() {
     _overlayEscapeGate(this.visible, () => false);
   }
+}
+
+/** A panel with a `wj-dialog` that a button inside it opens: the dialog is the upper overlay. */
+@Component({
+  selector: 'wj-overlay-over-dialog-host',
+  imports: [WjDialog, WjOverlay],
+  template: `
+    <button id="trigger" type="button" (click)="open.set(!open())">Open</button>
+    <wj-overlay id="outer" [(visible)]="open">
+      <button id="open-dialog" type="button" (click)="dialog.set(true)">Dialog</button>
+    </wj-overlay>
+    <wj-dialog [(visible)]="dialog" header="Above">
+      <button id="dialog-action" type="button">Action</button>
+    </wj-dialog>
+  `,
+})
+class OverDialogHost {
+  readonly open = signal(false);
+  readonly dialog = signal(false);
+}
+
+/** A panel with another `wj-overlay` inside it: the inner one is the upper overlay. */
+@Component({
+  selector: 'wj-overlay-nested-host',
+  imports: [WjOverlay],
+  template: `
+    <button id="outer-trigger" type="button" (click)="outer.set(!outer())">Outer</button>
+    <wj-overlay id="outer" [(visible)]="outer">
+      <button id="inner-trigger" type="button" (click)="inner.set(!inner())">Inner</button>
+      <wj-overlay id="inner" [(visible)]="inner">
+        <button id="inner-action" type="button">Action</button>
+      </wj-overlay>
+    </wj-overlay>
+  `,
+})
+class NestedHost {
+  readonly outer = signal(false);
+  readonly inner = signal(false);
+}
+
+/** A `wj-dialog` that holds a trigger and a panel: the dialog is the lower overlay. */
+@Component({
+  selector: 'wj-overlay-under-dialog-host',
+  imports: [WjDialog, WjOverlay],
+  template: `
+    <wj-dialog [(visible)]="dialog" header="Below">
+      <button id="panel-opener" type="button" (click)="open.set(!open())">Open</button>
+      <wj-overlay [(visible)]="open">
+        <button id="inner" type="button">Inner</button>
+      </wj-overlay>
+    </wj-dialog>
+  `,
+})
+class UnderDialogHost {
+  readonly dialog = signal(true);
+  readonly open = signal(false);
 }
 
 type Scheme = 'light' | 'dark';
@@ -800,6 +857,120 @@ describe('WjOverlay', () => {
       expect(fixture.componentInstance.visible()).toBe(true);
       expect(document.querySelector('.p-dialog-mask')).not.toBeNull();
       await closeBoth(fixture);
+    });
+
+    const dialogEl = (): HTMLElement | null => document.querySelector<HTMLElement>('.p-dialog');
+
+    /** Waits until the dialog is on the page and focus has moved into it. */
+    async function dialogOpened(): Promise<void> {
+      await expect.poll(() => dialogEl() !== null).toBe(true);
+      await expect.poll(() => dialogEl()?.contains(document.activeElement)).toBe(true);
+    }
+
+    /** A panel by its own host id, so nested panels are never confused. */
+    const panelOf = (id: string): HTMLElement | null =>
+      document.querySelector<HTMLElement>(`#${id} .p-overlay-content`);
+
+    /** Waits until that host's panel is on the page and placed. */
+    async function panelOpened(id: string): Promise<void> {
+      await expect.poll(() => panelOf(id) !== null).toBe(true);
+      await expect
+        .poll(() => panelOf(id)?.closest<HTMLElement>('.p-overlay')?.style.minWidth !== '')
+        .toBe(true);
+    }
+
+    it('closes only the dialog opened above it on Escape, then itself on the next', async () => {
+      TestBed.configureTestingModule({ providers: [provideWeeljack()] });
+      const fixture = TestBed.createComponent(OverDialogHost);
+      const host = fixture.componentInstance;
+      await fixture.whenStable();
+      try {
+        await userEvent.click(find(document, '#trigger', HTMLElement));
+        await panelOpened('outer');
+        await userEvent.click(find(document, '#open-dialog', HTMLElement));
+        await dialogOpened();
+
+        await userEvent.keyboard('{Escape}');
+        await expect.poll(dialogEl).toBeNull();
+        await fixture.whenStable();
+        expect(panelOf('outer')).not.toBeNull();
+        expect(host.open()).toBe(true);
+        expect(host.dialog()).toBe(false);
+
+        await userEvent.keyboard('{Escape}');
+        await expect.poll(() => panelOf('outer')).toBeNull();
+        await expect
+          .poll(() => document.activeElement === find(document, '#trigger', HTMLElement))
+          .toBe(true);
+      } finally {
+        host.dialog.set(false);
+        host.open.set(false);
+        await fixture.whenStable();
+        await expect.poll(dialogEl).toBeNull();
+        await expect.poll(() => panelOf('outer')).toBeNull();
+        await expect.poll(() => document.querySelector('.p-dialog-mask')).toBeNull();
+        await expect.poll(() => document.body.classList.contains('p-overflow-hidden')).toBe(false);
+      }
+    });
+
+    it('closes only the inner overlay of two on Escape, then the outer on the next', async () => {
+      TestBed.configureTestingModule({ providers: [provideWeeljack()] });
+      const fixture = TestBed.createComponent(NestedHost);
+      const host = fixture.componentInstance;
+      await fixture.whenStable();
+      try {
+        await userEvent.click(find(document, '#outer-trigger', HTMLElement));
+        await panelOpened('outer');
+        await userEvent.click(find(document, '#inner-trigger', HTMLElement));
+        await panelOpened('inner');
+
+        await userEvent.keyboard('{Escape}');
+        await expect.poll(() => panelOf('inner')).toBeNull();
+        await fixture.whenStable();
+        expect(panelOf('outer')).not.toBeNull();
+        expect(host.outer()).toBe(true);
+        expect(host.inner()).toBe(false);
+
+        await userEvent.keyboard('{Escape}');
+        await expect.poll(() => panelOf('outer')).toBeNull();
+        await expect
+          .poll(() => document.activeElement === find(document, '#outer-trigger', HTMLElement))
+          .toBe(true);
+      } finally {
+        host.inner.set(false);
+        host.outer.set(false);
+        await fixture.whenStable();
+        await expect.poll(() => panelOf('inner')).toBeNull();
+        await expect.poll(() => panelOf('outer')).toBeNull();
+      }
+    });
+
+    it('leaves a wj-dialog below it open on its Escape', async () => {
+      TestBed.configureTestingModule({ providers: [provideWeeljack()] });
+      const fixture = TestBed.createComponent(UnderDialogHost);
+      const host = fixture.componentInstance;
+      await fixture.whenStable();
+      try {
+        await dialogOpened();
+        await userEvent.click(find(document, '#panel-opener', HTMLElement));
+        await opened();
+
+        await userEvent.keyboard('{Escape}');
+        await gone();
+        await fixture.whenStable();
+
+        expect(host.open()).toBe(false);
+        expect(host.dialog()).toBe(true);
+        expect(dialogEl()).not.toBeNull();
+      } finally {
+        host.open.set(false);
+        host.dialog.set(false);
+        await fixture.whenStable();
+        await gone();
+        await expect.poll(dialogEl).toBeNull();
+        await expect.poll(() => document.querySelector('.p-dialog-mask')).toBeNull();
+        await expect.poll(() => document.body.classList.contains('p-overflow-hidden')).toBe(false);
+      }
     });
   });
 

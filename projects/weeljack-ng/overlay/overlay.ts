@@ -10,6 +10,7 @@ import {
   output,
   runInInjectionContext,
 } from '@angular/core';
+import type { OverlayListenerOptions } from '@openng/optimus-ui/api';
 import { Overlay } from '@openng/optimus-ui/overlay';
 import {
   _OVERLAY_MOTION,
@@ -27,7 +28,9 @@ const WJ0154 = 'WJ0154';
  * `<button (click)="open.set(!open())">Menu</button><wj-overlay [(visible)]="open">...</wj-overlay>`.
  * The panel renders inside this element, right after the trigger, so Tab moves from the trigger
  * into it. It has no role of its own: its content decides what it is. Focus stays on the trigger
- * when it opens and returns there when it closes, except after a click on another control.
+ * when it opens and returns there when it closes, except after a click on another control. It joins
+ * the overlay stack: Escape closes it only while it is the top overlay, so a dialog, popover or
+ * another overlay opened above it closes first.
  */
 @Component({
   selector: 'wj-overlay',
@@ -77,10 +80,18 @@ export class WjOverlay {
     () => this.keep ?? this.anchor(),
   );
 
+  /** Whether this panel is the top of the overlay stack (it has no `closable` of its own). */
+  private readonly onTop = _overlayEscapeGate(this.visible, () => true);
+
+  /**
+   * Optimus's `listener` hook, asked before each scroll, outside click, resize and keydown. It keeps
+   * Optimus's own `valid`, and lets Escape through only while this panel is the top overlay.
+   */
+  protected readonly listener = (event: Event, options?: OverlayListenerOptions): boolean =>
+    Boolean(options?.valid) && (event.type !== 'keydown' || this.onTop());
+
   constructor() {
     _checkWeeljackSetup('wj-overlay');
-    // It has no `closable` of its own: it joins the overlay stack, so Escape reaches it first.
-    _overlayEscapeGate(this.visible, () => true);
   }
 
   /**
