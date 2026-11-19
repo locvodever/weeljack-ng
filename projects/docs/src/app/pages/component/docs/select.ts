@@ -89,7 +89,7 @@ export const DOC: ComponentDoc = {
     {
       key: 'PageDown, PageUp',
       effect:
-        'Scrolls the open list to its last or first option. The focused option does not move.',
+        'In an open list, focuses the option ten places on or back, counting only options that are not disabled, and stops at the last or the first. They pick nothing. While the list is closed they do nothing.',
     },
     {
       key: 'Enter, Space',
@@ -119,7 +119,7 @@ export const DOC: ComponentDoc = {
     'While the list is open, focus stays on the combobox and `aria-activedescendant` points at the focused option. The list is named from the translation (`aria.listLabel`), and an empty list shows the translation’s `emptyMessage` as its only row.',
     'Fixed here through `pt`: a disabled option gets `aria-disabled="true"`, which Optimus leaves off, so assistive tech now hears it as unavailable. Optimus’s two hidden focus-trap spans are taken out of the Tab order, because Tab from an open list would otherwise land on one and lose focus when the list closed. The chevron, an English-only "dropdown trigger" button next to the combobox, is hidden from assistive tech.',
     'Gap, fixed: the "no options" row is an `li` with `role="option"` in Optimus, so a screen reader announces it as an option, though it cannot be picked, and nothing read it out. `wj-select` makes the row presentational and, while there are no options, makes the list a `group` (a listbox with no option in it is invalid ARIA). A visually hidden polite live region beside the select reads the translation’s `emptyMessage` while the list is open with nothing to pick.',
-    'Gap: PageDown and PageUp only scroll the list. The WAI-ARIA select-only combobox pattern lets them move focus by about ten options; Optimus does not.',
+    'Gap, fixed: in Optimus, PageDown and PageUp only scroll the open list, to its end and to its start, and leave the focused option where it is, where the WAI-ARIA select-only combobox pattern moves focus by about ten options. `wj-select` moves focus ten options that are not disabled, or to the last or first one, while the list is open; a closed select is left to Optimus.',
     'The list opens inside the host. An ancestor that clips its overflow clips the list too: give the field room, or do not clip.',
     'The screen-reader pass (NVDA with Chrome, VoiceOver on iOS for the list) is recorded on this page before `0.1.0`.',
   ],

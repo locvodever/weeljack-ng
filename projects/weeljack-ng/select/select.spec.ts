@@ -58,10 +58,11 @@ const FRUIT: WjSelectOption<string>[] = [
   { label: 'Elderberry', value: 'elderberry' },
 ];
 
-/** Forty numbered options: enough to make the list scroll. */
-const LONG: WjSelectOption<number>[] = Array.from({ length: 40 }, (_, index) => ({
+/** Twenty-five numbered options; the fifth is disabled, so a ten-option step has one to skip. */
+const PAGED: WjSelectOption<number>[] = Array.from({ length: 25 }, (_, index) => ({
   label: `Option ${String(index + 1)}`,
   value: index + 1,
+  disabled: index === 4,
 }));
 
 /** A consumer's template: one bare select, or the same select inside a field. */
@@ -251,14 +252,15 @@ class KeyboardHost {
   readonly value = signal<string | null>(null);
 }
 
-/** A long list, for PageDown and PageUp. */
+/** A long list with one disabled option, for PageDown and PageUp. */
 @Component({
-  selector: 'wj-select-long-host',
+  selector: 'wj-select-paged-host',
   imports: [WjSelect],
-  template: `<wj-select ariaLabel="Number" [options]="options" />`,
+  template: `<wj-select ariaLabel="Number" [(value)]="value" [options]="options" />`,
 })
-class LongHost {
-  readonly options = LONG;
+class PagedHost {
+  readonly options = PAGED;
+  readonly value = signal<number | null>(null);
 }
 
 type Scheme = 'light' | 'dark';
@@ -1379,28 +1381,65 @@ describe('WjSelect', () => {
       await closeList(select, element);
     });
 
-    it('PageDown and PageUp scroll the list to its end and its start without moving the focused option', async () => {
-      const { fixture, element } = await renderAs(LongHost);
+    it('PageDown and PageUp move focus ten pickable options, skip a disabled one and stop at the ends', async () => {
+      const { fixture, element } = await renderAs(PagedHost);
       const select = await harnessOf(fixture);
       await select.focus();
       await userEvent.keyboard('{ArrowDown}');
+      await overlayOpen(element);
       await userEvent.keyboard('{ArrowDown}');
       expect(activeLabel(element)).toBe('Option 1');
-      await overlayOpen(element);
-      const container = find(element, '.p-select-list-container', HTMLElement);
-      expect(container.scrollTop).toBe(0);
 
+      // Option 5 is disabled, so ten steps from Option 1 land on Option 12, not 11.
       await userEvent.keyboard('{PageDown}');
-      await expect.poll(() => container.scrollTop).toBeGreaterThan(0);
-      expect(activeLabel(element)).toBe('Option 1');
+      await expect.poll(() => activeLabel(element)).toBe('Option 12');
       expect(await select.isOpen()).toBe(true);
 
       await userEvent.keyboard('{PageUp}');
-      // The first option scrolls into view with the list's own 4px padding above it.
-      await expect.poll(() => container.scrollTop).toBeLessThanOrEqual(4);
-      expect(activeLabel(element)).toBe('Option 1');
+      await expect.poll(() => activeLabel(element)).toBe('Option 1');
+
+      await userEvent.keyboard('{PageUp}');
+      await expect.poll(() => activeLabel(element)).toBe('Option 1');
+
+      await userEvent.keyboard('{PageDown}{PageDown}');
+      await expect.poll(() => activeLabel(element)).toBe('Option 22');
+      await userEvent.keyboard('{PageDown}');
+      await expect.poll(() => activeLabel(element)).toBe('Option 25');
+      await userEvent.keyboard('{PageDown}');
+      await expect.poll(() => activeLabel(element)).toBe('Option 25');
+      expect(await select.isOpen()).toBe(true);
 
       await closeList(select, element);
+    });
+
+    it('PageDown moves focus without picking, and Enter then picks the option it reached', async () => {
+      const { fixture, component, element } = await renderAs(PagedHost);
+      const select = await harnessOf(fixture);
+      await select.focus();
+      await userEvent.keyboard('{ArrowDown}');
+      await overlayOpen(element);
+      await userEvent.keyboard('{ArrowDown}');
+
+      await userEvent.keyboard('{PageDown}');
+      await expect.poll(() => activeLabel(element)).toBe('Option 12');
+      expect(component.value()).toBeNull();
+
+      await userEvent.keyboard('{Enter}');
+      await fixture.whenStable();
+      expect(component.value()).toBe(12);
+      await expect.poll(() => select.isOpen()).toBe(false);
+    });
+
+    it('PageDown and PageUp leave a closed select alone: it stays closed and nothing is picked', async () => {
+      const { fixture, component } = await renderAs(PagedHost);
+      const select = await harnessOf(fixture);
+      await select.focus();
+
+      await userEvent.keyboard('{PageDown}{PageUp}');
+
+      expect(await select.isOpen()).toBe(false);
+      expect(component.value()).toBeNull();
+      expect(await select.isFocused()).toBe(true);
     });
 
     it('Enter picks the focused option, closes the list and keeps focus on the combobox', async () => {

@@ -84,7 +84,7 @@ export const DOC: ComponentDoc = {
     {
       key: 'PageDown, PageUp',
       effect:
-        'Scroll the list to its start and to its end, in that order: PageDown to the start, PageUp to the end. The focused option does not change.',
+        'Focus the option ten places on (PageDown) or back (PageUp), counting only options that are not disabled, and stop at the last or the first. They pick nothing.',
     },
     {
       key: 'Escape',
@@ -107,7 +107,7 @@ export const DOC: ComponentDoc = {
     'The scrolling box around the list gets `tabindex="-1"`: browsers make a scrolling box a Tab stop of its own, so without it Shift+Tab from a list that scrolls would stop on the box first.',
     'The empty message is the translation’s `emptyMessage`. Optimus’s list reads its translation for its other messages but draws this one from its own input alone, so the component reads the translation and passes it, once, when it is created.',
     'Gap: an empty list renders no `listbox` element, only the message, so it has no accessible name, description or invalid state of its own, and its entry is a `span` with `role="presentation"` that takes the focus. Disable the list while there is nothing to pick, or say why in the field’s hint.',
-    'Gap: PageDown scrolls to the start and PageUp to the end, the reverse of what the keys mean elsewhere.',
+    'Gap, fixed: in Optimus, PageDown scrolls the list to its start and PageUp to its end, the reverse of what the keys mean elsewhere, and neither moves the focused option. `wj-listbox` moves focus ten options that are not disabled, forward on PageDown and back on PageUp, and stops at the last or first one.',
     'Gap: Optimus types the entry part as `hiddenFirstFocusableEl` but its template reads `hiddenFirstFocusableElement`, so a `pt` attribute for that part never lands. The id is set by the component.',
     'Gap: Optimus’s polite live region reads “1 items selected” when an option is picked, and “No selected item” when none is, from its `selectionMessage` and `emptySelectionMessage`; the count is not pluralised.',
     'Gap: the type-ahead search keeps the letters typed in the last half second, so typing “e” and then “d” in that time looks for “ed”, not “d”.',

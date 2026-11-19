@@ -1,5 +1,7 @@
 import {
   Component,
+  ElementRef,
+  afterNextRender,
   booleanAttribute,
   computed,
   inject,
@@ -18,6 +20,14 @@ import {
   _registerWithField,
 } from 'weeljack-ng/private';
 import type { WjSelectOption, WjSelectPt, WjSelectSize } from './select-types';
+
+/** How many pickable options PageDown and PageUp move focus by. */
+const PAGE_STEP = 10;
+
+/** An option index an Optimus finder returned, `-1` when it is not a number. */
+function asIndex(value: unknown): number {
+  return typeof value === 'number' ? value : -1;
+}
 
 /** Whether the pass-through context Optimus gives an `option` part describes a disabled option. */
 function isDisabledOption(options: unknown): boolean {
@@ -79,6 +89,7 @@ export class WjSelect<T> implements ControlValueAccessor {
    */
   readonly pt = input<WjSelectPt>();
 
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;
   private readonly inner = viewChild(Select);
   protected readonly isDisabled = _bridgeAccessor(
     this,
@@ -164,6 +175,49 @@ export class WjSelect<T> implements ControlValueAccessor {
       };
     };
   });
+
+  constructor() {
+    // In the capture phase, so that Optimus's own handler (scroll only) never sees the key.
+    afterNextRender(() => {
+      this.host.addEventListener(
+        'keydown',
+        (event) => {
+          this.page(event);
+        },
+        { capture: true },
+      );
+    });
+  }
+
+  /**
+   * PageDown and PageUp while the list is open: focus moves ten pickable options (a disabled one is
+   * skipped), stopping at the last or first, where Optimus only scrolls the list to its end or
+   * start. A closed select is left to Optimus.
+   */
+  private page(event: KeyboardEvent): void {
+    const forward = event.key === 'PageDown';
+    const select = this.inner();
+    if ((!forward && event.key !== 'PageUp') || !select?.overlayVisible) {
+      return;
+    }
+    let index = select.focusedOptionIndex();
+    if (index < 0) {
+      const picked = asIndex(select.findSelectedOptionIndex());
+      index = picked >= 0 ? picked : asIndex(select.findNextOptionIndex(-1));
+    }
+    for (let step = 0; step < PAGE_STEP; step++) {
+      const next = asIndex(
+        forward ? select.findNextOptionIndex(index) : select.findPrevOptionIndex(index),
+      );
+      if (next === index) {
+        break;
+      }
+      index = next;
+    }
+    select.changeFocusedOptionIndex(event, index);
+    event.preventDefault();
+    event.stopPropagation();
+  }
 
   declare registerOnChange: _AccessorHost<T | null>['registerOnChange'];
   declare registerOnTouched: _AccessorHost<T | null>['registerOnTouched'];
