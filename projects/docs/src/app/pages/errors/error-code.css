@@ -1,0 +1,89 @@
+section {
+  margin-block-start: 48px;
+}
+
+h2 {
+  margin-block: 0 16px;
+  font-size: 1.5rem;
+}
+
+h2:focus {
+  outline: none;
+}
+
+p,
+ul {
+  max-inline-size: 72ch;
+}
+
+ul {
+  padding-inline-start: 24px;
+}
+
+li {
+  margin-block-end: 8px;
+}
+
+docs-code-block {
+  display: block;
+  margin-block: 16px;
+}
+
+/* The selectors read as a wrapping row of chips. */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  max-inline-size: none;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.chips li {
+  margin: 0;
+}
+
+.scroll {
+  overflow-x: auto;
+  margin-block: 16px;
+  border: 1px solid var(--wj-content-border-color);
+  border-radius: 12px;
+  background: var(--wj-content-background);
+}
+
+table {
+  inline-size: 100%;
+  border-collapse: collapse;
+  font-size: 0.9375rem;
+}
+
+th,
+td {
+  padding: 8px 12px;
+  border-block-end: 1px solid var(--wj-content-border-color);
+  text-align: start;
+  vertical-align: top;
+  overflow-wrap: anywhere;
+}
+
+tbody tr:last-child > * {
+  border-block-end: 0;
+}
+
+/* A cell that holds one token stays on one line; the region scrolls instead. */
+.token {
+  white-space: nowrap;
+  overflow-wrap: normal;
+}
+
+.next {
+  margin-block-start: 48px;
+  font-weight: 600;
+}
+
+.next a {
+  display: inline-block;
+  min-block-size: 24px;
+  line-height: 24px;
+}

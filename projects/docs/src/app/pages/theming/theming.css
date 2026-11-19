@@ -133,3 +133,14 @@ tbody:last-of-type tr:last-child > * {
   display: block;
   color: var(--wj-text-muted-color);
 }
+
+.next {
+  margin-block-start: 48px;
+  font-weight: 600;
+}
+
+.next a {
+  display: inline-block;
+  min-block-size: 24px;
+  line-height: 24px;
+}

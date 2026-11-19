@@ -1,0 +1,149 @@
+<h1 tabindex="-1">Coming from Optimus</h1>
+<p class="purpose">
+  Which WeeljackNg selector takes the place of each Optimus one, for an app that uses Optimus
+  directly today.
+</p>
+<nav aria-label="On this page">
+  <ul class="toc">
+    @for (section of sections; track section.id) {
+      <li>
+        <a [href]="'guides/from-optimus#' + section.id" (click)="jump($event, section.id)">{{
+          section.title
+        }}</a>
+      </li>
+    }
+  </ul>
+</nav>
+
+<section aria-labelledby="selectors">
+  <h2 id="selectors" tabindex="-1">Selectors</h2>
+  <div class="scroll" tabindex="0" role="region" aria-label="Optimus to WeeljackNg selectors">
+    <table>
+      <thead>
+        <tr>
+          <th scope="col">Optimus</th>
+          <th scope="col">WeeljackNg</th>
+          <th scope="col">Page</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (item of selectors; track item.row.entry) {
+          <tr [class.muted]="item.plannedWave !== null">
+            <th scope="row" class="token">
+              <code>{{ item.row.optimusSelector }}</code>
+            </th>
+            <td class="token">
+              <code>{{ chipOf(item.row) }}</code>
+            </td>
+            <td>
+              @if (item.plannedWave === null) {
+                <a [routerLink]="['components', item.row.entry]" [relativeTo]="root">{{
+                  item.row.title
+                }}</a>
+              } @else {
+                Planned — wave {{ item.plannedWave }}
+              }
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section aria-labelledby="own">
+  <h2 id="own" tabindex="-1">WeeljackNg only</h2>
+  <p>These have no Optimus counterpart. They are WeeljackNg's own components.</p>
+  @if (own.length === 0) {
+    <p class="none">None</p>
+  } @else {
+    <ul>
+      @for (item of own; track item.row.entry) {
+        <li>
+          <code>{{ chipOf(item.row) }}</code> —
+          <a [routerLink]="['components', item.row.entry]" [relativeTo]="root">{{
+            item.row.title
+          }}</a>
+        </li>
+      }
+    </ul>
+  }
+</section>
+
+<section aria-labelledby="not-wrapped">
+  <h2 id="not-wrapped" tabindex="-1">Not wrapped</h2>
+  <p>These Optimus entries are not part of WeeljackNg, and no wave will add them.</p>
+  <div class="scroll" tabindex="0" role="region" aria-label="Not wrapped">
+    <table>
+      <thead>
+        <tr>
+          <th scope="col">Optimus</th>
+          <th scope="col">Use instead</th>
+          <th scope="col">Why</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of notWrapped; track row.label) {
+          <tr>
+            <th scope="row">{{ row.label }}</th>
+            <td>Not wrapped — use <docs-text [value]="row.useInstead" /></td>
+            <td><docs-text [value]="row.why" /></td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section aria-labelledby="services">
+  <h2 id="services" tabindex="-1">Services</h2>
+  <p>
+    An app uses these WeeljackNg services in place of the Optimus ones. Each ships with its
+    component.
+  </p>
+  @if (services.length === 0) {
+    <p class="none">None</p>
+  } @else {
+    <div class="scroll" tabindex="0" role="region" aria-label="WeeljackNg services">
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">Service</th>
+            <th scope="col">Component</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of services; track item.row.entry) {
+            @for (service of item.row.services; track service.name) {
+              <tr>
+                <th scope="row" class="token">
+                  <code>{{ service.name }}</code>
+                </th>
+                <td>
+                  <a [routerLink]="['components', item.row.entry]" [relativeTo]="root">{{
+                    item.row.title
+                  }}</a>
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>
+
+<section aria-labelledby="inputs-and-setup">
+  <h2 id="inputs-and-setup" tabindex="-1">Inputs and setup</h2>
+  <p>
+    Each <a routerLink="components" [relativeTo]="root">component's page</a> ends with a "From
+    Optimus to WeeljackNg" table: the input-level mapping, input by input.
+  </p>
+  <p>
+    <a routerLink="getting-started" fragment="keep-optimus-out-of-your-imports" [relativeTo]="root"
+      >Get started</a
+    >
+    has the lint rule that keeps <code>@openng/*</code> out of your app, and the line that says to
+    never call <code>provideOptimus</code>.
+  </p>
+</section>

@@ -1,15 +1,25 @@
-import { DOCUMENT } from '@angular/common';
-import { Component, Injector, afterNextRender, inject, signal } from '@angular/core';
+import { DOCUMENT, Location } from '@angular/common';
+import {
+  Component,
+  ElementRef,
+  Injector,
+  afterNextRender,
+  afterRenderEffect,
+  inject,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router';
+import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { filter, skip } from 'rxjs';
 import apiIndex from '../generated/api/index.json';
+import { NavigationFailure } from './navigation-failure/navigation-failure';
 
 /** Class on `<html>` that `provideWeeljack({ darkMode: 'class' })` reads as "dark". */
 const DARK_CLASS = 'wj-dark';
 
 @Component({
-  imports: [RouterLink, RouterOutlet],
+  imports: [RouterLink, RouterLinkActive, RouterOutlet],
   selector: 'docs-root',
   templateUrl: './app.html',
   styleUrl: './app.css',
@@ -18,8 +28,12 @@ export class App {
   private readonly document = inject(DOCUMENT);
   private readonly injector = inject(Injector);
   private readonly router = inject(Router);
+  private readonly location = inject(Location);
+  private readonly failure = inject(NavigationFailure);
+  private readonly reloadButton = viewChild<ElementRef<HTMLButtonElement>>('reload');
 
   protected readonly version = apiIndex.version;
+  protected readonly failed = this.failure.url;
   protected readonly dark = signal(this.document.documentElement.classList.contains(DARK_CLASS));
 
   constructor() {
@@ -32,6 +46,7 @@ export class App {
         takeUntilDestroyed(),
       )
       .subscribe(() => {
+        this.failure.url.set(null);
         afterNextRender(
           () => {
             this.document.querySelector<HTMLElement>('main h1')?.focus();
@@ -39,6 +54,24 @@ export class App {
           { injector: this.injector },
         );
       });
+
+    // A failed navigation leaves the address bar on the old page, so focus goes to the one
+    // control that can fix it: it is scrolled into view even from a link low on a long page.
+    afterRenderEffect(() => {
+      this.reloadButton()?.nativeElement.focus();
+    });
+  }
+
+  /**
+   * Loads the page that failed, not the one on screen: a failed navigation never changes the
+   * address bar, so `location.reload()` would only refetch the old page. The router's URL is
+   * resolved against the base href (`prepareExternalUrl`) and loaded in full.
+   */
+  protected loadFailedPage(): void {
+    const url = this.failure.url();
+    if (url !== null) {
+      this.document.defaultView?.location.assign(this.location.prepareExternalUrl(url));
+    }
   }
 
   protected toggleDark(): void {

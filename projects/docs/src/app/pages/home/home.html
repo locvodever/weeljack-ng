@@ -4,6 +4,24 @@
   component.
 </p>
 <docs-code-block code="npm install weeljack-ng" label="install line" />
-<p>
-  <a class="primary" routerLink="components/button" [relativeTo]="root">Button</a>
+<p class="actions">
+  <a class="primary" routerLink="getting-started" [relativeTo]="root">Get started</a>
+  <a class="secondary" routerLink="components" [relativeTo]="root">Components</a>
 </p>
+
+<section aria-labelledby="strip">
+  <h2 id="strip">A few components</h2>
+  <div class="strip">
+    <wj-button label="Save" />
+    <wj-tag value="Paid" />
+    <span class="field">
+      <wj-checkbox inputId="home-newsletter" [(checked)]="subscribed" />
+      <label for="home-newsletter">Send me the monthly newsletter</label>
+    </span>
+    <span class="field">
+      <wj-toggleswitch inputId="home-notifications" [(checked)]="enabled" />
+      <label for="home-notifications">Email me about new replies</label>
+    </span>
+    <wj-skeleton width="10rem" />
+  </div>
+</section>

@@ -1,3 +1,10 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  min-block-size: 100vh;
+  min-block-size: 100dvh;
+}
+
 .skip-link {
   position: absolute;
   inset-block-start: 8px;
@@ -14,14 +21,16 @@
 }
 
 .header {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px 24px;
   padding: 12px 24px;
   border-block-end: 1px solid var(--wj-content-border-color);
   background: var(--wj-content-background);
+}
+
+.bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 24px;
 }
 
 .group {
@@ -29,6 +38,40 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 8px 16px;
+}
+
+.utilities {
+  margin-inline-start: auto;
+}
+
+.pages {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.page-link {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 44px;
+  padding: 0 8px;
+  color: var(--wj-text-color);
+  text-decoration: none;
+}
+
+.page-link:hover {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 6px;
+}
+
+.page-link[aria-current='page'] {
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 6px;
 }
 
 .wordmark {
@@ -70,6 +113,8 @@
 
 main {
   box-sizing: border-box;
+  flex-grow: 1;
+  inline-size: 100%;
   max-inline-size: 960px;
   margin-inline: auto;
   padding: 32px 24px 48px;
@@ -77,4 +122,73 @@ main {
 
 main:focus {
   outline: none;
+}
+
+/* Always in the DOM so a screen reader announces the banner; no box of its own while empty. */
+.alert-slot {
+  box-sizing: border-box;
+  inline-size: 100%;
+  max-inline-size: 960px;
+  margin-inline: auto;
+}
+
+.banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  margin: 16px 24px 0;
+  padding: 8px 8px 8px 16px;
+  border: 1px solid var(--wj-error-color);
+  border-radius: 12px;
+  background: var(--wj-content-background);
+}
+
+.banner p {
+  margin: 0;
+  font-weight: 600;
+}
+
+.footer {
+  border-block-start: 1px solid var(--wj-content-border-color);
+  background: var(--wj-content-background);
+}
+
+.footer-inner {
+  box-sizing: border-box;
+  max-inline-size: 960px;
+  margin-inline: auto;
+  padding: 24px;
+}
+
+.footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.footer-links a {
+  display: inline-block;
+  min-block-size: 24px;
+  font-size: 0.9375rem;
+  line-height: 24px;
+}
+
+.lineage {
+  max-inline-size: 72ch;
+  margin-block-start: 16px;
+  color: var(--wj-text-muted-color);
+  font-size: 0.875rem;
+}
+
+.lineage p {
+  margin: 0;
+}
+
+.lineage p + p {
+  margin-block-start: 8px;
 }

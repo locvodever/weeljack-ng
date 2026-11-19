@@ -1,0 +1,69 @@
+<h1 tabindex="-1">Components</h1>
+<p class="purpose">Every Optimus component, and what WeeljackNg does with it.</p>
+
+<label class="filter-label" for="component-filter">Filter components</label>
+<input
+  #filterInput
+  id="component-filter"
+  class="filter-input"
+  type="text"
+  autocomplete="off"
+  spellcheck="false"
+  [value]="query()"
+  (input)="onFilter($event)"
+/>
+<div class="status-row">
+  <p class="status" role="status">{{ status() }}</p>
+  @if (noMatch()) {
+    <button type="button" class="action" (click)="clear()">Clear the filter</button>
+  }
+</div>
+
+@for (group of groups(); track group.id) {
+  <section [attr.aria-labelledby]="'group-' + group.id">
+    <h2 [id]="'group-' + group.id">{{ group.label }}</h2>
+    <ul class="rows">
+      @for (row of group.rows; track row.entry) {
+        @if (row.status === 'shipped') {
+          <li class="row">
+            <div class="who">
+              <a class="title" [routerLink]="['components', row.entry]" [relativeTo]="root">{{
+                row.title
+              }}</a>
+              @if (chipOf(row); as chip) {
+                <code class="chip">{{ chip }}</code>
+              }
+            </div>
+            <p class="what"><docs-text [value]="row.purpose ?? ''" /></p>
+          </li>
+        } @else {
+          <li class="row muted">
+            <div class="who">
+              <code class="chip">wj-{{ row.entry }}</code>
+            </div>
+            <p class="what">Planned — wave {{ group.wave }}</p>
+          </li>
+        }
+      }
+    </ul>
+  </section>
+}
+
+@if (notWrapped().length > 0) {
+  <section aria-labelledby="not-wrapped">
+    <h2 id="not-wrapped">Not wrapped</h2>
+    <ul class="rows">
+      @for (row of notWrapped(); track row.label) {
+        <li class="row">
+          <div class="who">
+            <span class="title">{{ row.label }}</span>
+          </div>
+          <div class="what">
+            <p class="use">Not wrapped — use <docs-text [value]="row.useInstead" /></p>
+            <p class="why"><docs-text [value]="row.why" /></p>
+          </div>
+        </li>
+      }
+    </ul>
+  </section>
+}

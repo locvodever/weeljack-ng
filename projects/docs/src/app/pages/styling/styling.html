@@ -1,0 +1,98 @@
+<h1 tabindex="-1">Styling</h1>
+<p class="purpose">
+  Style a <code>wj-*</code> component from its host, from the <code>--wj-*</code> variables, or, as
+  a last resort, through the Optimus parts underneath.
+</p>
+<nav aria-label="On this page">
+  <ul class="toc">
+    @for (section of sections; track section.id) {
+      <li>
+        <a [href]="'guides/styling#' + section.id" (click)="jump($event, section.id)">{{
+          section.title
+        }}</a>
+      </li>
+    }
+  </ul>
+</nav>
+
+<section aria-labelledby="host-class-and-style">
+  <h2 id="host-class-and-style" tabindex="-1">Host class and style</h2>
+  <p>
+    <code>class</code> and <code>style</code> go on the <code>wj-*</code> host as plain attributes.
+    The host renders a real box, never <code>display: contents</code>, so they style something you
+    can see: an inline-flex box for a button-like control, a block for a panel, an overlay or a data
+    component.
+  </p>
+  <docs-code-block [code]="hostHtml" label="host class and style example" />
+  <docs-code-block [code]="hostCss" label="host class rule example" />
+</section>
+
+<section aria-labelledby="css-variables">
+  <h2 id="css-variables" tabindex="-1">CSS variables</h2>
+  <p>
+    The primitive and semantic <code>--wj-*</code> variables are public. Override one on
+    <code>:root</code> and every component reads it through its <code>var()</code> chain. All
+    WeeljackNg styles sit in one CSS layer, <code>wj</code>, so your unlayered CSS always wins, and
+    an app that uses other layers declares the order once. The
+    <a routerLink="guides/theming" [relativeTo]="root">Theming</a> page lists every variable and
+    shows the layer order.
+  </p>
+</section>
+
+<section aria-labelledby="the-pt-escape-hatch">
+  <h2 id="the-pt-escape-hatch" tabindex="-1">The <code>pt</code> escape hatch</h2>
+  <p>
+    Every wrapper has one <code>pt</code> input. It is forwarded verbatim to the pass-through of the
+    Optimus component underneath, and typed <code>Wj&lt;Name&gt;Pt</code>, such as
+    <code>WjButtonPt</code>. It reaches every part, nested ones included, and takes classes, styles
+    and attributes.
+  </p>
+  <ul>
+    <li>
+      Your <code>pt</code> merges over the wrapper's own. Where a wrapper sets a part's attributes
+      itself, such as ARIA names, its component page says which side wins.
+    </li>
+    <li>
+      Its part names track the installed Optimus minor, so <code>pt</code> is outside the stable
+      API. Part changes ship only in the release that takes a new Optimus minor, under their own
+      changelog heading, and are not breaking.
+    </li>
+  </ul>
+</section>
+
+<section aria-labelledby="what-does-not-exist">
+  <h2 id="what-does-not-exist" tabindex="-1">What does not exist</h2>
+  <p>These Optimus names have no WeeljackNg counterpart:</p>
+  <ul>
+    <li><code>styleClass</code></li>
+    <li><code>dt</code></li>
+    <li><code>unstyled</code></li>
+    <li><code>ptOptions</code></li>
+    <li>A global <code>pt</code></li>
+  </ul>
+  <p>
+    The own components, <code>wj-sheet</code> and <code>wj-field</code>, have no
+    <code>pt</code> either. Style them with host <code>class</code> and <code>style</code> and their
+    documented <code>--wj-*</code> variables.
+  </p>
+</section>
+
+<section aria-labelledby="example">
+  <h2 id="example" tabindex="-1">Example</h2>
+  <p>
+    A <code>wj-button</code> with a host class, which draws a dashed frame around the host's box,
+    and a <code>pt</code> part, which sets the style of the button's label.
+  </p>
+  <div class="live docs-live">
+    <docs-example-frame [component]="hostClassAndPtExample" />
+  </div>
+  <docs-code-block [code]="exampleSource" label="host class and pt example source" />
+</section>
+
+<section aria-labelledby="per-component">
+  <h2 id="per-component" tabindex="-1">Per component</h2>
+  <p>
+    Each component's page has a Styling section with its parts and its variables. Find a component
+    in the <a routerLink="components" [relativeTo]="root">Components</a> index.
+  </p>
+</section>
