@@ -37,6 +37,7 @@ export {
   type _OverlayRegion,
 } from './overlay';
 export { _mergePartAttributes, type _PartAttributeValue } from './part-attributes';
+export { _ptContextFlag } from './pt-context';
 export { _WJ_EN } from './translation-en';
 export { _copyTree, type _TreeCopy } from './tree-copy';
 export { _bridgeAccessor, type _AccessorHost } from './value-accessor';

@@ -1,0 +1,17 @@
+/* The host is the box: the Optimus root inside stretches to the host's width, so an app sizes the
+   control with host `class`/`style`. Optimus's label part already truncates a long picked text with
+   an ellipsis. The chevron and the group icon move off the preset's low-contrast surface.400 to the
+   muted text colour through Optimus's own component variables. The label's line-height comes from
+   the root layer styles, so the control measures 36 / 44 / 52 px. */
+@layer wj {
+  :host {
+    display: inline-flex;
+    --wj-cascadeselect-dropdown-color: var(--wj-text-muted-color);
+    --wj-cascadeselect-option-icon-color: var(--wj-text-muted-color);
+  }
+
+  p-cascadeselect {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+}

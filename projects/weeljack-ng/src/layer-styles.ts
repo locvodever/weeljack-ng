@@ -10,11 +10,14 @@
  * `line-height` rule below; T0 has the button and the text input; textarea and the select label join it.
  */
 export const wjLayerStyles = `
-/* 44px controls (22 Q2): the form-field padding tokens assume a 1.5 line-height. */
+/* 44px controls (22 Q3): the form-field padding tokens assume a 1.5 line-height. */
 .p-inputtext,
 .p-textarea,
 .p-select-label,
 .p-treeselect-label,
+.p-cascadeselect-label,
+.p-multiselect-label,
+.p-togglebutton-label,
 .p-button {
   line-height: 1.5;
 }
