@@ -12,7 +12,7 @@ import {
   selector: 'docs-tabs-scrollable-example',
   imports: [WjTabs, WjTabList, WjTab, WjTabPanels, WjTabPanel],
   template: `
-    <wj-tabs [(value)]="value" scrollable>
+    <wj-tabs [(value)]="value">
       <wj-tablist ariaLabel="Monthly reports">
         @for (month of months; track month) {
           <wj-tab [value]="month">{{ month }}</wj-tab>

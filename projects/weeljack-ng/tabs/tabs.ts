@@ -21,8 +21,6 @@ import { WjTabPanels } from './tabpanels/tabpanels';
 export class WjTabs {
   /** The value of the active tab. Keep it on a tab that exists, or no tab is reachable by Tab. */
   readonly value = model.required<WjTabsValue>();
-  /** Marks the strip as scrollable. Scroll buttons follow overflow whatever this says. */
-  readonly scrollable = input(false, { transform: booleanAttribute });
   /** Activates a tab as soon as it takes focus, not only on Enter or Space. */
   readonly selectOnFocus = input(false, { transform: booleanAttribute });
   /**
