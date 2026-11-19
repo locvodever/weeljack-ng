@@ -80,6 +80,16 @@ export const DOC: ComponentDoc = {
     },
     { key: 'ArrowDown, ArrowUp', effect: 'Moves to the next or the previous visible node.' },
     {
+      key: 'Home, End',
+      effect:
+        'Moves focus to the first or the last node on screen: the children of a collapsed node are not there, so focus never lands in one. Nothing is selected or checked.',
+    },
+    {
+      key: 'A typed character',
+      effect:
+        'Moves focus to the next node after the focused one, wrapping, whose label starts with that character, in any case. Nodes in a collapsed branch are skipped. Ctrl, Alt and Meta combinations are left alone, and nothing is selected or checked.',
+    },
+    {
       key: 'ArrowRight',
       effect:
         'Expands a collapsed node, then moves focus to its first child; on an open node it does nothing. `nodeExpand` fires. Optimus moves the focus a moment after the expansion.',
@@ -101,9 +111,10 @@ export const DOC: ComponentDoc = {
     'A node is named from what it shows, not from its `label`. Optimus sets `aria-label` to the label, but an open node contains its children, so a name of only its own label does not contain the text on screen (WCAG 2.5.3, axe `label-content-name-mismatch`), and the component removes it. The cost is that a screen reader may read an open branch with its children. Keep the first text of a custom node meaningful on its own.',
     'These are written on the rendered nodes of every level by an observer on the tree, because Optimus hands the nodes below the first level no `pt`. It runs in the browser only: a prerendered tree has the Optimus attributes until the client takes over (hydration is not claimed).',
     'Gap: a node that is `selectable: false` is not announced as such. Optimus sets no `aria-disabled`, and one would read as “unavailable” on a node that still opens.',
-    'Gap: a partly checked node is announced as not checked: Optimus draws the minus on the checkbox but leaves `aria-checked="false"` on the treeitem. The harness reads the checkbox for `isPartiallyChecked()`.',
+    'Gap, fixed: a partly checked node was announced as not checked, because Optimus draws the minus on the checkbox but leaves `aria-checked="false"` on the treeitem. `wj-tree` now writes `aria-checked="mixed"` on a node whose own checkbox is partly checked, and puts `"false"` back when the mark goes: Optimus writes nothing when a partly checked node is unchecked, and writes `"true"` itself when it becomes checked.',
     'Gap: a selection set from code checks and selects the nodes, but a parent’s partial mark is drawn only while Optimus propagates a click, so it is not redrawn.',
-    'Gap: Home, End, type-ahead and `*` are not handled. Tab enters at the first node, unless the selected node is below the first level: a selected root node is reached with the arrow keys.',
+    'Gap: `*` (open every sibling) is not handled. Tab enters at the first node, unless the selected node is below the first level: a selected root node is reached with the arrow keys.',
+    'Gap, fixed: Optimus ignores Home, End and typing, so focus stayed put. `wj-tree` now moves it with Home, End and one typed character (see the keyboard table), and hands the one Tab stop over as Optimus does. Type-ahead reads one character, not a buffer of several, and none of these keys selects or checks.',
     'Gap: `selectionMode` is read when the tree is created. Optimus’s rendered nodes do not follow a later change, so a checkbox mode set afterwards draws no checkboxes: set it at creation.',
     'Gap: `pt` reaches the tree’s own parts and the parts of the first level of nodes only. Optimus hands the nodes below no `pt`, so `node`, `nodeLabel` and the like change nothing there.',
     'Gap: the English `emptyMessage` reads “No available options”, which suits a picker better than a tree. Set `translation: { emptyMessage }` in `provideWeeljack`, or give a `wjTreeEmpty` template.',

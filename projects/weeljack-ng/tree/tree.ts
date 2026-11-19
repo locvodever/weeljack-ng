@@ -71,7 +71,10 @@ function put(element: Element, name: string, value: string | null): void {
  * - the set size is the number of siblings (Optimus sets the node's own child count);
  * - a node that can open says `aria-expanded="false"` while closed (Optimus leaves it off);
  * - no `aria-label`: an expanded treeitem contains its children, so a label of its own text is not
- *   part of its visible text (axe `label-content-name-mismatch`): it is named from its content.
+ *   part of its visible text (axe `label-content-name-mismatch`): it is named from its content;
+ * - a node whose own checkbox is partly checked says `aria-checked="mixed"`. Optimus writes only
+ *   `"true"` and `"false"`, and writes nothing when a partly checked node is unchecked, so a stale
+ *   `"mixed"` is put back to `"false"` here.
  */
 function fixNodes(host: HTMLElement): void {
   for (const node of host.querySelectorAll('[role="treeitem"]')) {
@@ -79,6 +82,13 @@ function fixNodes(host: HTMLElement): void {
     put(node, 'aria-setsize', String(node.parentElement?.parentElement?.childElementCount ?? 0));
     if (!node.hasAttribute('aria-expanded') && !node.classList.contains('p-tree-node-leaf')) {
       put(node, 'aria-expanded', 'false');
+    }
+    const mixed =
+      node.querySelector(
+        ':scope > [data-pc-section="nodecontent"] > [data-p-partialchecked="true"]',
+      ) !== null;
+    if (mixed || node.getAttribute('aria-checked') === 'mixed') {
+      put(node, 'aria-checked', mixed ? 'mixed' : 'false');
     }
   }
   const hidden =
@@ -102,6 +112,7 @@ function fixNodes(host: HTMLElement): void {
   imports: [Tree, PrimeTemplate, NgTemplateOutlet],
   templateUrl: './tree.html',
   styleUrl: './tree.css',
+  host: { '(keydown)': 'jump($event)' },
 })
 export class WjTree<T = unknown> {
   /** The nodes. Never changed: Optimus renders copies, and `key` carries state across a new array. */
@@ -140,6 +151,7 @@ export class WjTree<T = unknown> {
   protected readonly trackBy = trackByKey;
 
   private readonly inner = viewChild(Tree);
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;
   private built: { value: WjTreeNode<T>[]; copy: _TreeCopy<WjTreeNode<T>> } | undefined;
   private written: Record<string, boolean> | undefined;
   private reporting = false;
@@ -186,23 +198,64 @@ export class WjTree<T = unknown> {
       this.inner()?.cd.markForCheck();
     });
 
-    const host = inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;
     const destroyRef = inject(DestroyRef);
     afterNextRender(() => {
       const observer = new MutationObserver(() => {
-        fixNodes(host);
+        fixNodes(this.host);
       });
-      observer.observe(host, {
+      observer.observe(this.host, {
         childList: true,
         subtree: true,
         attributes: true,
-        attributeFilter: ['aria-label', 'aria-setsize', 'aria-expanded', 'aria-hidden'],
+        attributeFilter: [
+          'aria-label',
+          'aria-setsize',
+          'aria-expanded',
+          'aria-hidden',
+          'aria-checked',
+          'data-p-partialchecked',
+        ],
       });
       destroyRef.onDestroy(() => {
         observer.disconnect();
       });
-      fixNodes(host);
+      fixNodes(this.host);
     });
+  }
+
+  /**
+   * Home, End and a typed character move focus between the nodes on screen, and hand the one Tab
+   * stop over as Optimus does. Nothing is selected or checked. Optimus ignores these keys, so they
+   * reach the host; only a treeitem target counts. A space matches no label (labels are trimmed),
+   * so it stays Optimus's.
+   */
+  protected jump(event: KeyboardEvent): void {
+    const { key } = event;
+    const items = [...this.host.querySelectorAll<HTMLElement>('[role="treeitem"]')];
+    const from = items.find((item) => item === event.target);
+    if (!from || event.ctrlKey || event.altKey || event.metaKey) {
+      return;
+    }
+    let next: HTMLElement | undefined;
+    if (key === 'Home') {
+      next = items[0];
+    } else if (key === 'End') {
+      next = items.at(-1);
+    } else if (key.length === 1) {
+      next = [...items.slice(items.indexOf(from) + 1), ...items].find((item) =>
+        item
+          .querySelector('[data-pc-section="nodelabel"]')
+          ?.textContent.trim()
+          .toLowerCase()
+          .startsWith(key.toLowerCase()),
+      );
+    }
+    if (next) {
+      event.preventDefault();
+      from.tabIndex = -1;
+      next.tabIndex = 0;
+      next.focus();
+    }
   }
 
   /** Optimus's `selectionChange`, once per click: reports what Optimus holds, as your own nodes. */

@@ -43,6 +43,18 @@
       "optimus": "galleria",
       "kb": 3.45,
       "note": "Raised under CLAUDE.md § 5's rule (Loc, 2026-11-19): S1, the thumbnail strip (five inputs and the wjGalleriaThumbnail slot), plus the dimmed navigators (FR-9)."
+    },
+    {
+      "entry": "weeljack-ng/tree",
+      "optimus": "tree",
+      "kb": 3.3,
+      "note": "Raised under CLAUDE.md § 5's rule (Loc, 2026-11-19): S4, a partly checked node reads aria-checked=\"mixed\" (FR-16), and Home, End and one-character type-ahead move focus (FR-18)."
+    },
+    {
+      "entry": "weeljack-ng/treeselect",
+      "optimus": "treeselect",
+      "kb": 2.75,
+      "note": "Raised under CLAUDE.md § 5's rule (Loc, 2026-11-19): S4, the set size counts siblings (FR-17), a partly checked node reads aria-checked=\"mixed\" (FR-16), and Home and End move focus in the panel (FR-18). Type-ahead did not fit the 2.75 KB cap."
     }
   ]
 }

@@ -1295,20 +1295,47 @@ describe('WjTree', () => {
       expect(item(element, 'Documents').getAttribute('aria-expanded')).toBe('false');
     });
 
-    it('leaves a partly checked node aria-checked="false": Optimus draws the mark, not the state', async () => {
+    it('reads a partly checked node as mixed, a checked one as true, and an unchecked one as false', async () => {
       const { element, tree } = await render('light', (host) => {
         host.mode.set('checkbox');
         host.expanded.set({ documents: true, 'documents/reports': true });
       });
-      expect(item(element, 'Reports').getAttribute('aria-checked')).toBe('false');
+      const state = (label: string): string | null =>
+        item(element, label).getAttribute('aria-checked');
+      expect(state('Reports')).toBe('false');
 
       await (await node(tree, 'Q1 report')).select();
+      await expect.poll(() => state('Reports')).toBe('mixed');
+      expect(state('Documents')).toBe('mixed');
+      expect(state('Q1 report')).toBe('true');
+      expect(state('Q2 report')).toBe('false');
 
-      // The gap, listed on the docs page: a partly checked parent is announced as not checked.
-      expect(await (await node(tree, 'Reports')).isPartiallyChecked()).toBe(true);
+      await (await node(tree, 'Q2 report')).select();
+      await expect.poll(() => state('Reports')).toBe('true');
+      expect(state('Documents')).toBe('mixed');
+
+      await (await node(tree, 'Q1 report')).select();
+      await (await node(tree, 'Q2 report')).select();
+      await expect.poll(() => state('Reports')).toBe('false');
+      expect(state('Documents')).toBe('false');
+      expect(
+        parts(element, ITEM).some((entry) => entry.getAttribute('aria-checked') === 'mixed'),
+      ).toBe(false);
+    });
+
+    it('marks only the node whose own checkbox is partly checked, never its ancestors by what is inside', async () => {
+      const { element, tree } = await render('light', (host) => {
+        host.mode.set('checkbox');
+        host.expanded.set({ documents: true, 'documents/reports': true });
+      });
+
+      await (await node(tree, 'Invoices')).select();
+
+      await expect
+        .poll(() => item(element, 'Documents').getAttribute('aria-checked'))
+        .toBe('mixed');
       expect(item(element, 'Reports').getAttribute('aria-checked')).toBe('false');
-      expect(item(element, 'Q1 report').getAttribute('aria-checked')).toBe('true');
-      expect(item(element, 'Q2 report').getAttribute('aria-checked')).toBe('false');
+      expect(item(element, 'Invoices').getAttribute('aria-checked')).toBe('true');
     });
 
     it('hides every toggle and node checkbox from assistive tech, and keeps them out of the Tab order', async () => {
@@ -1565,8 +1592,9 @@ describe('WjTree', () => {
       expect(rendered.host.selections).toEqual([]);
     });
 
-    it('leaves Home, End, type-ahead and * unhandled: Optimus 2.0.2 does not honour them', async () => {
+    it('moves focus to the first and the last visible node with Home and End, and hands over the Tab stop', async () => {
       const rendered = await render('light', (host) => {
+        host.mode.set('single');
         host.expanded.set({ documents: true });
       });
       await tabIn(rendered);
@@ -1575,15 +1603,64 @@ describe('WjTree', () => {
       expect(document.activeElement).toBe(reports);
 
       await userEvent.keyboard('{End}');
-      expect(document.activeElement).toBe(reports);
-      // Chrome can ignore a Home pressed right after End: press it again, and a key between.
+      const archive = item(rendered.element, 'Archive');
+      expect(document.activeElement).toBe(archive);
+      expect([archive.tabIndex, reports.tabIndex]).toEqual([0, -1]);
+
       await userEvent.keyboard('{Home}');
-      await userEvent.keyboard('{Home}');
-      expect(document.activeElement).toBe(reports);
+      const documents = item(rendered.element, 'Documents');
+      expect(document.activeElement).toBe(documents);
+      expect([documents.tabIndex, archive.tabIndex]).toEqual([0, -1]);
+      expect(rendered.host.selections).toEqual([]);
+    });
+
+    it('never lands in a collapsed subtree: End stops at the last node on screen', async () => {
+      const rendered = await render();
+      await tabIn(rendered);
+
+      await userEvent.keyboard('{End}');
+
+      expect(document.activeElement).toBe(item(rendered.element, 'Archive'));
+      expect(labels(rendered.element)).toEqual(['Documents', 'Pictures', 'Music', 'Archive']);
+    });
+
+    it('moves to the next node whose label starts with the typed character, wrapping and ignoring case', async () => {
+      const rendered = await render('light', (host) => {
+        host.mode.set('checkbox');
+        host.expanded.set({ documents: true });
+      });
+      await tabIn(rendered);
+
       await userEvent.keyboard('m');
-      expect(document.activeElement).toBe(reports);
+      expect(document.activeElement).toBe(item(rendered.element, 'Music'));
+      await userEvent.keyboard('D');
+      expect(document.activeElement).toBe(item(rendered.element, 'Documents'));
+      await userEvent.keyboard('i');
+      expect(document.activeElement).toBe(item(rendered.element, 'Invoices'));
+      await userEvent.keyboard('p');
+      expect(document.activeElement).toBe(item(rendered.element, 'Pictures'));
+      // Holidays and Q1 report are in collapsed branches: there is nothing to land on.
+      await userEvent.keyboard('h');
+      await userEvent.keyboard('q');
+      expect(document.activeElement).toBe(item(rendered.element, 'Pictures'));
+      expect(item(rendered.element, 'Pictures').tabIndex).toBe(0);
+      // Typing never selects or checks.
+      expect(rendered.host.selections).toEqual([]);
+      expect(parts(rendered.element, '[aria-checked="true"]')).toEqual([]);
+    });
+
+    it('leaves a modified character and * alone', async () => {
+      const rendered = await render('light', (host) => {
+        host.expanded.set({ documents: true });
+      });
+      await tabIn(rendered);
+      const documents = item(rendered.element, 'Documents');
+
+      await userEvent.keyboard('{Control>}m{/Control}');
+      await userEvent.keyboard('{Alt>}m{/Alt}');
+      await userEvent.keyboard('{Meta>}m{/Meta}');
       await userEvent.keyboard('*');
-      expect(document.activeElement).toBe(reports);
+      expect(document.activeElement).toBe(documents);
       expect(rendered.host.expands).toEqual([]);
     });
 
@@ -1732,6 +1809,22 @@ describe('WjTree', () => {
           await expectNoAxeViolations(rendered.element);
         });
       }
+    }
+
+    for (const scheme of ['light', 'dark'] as const) {
+      it(`has no violations with a node announced as mixed, ${scheme}`, async () => {
+        const rendered = await render(scheme, (host) => {
+          host.mode.set('checkbox');
+          host.expanded.set({ documents: true, 'documents/reports': true });
+        });
+        await (await node(rendered.tree, 'Q1 report')).select();
+        await userEvent.hover(part(rendered.page, '#name'));
+        await expect
+          .poll(() => item(rendered.element, 'Reports').getAttribute('aria-checked'))
+          .toBe('mixed');
+
+        await expectNoAxeViolations(rendered.element);
+      });
     }
 
     it('has no violations with a node focused on the highlight fill', async () => {
