@@ -46,6 +46,7 @@ export {
 } from './overlay';
 export { _mergePartAttributes, type _PartAttributeValue } from './part-attributes';
 export { _ptContextFlag } from './pt-context';
+export { _rangeKeys, type _RangeKeysOptions } from './range-keys';
 export { _touchedOnLeave } from './touch-on-leave';
 export { _WJ_EN } from './translation-en';
 export { _copyTree, type _TreeCopy } from './tree-copy';

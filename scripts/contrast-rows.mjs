@@ -39,6 +39,21 @@ const PAIRS = {
     ['radio dot', 'radiobutton.icon.checked.color', 'radiobutton.checked.background', NON_TEXT],
     ['rating off star on cards', 'rating.icon.color', 'surface.0', NON_TEXT],
     ['rating on star on cards', 'rating.icon.active.color', 'surface.0', NON_TEXT],
+    ['slider track and handle ring on cards', 'slider.track.background', 'surface.0', NON_TEXT],
+    ['slider track and handle ring on the page', 'slider.track.background', 'surface.50', NON_TEXT],
+    ['slider range on the track', 'slider.range.background', 'slider.track.background', NON_TEXT],
+    [
+      'slider handle ring on the face',
+      'slider.handle.background',
+      'slider.handle.content.background',
+      NON_TEXT,
+    ],
+    [
+      'slider handle ring on hover',
+      'slider.handle.hover.background',
+      'slider.handle.content.hover.background',
+      NON_TEXT,
+    ],
     ['switch off track', 'toggleswitch.background', 'surface.0', NON_TEXT],
     [
       'switch handle on track',
@@ -215,6 +230,31 @@ const PAIRS = {
     ['radio dot', 'radiobutton.icon.checked.color', 'radiobutton.checked.background', NON_TEXT],
     ['rating off star on cards', 'rating.icon.color', 'content.background', NON_TEXT],
     ['rating on star on cards', 'rating.icon.active.color', 'content.background', NON_TEXT],
+    [
+      'slider track and handle ring on cards',
+      'slider.track.background',
+      'content.background',
+      NON_TEXT,
+    ],
+    [
+      'slider track and handle ring on the page',
+      'slider.track.background',
+      'surface.950',
+      NON_TEXT,
+    ],
+    ['slider range on the track', 'slider.range.background', 'slider.track.background', NON_TEXT],
+    [
+      'slider handle ring on the face',
+      'slider.handle.background',
+      'slider.handle.content.background',
+      NON_TEXT,
+    ],
+    [
+      'slider handle ring on hover',
+      'slider.handle.hover.background',
+      'slider.handle.content.hover.background',
+      NON_TEXT,
+    ],
     ['switch off track', 'toggleswitch.background', 'content.background', NON_TEXT],
     [
       'switch handle on track',
