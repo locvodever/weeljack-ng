@@ -19,6 +19,7 @@ import { WjDynamicDialogHarness } from 'weeljack-ng/dynamicdialog/testing';
 import { _overlayEscapeGate } from 'weeljack-ng/private';
 import { expectNoAxeViolations } from '../spec-support/axe';
 import { WJ_DIALOGS } from './dynamicdialog-service';
+import { afterOverlay } from '../spec-support/teardown';
 
 const PAYLOAD = '<img src=x onerror="window.wjInjected = true">';
 const ROOT = document.documentElement;
@@ -250,19 +251,25 @@ describe('WjDialogService', () => {
     reduceMotion(true);
   });
 
-  afterEach(async () => {
-    // An overlay left open at teardown would reach the next spec: close it and wait for the leave.
-    if (current && dialogEl()) {
-      current.component.ref?.close();
-      await current.fixture.whenStable();
-      await gone();
-    }
-    current = undefined;
-    ROOT.classList.remove('wj-dark');
-    document.body.style.backgroundColor = '';
-    Reflect.deleteProperty(window, 'wjInjected');
-    await page.viewport(viewport.width, viewport.height);
-  });
+  afterEach(() =>
+    afterOverlay(
+      async () => {
+        // An overlay left open at teardown would reach the next spec: close it and wait for the leave.
+        if (current && dialogEl()) {
+          current.component.ref?.close();
+          await current.fixture.whenStable();
+          await gone();
+        }
+      },
+      async () => {
+        current = undefined;
+        ROOT.classList.remove('wj-dark');
+        document.body.style.backgroundColor = '';
+        Reflect.deleteProperty(window, 'wjInjected');
+        await page.viewport(viewport.width, viewport.height);
+      },
+    ),
+  );
 
   describe('the service', () => {
     it('injects with only provideWeeljack() and no Optimus service provided', () => {

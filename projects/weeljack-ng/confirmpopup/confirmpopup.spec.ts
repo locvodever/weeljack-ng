@@ -11,6 +11,7 @@ import { WjConfirmPopup, type WjConfirmPopupPt } from 'weeljack-ng/confirmpopup'
 import { WjConfirmPopupHarness } from 'weeljack-ng/confirmpopup/testing';
 import { _overlayEscapeGate } from 'weeljack-ng/private';
 import { expectNoAxeViolations } from '../spec-support/axe';
+import { afterOverlay } from '../spec-support/teardown';
 
 const PAYLOAD = '<img src=x onerror="window.wjInjected = true">';
 const ROOT = document.documentElement;
@@ -221,19 +222,25 @@ describe('WjConfirmPopup', () => {
     reduceMotion(true);
   });
 
-  afterEach(async () => {
-    // A popup left open at teardown lives in `document.body`: close it and wait for the leave.
-    if (current && popupEl()) {
-      current.component.service.close();
-      await current.fixture.whenStable();
-      await gone();
-    }
-    current = undefined;
-    ROOT.classList.remove('wj-dark');
-    document.body.style.backgroundColor = '';
-    Reflect.deleteProperty(window, 'wjInjected');
-    await page.viewport(viewport.width, viewport.height);
-  });
+  afterEach(() =>
+    afterOverlay(
+      async () => {
+        // A popup left open at teardown lives in `document.body`: close it and wait for the leave.
+        if (current && popupEl()) {
+          current.component.service.close();
+          await current.fixture.whenStable();
+          await gone();
+        }
+      },
+      async () => {
+        current = undefined;
+        ROOT.classList.remove('wj-dark');
+        document.body.style.backgroundColor = '';
+        Reflect.deleteProperty(window, 'wjInjected');
+        await page.viewport(viewport.width, viewport.height);
+      },
+    ),
+  );
 
   describe('the confirmation', () => {
     it('renders nothing while closed, in a host that is a block with no height', async () => {

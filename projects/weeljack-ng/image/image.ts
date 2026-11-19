@@ -3,6 +3,7 @@ import {
   ViewEncapsulation,
   booleanAttribute,
   computed,
+  effect,
   inject,
   input,
   output,
@@ -86,6 +87,7 @@ export class WjImage {
   constructor() {
     _checkWeeljackSetup('wj-image');
     _checkAriaOnHost('wj-image', 'Use the alt input, which names the image and its preview');
+    removeLeftMask(this.inner);
   }
 
   /** Optimus has finished closing the preview: put focus back on the enlarge button, then say so. */
@@ -97,6 +99,65 @@ export class WjImage {
     }
     this.closed.emit();
   }
+}
+
+/** The members of Optimus's `Image` that {@link removeLeftMask} reaches (Optimus 2.0.2). */
+interface PreviewMembers {
+  readonly renderMask: { (): boolean; set(value: boolean): void };
+  onImageClick: () => void;
+  onAnimationEnd: () => void;
+  onMaskAfterLeave: () => void;
+}
+
+function hasPreviewMembers(inner: object): inner is PreviewMembers {
+  const renderMask: unknown = Reflect.get(inner, 'renderMask');
+  return (
+    typeof renderMask === 'function' &&
+    typeof Reflect.get(renderMask, 'set') === 'function' &&
+    ['onImageClick', 'onAnimationEnd', 'onMaskAfterLeave'].every(
+      (name) => typeof Reflect.get(inner, name) === 'function',
+    )
+  );
+}
+
+/**
+ * Removes the preview mask Optimus leaves behind. Optimus 2.0.2 drops the mask in
+ * `onMaskAfterLeave` only when the enlarged image has already left (`!renderPreview()`). Both
+ * leaves last 300 ms and the mask's starts a check later, but when the mask's ends first (the same
+ * frame, or timers out of order under load) nothing drops it: a hidden `role="dialog"` stays in the
+ * page until the next open. So: when the image's leave ends after the mask's, drop the mask then.
+ * Each open starts clean, so a close in the usual order is never cut short. If Optimus's members
+ * change shape, this does nothing. Must run in an injection context.
+ */
+function removeLeftMask(image: () => Image | undefined): void {
+  const patched = new WeakSet();
+  effect(() => {
+    const inner = image();
+    if (!inner || patched.has(inner) || !hasPreviewMembers(inner)) {
+      return;
+    }
+    patched.add(inner);
+    const imageClick = inner.onImageClick.bind(inner);
+    const animationEnd = inner.onAnimationEnd.bind(inner);
+    const maskAfterLeave = inner.onMaskAfterLeave.bind(inner);
+    let maskLeftFirst = false;
+    inner.onImageClick = () => {
+      maskLeftFirst = false;
+      imageClick();
+    };
+    inner.onMaskAfterLeave = () => {
+      maskAfterLeave();
+      // Still rendered after its own leave: Optimus is waiting on the image, which will not ask.
+      maskLeftFirst = inner.renderMask();
+    };
+    inner.onAnimationEnd = () => {
+      animationEnd();
+      if (maskLeftFirst && inner.renderMask()) {
+        inner.renderMask.set(false);
+      }
+      maskLeftFirst = false;
+    };
+  });
 }
 
 /** `aria.zoomImage` of the translation `provideWeeljack` fills, with the English default. */

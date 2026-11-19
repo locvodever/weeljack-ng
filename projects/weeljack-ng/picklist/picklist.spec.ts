@@ -1011,7 +1011,16 @@ describe('WjPickList', () => {
       );
     }
 
+    /**
+     * Focuses the list with the pointer parked on the Before button first. While a list has focus,
+     * Optimus moves its focused option to the option under the pointer (`focusOnHover`), and Chrome
+     * sends a hover to whatever a layout change puts under a resting pointer. A pointer an earlier
+     * spec file left over an option would otherwise take the focus as soon as the list has it.
+     */
     async function enter(element: HTMLElement, box: string): Promise<void> {
+      const before = part(element, '#before');
+      await userEvent.hover(before);
+      await expect.poll(() => before.matches(':hover')).toBe(true);
       part(element, box).focus();
       await expect.poll(() => document.activeElement).toBe(part(element, box));
     }

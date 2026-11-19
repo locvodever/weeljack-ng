@@ -13,6 +13,7 @@ import { expectNoAxeViolations } from '../spec-support/axe';
 import { WjSheet } from './sheet';
 import { WJ_SHEET_WIDE } from './sheet-wide';
 import { WjSheetHarness } from './testing/sheet-harness';
+import { afterOverlay } from '../spec-support/teardown';
 
 const PAYLOAD = '<img src=x onerror="window.wjInjected = true">';
 const ROOT = document.documentElement;
@@ -239,22 +240,28 @@ describe('WjSheet', () => {
     await page.viewport(1024, 768);
   });
 
-  afterEach(async () => {
-    // A sheet left open at teardown would reach the next spec: close it and wait for the leave,
-    // for the drawer's backdrop to leave the body and for the scroll lock to clear.
-    if (current && (panelEl() || masks().length > 0)) {
-      await close(current);
-    }
-    current = undefined;
-    ROOT.classList.remove('wj-dark');
-    ROOT.style.removeProperty('--wj-mask-transition-duration');
-    document.body.style.backgroundColor = '';
-    document.head.querySelectorAll('style[data-optimus-style-id]').forEach((style) => {
-      style.remove();
-    });
-    Reflect.deleteProperty(window, 'wjInjected');
-    await page.viewport(viewport.width, viewport.height);
-  });
+  afterEach(() =>
+    afterOverlay(
+      async () => {
+        // A sheet left open at teardown would reach the next spec: close it and wait for the leave,
+        // for the drawer's backdrop to leave the body and for the scroll lock to clear.
+        if (current && (panelEl() || masks().length > 0)) {
+          await close(current);
+        }
+      },
+      async () => {
+        current = undefined;
+        ROOT.classList.remove('wj-dark');
+        ROOT.style.removeProperty('--wj-mask-transition-duration');
+        document.body.style.backgroundColor = '';
+        document.head.querySelectorAll('style[data-optimus-style-id]').forEach((style) => {
+          style.remove();
+        });
+        Reflect.deleteProperty(window, 'wjInjected');
+        await page.viewport(viewport.width, viewport.height);
+      },
+    ),
+  );
 
   describe.each<Mode>(['dialog', 'drawer'])('in %s mode', (mode) => {
     const renderMode = (options: Omit<RenderOptions, 'mode'> = {}): Promise<Rendered> =>

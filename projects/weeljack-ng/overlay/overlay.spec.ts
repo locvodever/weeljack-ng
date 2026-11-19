@@ -12,6 +12,7 @@ import { WjOverlay, type WjOverlayPt } from 'weeljack-ng/overlay';
 import { WjOverlayHarness } from 'weeljack-ng/overlay/testing';
 import { _overlayEscapeGate } from 'weeljack-ng/private';
 import { expectNoAxeViolations } from '../spec-support/axe';
+import { afterOverlay } from '../spec-support/teardown';
 
 const ROOT = document.documentElement;
 
@@ -246,16 +247,22 @@ describe('WjOverlay', () => {
     reduceMotion(true);
   });
 
-  afterEach(async () => {
-    // A panel left open at teardown still holds the stack and its listeners: close it.
-    if (current && panelEl()) {
-      await closeByApp(current);
-    }
-    current = undefined;
-    ROOT.classList.remove('wj-dark');
-    document.body.style.backgroundColor = '';
-    await page.viewport(viewport.width, viewport.height);
-  });
+  afterEach(() =>
+    afterOverlay(
+      async () => {
+        // A panel left open at teardown still holds the stack and its listeners: close it.
+        if (current && panelEl()) {
+          await closeByApp(current);
+        }
+      },
+      async () => {
+        current = undefined;
+        ROOT.classList.remove('wj-dark');
+        document.body.style.backgroundColor = '';
+        await page.viewport(viewport.width, viewport.height);
+      },
+    ),
+  );
 
   describe('the panel', () => {
     it('renders nothing while closed, in a host that is a block with no height', async () => {
