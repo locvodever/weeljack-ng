@@ -7,8 +7,10 @@ import {
   Injector,
   PLATFORM_ID,
   afterNextRender,
+  computed,
   effect,
   inject,
+  signal,
   untracked,
 } from '@angular/core';
 import type { ButtonProps } from '@openng/optimus-ui/button';
@@ -22,7 +24,8 @@ import { _WJ_EN } from './translation-en';
  * wave-4 overlays (confirm dialog, dynamic dialog, popover) read the same helpers instead of
  * re-deriving them: the close-button name, motion that respects reduced motion, focus in on open
  * and back on close (Safari included), `closed` once per close, and an Escape key that follows
- * `closable` and reaches the top overlay of a stack.
+ * `closable` and reaches only the top overlay of a stack, Optimus's own document-wide Escape
+ * listeners (popover, confirm popup, drawer) included.
  */
 
 /**
@@ -142,11 +145,12 @@ class PressedOpener {
 
 /**
  * The overlays of an application that are open, in the order they opened: the stack behind
- * `_overlayEscapeGate` (FR-9). One per application injector, never module state.
+ * `_overlayEscapeGate` (FR-9). A signal, so a drawer can follow where it stands (FR-18). One per
+ * application injector, never module state.
  */
 @Injectable({ providedIn: 'root' })
 class OverlayStack {
-  readonly open: object[] = [];
+  readonly open = signal<readonly object[]>([]);
 }
 
 /**
@@ -282,24 +286,50 @@ export function _overlayLifecycle(
  * its own calls this with `() => true`, which only joins the stack. Listeners exist only in a
  * browser. Must run in an injection context.
  *
+ * Optimus Popover and ConfirmPopup close on a document-wide Escape whichever overlay is on top
+ * (FR-19). Pass `inner`, the Optimus instance: its `onEscapeKeydown` is wrapped once, and then runs
+ * only while this overlay is the top of the stack or not in it. Returns whether that holds, which
+ * `_overlayDrawer` reads for Drawer's own listener (FR-20).
+ *
  * @docs-private
  */
-export function _overlayEscapeGate(open: () => boolean, closable: () => boolean): void {
+export function _overlayEscapeGate(
+  open: () => boolean,
+  closable: () => boolean,
+  inner?: () => { onEscapeKeydown(event: KeyboardEvent): void } | undefined,
+): () => boolean {
   const host = inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;
   const document = inject(DOCUMENT);
   const destroyRef = inject(DestroyRef);
   const stack = inject(OverlayStack).open;
   const self = {};
   const join = (present: boolean): void => {
-    const index = stack.indexOf(self);
-    if (present && index < 0) {
-      stack.push(self);
-    } else if (!present && index >= 0) {
-      stack.splice(index, 1);
-    }
+    stack.update((list) =>
+      list.includes(self) === present
+        ? list
+        : present
+          ? [...list, self]
+          : list.filter((item) => item !== self),
+    );
   };
+  const onTop = computed(() => stack().at(-1) === self || !stack().includes(self));
   const blocked = (event: KeyboardEvent): boolean =>
-    event.key === 'Escape' && open() && !closable() && stack.at(-1) === self;
+    event.key === 'Escape' && open() && !closable() && stack().at(-1) === self;
+  const wrapped = new WeakSet();
+
+  effect(() => {
+    const instance = inner?.();
+    if (!instance || wrapped.has(instance)) {
+      return;
+    }
+    wrapped.add(instance);
+    const keydown = instance.onEscapeKeydown.bind(instance);
+    instance.onEscapeKeydown = (event) => {
+      if (onTop()) {
+        keydown(event);
+      }
+    };
+  });
 
   effect(() => {
     const present = open();
@@ -332,6 +362,7 @@ export function _overlayEscapeGate(open: () => boolean, closable: () => boolean)
       document.removeEventListener('keydown', onPage, { capture: true });
     });
   });
+  return onTop;
 }
 
 /**
@@ -364,8 +395,10 @@ export function _drawerPassThrough<C, T extends object>(
  *   nothing else is: a control inside the body still gets Escape first. `_overlayEscapeGate` keeps
  *   the keydown from reaching Optimus's document listener.
  * - Drawer's document Escape listener is not topmost-aware: it closes the drawer for any Escape
- *   that reaches the document, also one meant for an overlay stacked above it. While not
- *   `closable` it is unbound, so a non-closable drawer stays open under an upper overlay's Escape.
+ *   that reaches the document, also one meant for an overlay stacked above it. It is bound only
+ *   while the drawer is `closable` and on top of the overlay stack (FR-20), so a drawer stays open
+ *   under an upper overlay's Escape and closes on the next, once that overlay has gone. The
+ *   patched container handler skips Escape under the same condition.
  * - Drawer binds its Escape and backdrop-click listeners when it opens. A `closable` that turns
  *   true while open (a failed save) binds the ones that are missing.
  * - Drawer's `onHide` fires only for a close by the user, but its leave handler runs for every
@@ -382,7 +415,7 @@ export function _overlayDrawer(
   closable: () => boolean,
   left: () => void,
 ): void {
-  _overlayEscapeGate(visible, closable);
+  const onTop = _overlayEscapeGate(visible, closable);
   const patched = new WeakSet<Drawer>();
 
   effect(() => {
@@ -394,7 +427,7 @@ export function _overlayDrawer(
     const keydown = inner.onKeyDown.bind(inner);
     const afterLeave = inner.onAfterLeave.bind(inner);
     inner.onKeyDown = (event) => {
-      if (event.code !== 'Escape' || closable()) {
+      if (event.code !== 'Escape' || (closable() && onTop())) {
         keydown(event);
       }
     };
@@ -406,17 +439,18 @@ export function _overlayDrawer(
 
   effect(() => {
     const inner = drawer();
-    if (inner && !closable()) {
+    if (inner && !(closable() && onTop())) {
       inner.unbindDocumentEscapeListener();
     }
   });
 
   effect(() => {
     const inner = drawer();
+    const top = onTop();
     if (!closable() || !inner) {
       return;
     }
-    if (inner.container && !inner.documentEscapeListener) {
+    if (top && inner.container && !inner.documentEscapeListener) {
       inner.bindDocumentEscapeListener();
     }
     const mask = inner.mask;

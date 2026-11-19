@@ -487,6 +487,27 @@ class GateHost {
   }
 }
 
+/** What Optimus's popover and confirm popup expose: the method its document listener calls. */
+interface EscapeTarget {
+  onEscapeKeydown(event: KeyboardEvent): void;
+}
+
+/** A component that holds the gate with an instance of its own, a stand-in for Optimus's. */
+@Component({ selector: 'wj-escape-inner-host', template: '' })
+class InnerHost {
+  readonly open = signal(true);
+  readonly handled = vi.fn<(event: KeyboardEvent) => void>();
+  readonly instance = signal<EscapeTarget | undefined>({
+    onEscapeKeydown: (event) => {
+      this.handled(event);
+    },
+  });
+
+  constructor() {
+    _overlayEscapeGate(this.open, () => true, this.instance);
+  }
+}
+
 describe('_overlayEscapeGate', () => {
   const reachedDocument = vi.fn<(event: KeyboardEvent) => void>();
   const reachedInput = vi.fn<(event: KeyboardEvent) => void>();
@@ -681,6 +702,72 @@ describe('_overlayEscapeGate', () => {
       press(document.body);
       expect(reachedDocument).toHaveBeenCalledTimes(1);
       expect(lower.host.open()).toBe(true);
+    });
+  });
+
+  describe('with an instance of the overlay', () => {
+    async function inner(): Promise<{ host: InnerHost; fixture: ComponentFixture<InnerHost> }> {
+      const fixture = TestBed.createComponent(InnerHost);
+      await fixture.whenStable();
+      return { host: fixture.componentInstance, fixture };
+    }
+
+    /** What Optimus's document listener does: call the instance's method. */
+    const escape = (host: InnerHost): void => {
+      host.instance()?.onEscapeKeydown(new KeyboardEvent('keydown', { key: 'Escape' }));
+    };
+
+    it('runs the handler of the upper overlay only, and the lower again once it has closed', async () => {
+      const lower = await inner();
+      const upper = await inner();
+
+      escape(lower.host);
+      escape(upper.host);
+      expect(lower.host.handled).not.toHaveBeenCalled();
+      expect(upper.host.handled).toHaveBeenCalledTimes(1);
+
+      upper.host.open.set(false);
+      await upper.fixture.whenStable();
+      escape(lower.host);
+      expect(lower.host.handled).toHaveBeenCalledTimes(1);
+    });
+
+    it('runs the handler of an overlay that is not in the stack', async () => {
+      const { host, fixture } = await inner();
+      host.open.set(false);
+      await fixture.whenStable();
+      escape(host);
+
+      expect(host.handled).toHaveBeenCalledTimes(1);
+    });
+
+    it('holds back the lower handler for an overlay above it that has no instance', async () => {
+      const lower = await inner();
+      const upper = TestBed.createComponent(GateHost);
+      upper.componentInstance.closable.set(true);
+      await upper.whenStable();
+
+      escape(lower.host);
+      expect(lower.host.handled).not.toHaveBeenCalled();
+
+      upper.componentInstance.open.set(false);
+      await upper.whenStable();
+      escape(lower.host);
+      expect(lower.host.handled).toHaveBeenCalledTimes(1);
+    });
+
+    it('wraps an instance once, and a later instance too', async () => {
+      const { host, fixture } = await inner();
+      host.instance.update((same) => same);
+      await fixture.whenStable();
+      escape(host);
+      expect(host.handled).toHaveBeenCalledTimes(1);
+
+      const later = vi.fn<(event: KeyboardEvent) => void>();
+      host.instance.set({ onEscapeKeydown: later });
+      await fixture.whenStable();
+      escape(host);
+      expect(later).toHaveBeenCalledTimes(1);
     });
   });
 });
