@@ -40,6 +40,8 @@ const OWN_STRINGS = {
     invalidFileLimitSummary: 'Maximum number of files exceeded,',
     invalidFileLimitDetail: 'limit is {0} at most.',
     terminalCommand: 'Command',
+    toggleOn: 'Yes',
+    toggleOff: 'No',
   },
   vi: {
     breadcrumb: 'Đường dẫn',
@@ -53,6 +55,8 @@ const OWN_STRINGS = {
     invalidFileLimitSummary: 'Đã vượt quá số lượng tập tin tối đa,',
     invalidFileLimitDetail: 'giới hạn tối đa là {0}.',
     terminalCommand: 'Lệnh',
+    toggleOn: 'Có',
+    toggleOff: 'Không',
   },
 };
 

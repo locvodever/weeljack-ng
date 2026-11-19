@@ -186,5 +186,7 @@ export const vi: WjTranslation = {
     invalidFileLimitSummary: 'Đã vượt quá số lượng tập tin tối đa,',
     invalidFileLimitDetail: 'giới hạn tối đa là {0}.',
     terminalCommand: 'Lệnh',
+    toggleOn: 'Có',
+    toggleOff: 'Không',
   },
 };
