@@ -2,15 +2,18 @@ import {
   Component,
   booleanAttribute,
   computed,
+  inject,
   input,
   model,
   output,
+  signal,
   untracked,
   viewChild,
   type Signal,
 } from '@angular/core';
 import { NG_VALUE_ACCESSOR, type ControlValueAccessor } from '@angular/forms';
 import { AutoComplete } from '@openng/optimus-ui/autocomplete';
+import { Optimus } from '@openng/optimus-ui/config';
 import type { WjOption } from 'weeljack-ng';
 import {
   _bridgeAccessor,
@@ -133,13 +136,47 @@ export class WjAutoComplete<T> implements ControlValueAccessor {
     invalid: this.invalid,
   });
 
-  /** `pt` forwarded as given, plus the description and `aria-invalid` on the `input`. */
-  protected readonly partAttributes = computed<WjAutoCompletePt>(() =>
-    _mergePartAttributes(this.pt(), 'pcInputText.root', {
-      'aria-describedby': this.field.describedBy(),
-      'aria-invalid': this.field.invalid() ? 'true' : undefined,
-    }),
-  );
+  private readonly translation = inject(Optimus);
+
+  /** Whether the list is open: Optimus's `onShow` and `onHide`. */
+  protected readonly open = signal(false);
+
+  /**
+   * What the polite region reads: while the list is open, the translation's `searchMessage` with
+   * `{0}` set to the number of suggestions, or its `emptySearchMessage` when there are none; empty
+   * while the list is closed. Optimus renders both only inside the empty row, and its own region
+   * reads the selection instead.
+   */
+  protected readonly announcement = computed(() => {
+    if (!this.open()) {
+      return '';
+    }
+    const count = this.suggestions().length;
+    return count > 0
+      ? this.text('searchMessage').replaceAll('{0}', String(count))
+      : this.text('emptySearchMessage');
+  });
+
+  /**
+   * `pt` forwarded as given, plus the description and `aria-invalid` on the `input`, and what keeps
+   * the empty list honest. Optimus marks the empty row `role="option"`, though nothing in it can be
+   * picked, so the row is presentational and the polite region carries its text; a listbox with no
+   * option in it is invalid ARIA, so while there are no suggestions the list is a group, which keeps
+   * its name and still holds the text.
+   */
+  protected readonly partAttributes = computed<WjAutoCompletePt>(() => {
+    const routed = _mergePartAttributes(
+      _mergePartAttributes(this.pt(), 'pcInputText.root', {
+        'aria-describedby': this.field.describedBy(),
+        'aria-invalid': this.field.invalid() ? 'true' : undefined,
+      }),
+      'emptyMessage',
+      { role: 'presentation' },
+    );
+    return this.suggestions().length === 0
+      ? _mergePartAttributes(routed, 'list', { role: 'group' })
+      : routed;
+  });
 
   declare registerOnChange: _AccessorHost<WjOption<T> | null>['registerOnChange'];
   declare registerOnTouched: _AccessorHost<WjOption<T> | null>['registerOnTouched'];
@@ -147,5 +184,11 @@ export class WjAutoComplete<T> implements ControlValueAccessor {
 
   writeValue(value: WjOption<T> | null): void {
     this.value.set(value);
+  }
+
+  /** One of the translation's strings, `''` when the app set none. */
+  private text(key: 'searchMessage' | 'emptySearchMessage'): string {
+    const text: unknown = this.translation.getTranslation(key);
+    return typeof text === 'string' ? text : '';
   }
 }

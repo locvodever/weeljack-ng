@@ -1446,24 +1446,61 @@ describe('WjInputNumber', () => {
       await expect.poll(() => component.value()).toBe(20);
     });
 
-    it('Home and End do nothing when min or max is 0: the Optimus gap the page lists', async () => {
-      const { fixture, component } = await render((host) => {
+    it('Home reaches a min of 0, in the model and in the text', async () => {
+      const { fixture, component, element } = await render((host) => {
         host.min.set(0);
-        host.max.set(100);
-        host.value.set(40);
+        host.max.set(10);
+        host.value.set(7);
       });
       await (await harnessOf(fixture)).focus();
 
       await userEvent.keyboard('{Home}');
-      await fixture.whenStable();
-      expect(component.value()).toBe(40);
 
-      component.min.set(-5);
-      component.max.set(0);
-      await fixture.whenStable();
+      await expect.poll(() => component.value()).toBe(0);
+      await expect.poll(textOf(element)).toBe('0');
+    });
+
+    it('End reaches a max of 0, in the model and in the text', async () => {
+      const { fixture, component, element } = await render((host) => {
+        host.min.set(-10);
+        host.max.set(0);
+        host.value.set(-3);
+      });
+      await (await harnessOf(fixture)).focus();
+
       await userEvent.keyboard('{End}');
-      await fixture.whenStable();
-      expect(component.value()).toBe(40);
+
+      await expect.poll(() => component.value()).toBe(0);
+      await expect.poll(textOf(element)).toBe('0');
+    });
+
+    it('Home reaches a min of 0 after End has gone to the max', async () => {
+      const { fixture, component, element } = await render((host) => {
+        host.min.set(0);
+        host.max.set(10);
+        host.value.set(7);
+      });
+      await (await harnessOf(fixture)).focus();
+
+      await userEvent.keyboard('{End}');
+      await expect.poll(() => component.value()).toBe(10);
+      await userEvent.keyboard('{Home}');
+      await expect.poll(() => component.value()).toBe(0);
+      await expect.poll(textOf(element)).toBe('0');
+    });
+
+    it('Home goes to a min of 1 as before: the control', async () => {
+      const { fixture, component, element } = await render((host) => {
+        host.min.set(1);
+        host.max.set(10);
+        host.value.set(7);
+      });
+      await (await harnessOf(fixture)).focus();
+
+      await userEvent.keyboard('{Home}');
+
+      await expect.poll(() => component.value()).toBe(1);
+      await expect.poll(textOf(element)).toBe('1');
     });
 
     it('Enter commits and formats what was typed', async () => {

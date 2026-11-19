@@ -21,7 +21,8 @@ import type { WjRatingPt } from './rating-types';
 
 /**
  * A star rating over Optimus's `p-rating`: a row of `stars` stars, each a visually hidden radio
- * button. A click on a star rates that many; a click on the current star clears the rating. Bind
+ * button. A click on a star rates that many; a click on the current star, or Backspace or Delete on
+ * a focused star, clears the rating. Bind
  * `[(value)]`, or use `ngModel`, a `FormControl` or `[formField]`: it is its own value accessor,
  * and `value` is the number of stars picked (`null` while none is).
  *
@@ -146,6 +147,25 @@ export class WjRating implements ControlValueAccessor {
       const radio = event.target;
       if (this.readonly() && radio instanceof HTMLInputElement) {
         this.inner()?.focusedOptionIndex.set(starOf(radio));
+      }
+    });
+    // Backspace and Delete on a star clear the rating, as a click on the current star does. Optimus
+    // binds no key for it. Its pick of the current value emits `null` and resets the focused star,
+    // which is put back so the ring stays on the star that has focus.
+    host.addEventListener('keydown', (event) => {
+      const radio = event.target;
+      const rating = this.inner();
+      if (
+        rating &&
+        radio instanceof HTMLInputElement &&
+        (event.key === 'Backspace' || event.key === 'Delete') &&
+        !this.readonly() &&
+        !this.isDisabled() &&
+        rating.value
+      ) {
+        event.preventDefault();
+        rating.onOptionSelect(event, rating.value);
+        rating.focusedOptionIndex.set(starOf(radio));
       }
     });
   }

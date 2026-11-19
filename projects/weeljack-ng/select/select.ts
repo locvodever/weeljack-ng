@@ -1,5 +1,17 @@
-import { Component, booleanAttribute, computed, input, model, viewChild } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  afterNextRender,
+  booleanAttribute,
+  computed,
+  inject,
+  input,
+  model,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { NG_VALUE_ACCESSOR, type ControlValueAccessor } from '@angular/forms';
+import { Optimus } from '@openng/optimus-ui/config';
 import { Select } from '@openng/optimus-ui/select';
 import {
   _bridgeAccessor,
@@ -8,6 +20,14 @@ import {
   _registerWithField,
 } from 'weeljack-ng/private';
 import type { WjSelectOption, WjSelectPt, WjSelectSize } from './select-types';
+
+/** How many pickable options PageDown and PageUp move focus by. */
+const PAGE_STEP = 10;
+
+/** An option index an Optimus finder returned, `-1` when it is not a number. */
+function asIndex(value: unknown): number {
+  return typeof value === 'number' ? value : -1;
+}
 
 /** Whether the pass-through context Optimus gives an `option` part describes a disabled option. */
 function isDisabledOption(options: unknown): boolean {
@@ -69,6 +89,7 @@ export class WjSelect<T> implements ControlValueAccessor {
    */
   readonly pt = input<WjSelectPt>();
 
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;
   private readonly inner = viewChild(Select);
   protected readonly isDisabled = _bridgeAccessor(
     this,
@@ -86,32 +107,59 @@ export class WjSelect<T> implements ControlValueAccessor {
     labelable: false,
   });
 
+  private readonly translation = inject(Optimus);
+
+  /** Whether the list is open: Optimus's `onShow` and `onHide`. */
+  protected readonly open = signal(false);
+
+  /**
+   * What the polite region reads: the translation's `emptyMessage` while the list is open with no
+   * options, empty otherwise. Optimus shows that message as the list's only row and announces
+   * nothing.
+   */
+  protected readonly announcement = computed(() => {
+    if (!this.open() || this.options().length > 0) {
+      return '';
+    }
+    const text: unknown = this.translation.getTranslation('emptyMessage');
+    return typeof text === 'string' ? text : '';
+  });
+
   /**
    * `pt` forwarded as given, plus what this wrapper routes into Optimus's parts: the ARIA
-   * attributes on the combobox, and three gaps closed here. Optimus's two hidden focus-trap spans
+   * attributes on the combobox, and four gaps closed here. Optimus's two hidden focus-trap spans
    * sit in the Tab order, so Tab from an open list would land on one and lose focus when the list
    * closed; it never marks a disabled option `aria-disabled`, so assistive tech would not know the
    * option is unavailable; and its chevron is a second, English-only "dropdown trigger" button
-   * beside the combobox, so it is hidden from assistive tech.
+   * beside the combobox, so it is hidden from assistive tech; and its empty row is `role="option"`
+   * though nothing in it can be picked, so the row is presentational (the polite region carries
+   * its text) and, while there are no options, the list is a group, since a listbox with no
+   * option in it is invalid ARIA.
    */
   protected readonly partAttributes = computed<WjSelectPt>(() => {
     const untabbable = { tabindex: '-1' };
-    const routed = _mergePartAttributes(
+    const base = _mergePartAttributes(
       _mergePartAttributes(
         _mergePartAttributes(
-          _mergePartAttributes(this.pt(), 'label', {
-            'aria-describedby': this.field.describedBy(),
-            'aria-invalid': this.field.invalid() ? 'true' : undefined,
-          }),
-          'hiddenFirstFocusableEl',
+          _mergePartAttributes(
+            _mergePartAttributes(this.pt(), 'label', {
+              'aria-describedby': this.field.describedBy(),
+              'aria-invalid': this.field.invalid() ? 'true' : undefined,
+            }),
+            'hiddenFirstFocusableEl',
+            untabbable,
+          ),
+          'hiddenLastFocusableEl',
           untabbable,
         ),
-        'hiddenLastFocusableEl',
-        untabbable,
+        'dropdown',
+        { 'aria-hidden': 'true' },
       ),
-      'dropdown',
-      { 'aria-hidden': 'true' },
+      'emptyMessage',
+      { role: 'presentation' },
     );
+    const routed =
+      this.options().length === 0 ? _mergePartAttributes(base, 'list', { role: 'group' }) : base;
     return (context) => {
       const pt = routed(context);
       const own = pt.option;
@@ -127,6 +175,49 @@ export class WjSelect<T> implements ControlValueAccessor {
       };
     };
   });
+
+  constructor() {
+    // In the capture phase, so that Optimus's own handler (scroll only) never sees the key.
+    afterNextRender(() => {
+      this.host.addEventListener(
+        'keydown',
+        (event) => {
+          this.page(event);
+        },
+        { capture: true },
+      );
+    });
+  }
+
+  /**
+   * PageDown and PageUp while the list is open: focus moves ten pickable options (a disabled one is
+   * skipped), stopping at the last or first, where Optimus only scrolls the list to its end or
+   * start. A closed select is left to Optimus.
+   */
+  private page(event: KeyboardEvent): void {
+    const forward = event.key === 'PageDown';
+    const select = this.inner();
+    if ((!forward && event.key !== 'PageUp') || !select?.overlayVisible) {
+      return;
+    }
+    let index = select.focusedOptionIndex();
+    if (index < 0) {
+      const picked = asIndex(select.findSelectedOptionIndex());
+      index = picked >= 0 ? picked : asIndex(select.findNextOptionIndex(-1));
+    }
+    for (let step = 0; step < PAGE_STEP; step++) {
+      const next = asIndex(
+        forward ? select.findNextOptionIndex(index) : select.findPrevOptionIndex(index),
+      );
+      if (next === index) {
+        break;
+      }
+      index = next;
+    }
+    select.changeFocusedOptionIndex(event, index);
+    event.preventDefault();
+    event.stopPropagation();
+  }
 
   declare registerOnChange: _AccessorHost<T | null>['registerOnChange'];
   declare registerOnTouched: _AccessorHost<T | null>['registerOnTouched'];

@@ -99,10 +99,11 @@ const results = budgeted.map((row) => {
     return { row, bytes, optimusBytes: undefined, limit: (row.kb ?? limits.ownKb) * limits.kb };
   }
   const optimusBytes = measure(optimusFesm(row.optimus));
-  const limit = Math.max(
-    limits.wrapperFloorKb * limits.kb,
-    limits.wrapperShareOfOptimus * optimusBytes,
-  );
+  // A wrapper row with `kb` is a raise under CLAUDE.md § 5's rule; without it the computed limit.
+  const limit =
+    row.kb === undefined
+      ? Math.max(limits.wrapperFloorKb * limits.kb, limits.wrapperShareOfOptimus * optimusBytes)
+      : row.kb * limits.kb;
   return { row, bytes, optimusBytes, limit };
 });
 
@@ -124,7 +125,7 @@ if (summary !== undefined && summary !== '') {
 const over = results.filter(({ bytes, limit }) => bytes > limit);
 if (over.length > 0) {
   console.error(
-    `size: over the limit: ${over.map(({ row }) => row.entry).join(', ')}. No PR raises a limit.`,
+    `size: over the limit: ${over.map(({ row }) => row.entry).join(', ')}. A raise needs the rule in CLAUDE.md § 5 (measured gzip plus at most 0.05 KB, capped; root and private never change).`,
   );
   process.exit(1);
 }

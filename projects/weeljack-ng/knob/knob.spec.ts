@@ -489,16 +489,18 @@ describe('WjKnob', () => {
   });
 
   describe('keyboard (FR-7)', () => {
-    /** Tabs from the first button to the third knob, the one that takes keys. */
+    /** Tabs from the first button past the read-only knob (a stop) to the third, the one that takes keys. */
     async function focusKeys(element: HTMLElement): Promise<SVGSVGElement> {
       byId(element, 'before').focus();
+      await userEvent.tab();
+      await expect.poll(() => document.activeElement).toBe(dialOf(element));
       await userEvent.tab();
       const dial = element.querySelectorAll<SVGSVGElement>('svg[role="slider"]')[2];
       await expect.poll(() => document.activeElement).toBe(dial);
       return dial ?? dialOf(element);
     }
 
-    it('Tab skips a read-only and a disabled knob, enters at the third, and leaves it', async () => {
+    it('Tab stops at a read-only knob, skips a disabled one, enters at the third, and leaves it', async () => {
       const { element } = await renderAs(KeyboardHost);
 
       const dial = await focusKeys(element);
@@ -599,7 +601,7 @@ describe('WjKnob', () => {
       const at = await allHarnessesOf(fixture);
       const [read, off] = Array.from(element.querySelectorAll('svg[role="slider"]'));
 
-      expect(read?.getAttribute('tabindex')).toBe('-1');
+      expect(read?.getAttribute('tabindex')).toBe('0');
       expect(off?.getAttribute('tabindex')).toBe('-1');
       for (const dial of [read, off]) {
         for (const key of ['ArrowRight', 'ArrowDown', 'PageUp', 'Home', 'End']) {
@@ -608,6 +610,40 @@ describe('WjKnob', () => {
       }
       expect(await at(0).getValue()).toBe(30);
       expect(await at(1).getValue()).toBe(30);
+    });
+
+    it('Tab from a preceding button reaches a read-only knob, and skips a disabled one', async () => {
+      const { element } = await renderAs(KeyboardHost);
+      const [read, off] = Array.from(element.querySelectorAll('svg[role="slider"]'));
+      byId(element, 'before').focus();
+
+      await userEvent.tab();
+
+      await expect.poll(() => document.activeElement).toBe(read);
+      expect(read?.getAttribute('aria-readonly')).toBe('true');
+      await userEvent.tab();
+      expect(document.activeElement).not.toBe(off);
+      expect(document.activeElement?.getAttribute('aria-label')).toBe('Keys');
+    });
+
+    it('the tabindex of a read-only knob follows disabled: -1 while disabled, 0 again after', async () => {
+      const { fixture, component, element } = await render((host) => {
+        host.readonly.set(true);
+      });
+      expect(dialOf(element).getAttribute('tabindex')).toBe('0');
+
+      component.disabled.set(true);
+      await fixture.whenStable();
+
+      await expect.poll(() => dialOf(element).getAttribute('tabindex')).toBe('-1');
+
+      component.disabled.set(false);
+      await fixture.whenStable();
+      await expect.poll(() => dialOf(element).getAttribute('tabindex')).toBe('0');
+
+      component.readonly.set(false);
+      await fixture.whenStable();
+      await expect.poll(() => dialOf(element).getAttribute('tabindex')).toBe('0');
     });
 
     it('does not move a focused read-only knob with a trusted key either', async () => {
@@ -984,7 +1020,7 @@ describe('WjKnob', () => {
       await expect.poll(() => dialOf(element).getBoundingClientRect().height).toBe(64);
     });
 
-    it('readonly shows the value, takes the dial out of the Tab order and says so', async () => {
+    it('readonly shows the value, keeps the dial in the Tab order and says so', async () => {
       const { fixture, component, element } = await render();
       const knob = await harnessOf(fixture);
       expect(await knob.isReadonly()).toBe(false);
@@ -994,7 +1030,8 @@ describe('WjKnob', () => {
       await fixture.whenStable();
 
       await expect.poll(() => knob.isReadonly()).toBe(true);
-      expect(dialOf(element).getAttribute('tabindex')).toBe('-1');
+      expect(dialOf(element).getAttribute('tabindex')).toBe('0');
+      expect(dialOf(element).getAttribute('aria-readonly')).toBe('true');
       expect(dialOf(element).getAttribute('aria-valuenow')).toBe('40');
       expect(await knob.isDisabled()).toBe(false);
       expect(getComputedStyle(dialOf(element)).opacity).toBe('1');

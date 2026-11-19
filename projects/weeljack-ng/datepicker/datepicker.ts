@@ -40,6 +40,18 @@ import type { WjDatePickerPt, WjDatePickerSize } from './datepicker-types';
  * `_mergePartAttributes` returns reaches the input, the buttons and the panel (spec-proven).
  */
 
+/** Sets an attribute, or removes it for `null`, and touches the DOM only when that changes it. */
+function setAttribute(element: Element, name: string, value: string | null): void {
+  if (element.getAttribute(name) === value) {
+    return;
+  }
+  if (value === null) {
+    element.removeAttribute(name);
+  } else {
+    element.setAttribute(name, value);
+  }
+}
+
 /**
  * A date picker over Optimus's `p-datepicker`: a text box that takes a typed date and opens a
  * calendar, or with `inline` the calendar alone. Bind `[(value)]`, or use `ngModel`, a
@@ -218,6 +230,48 @@ export class WjDatePicker implements ControlValueAccessor, AfterViewInit {
     }
   }
 
+  /**
+   * Optimus names a day cell by its bare number and gives it no `aria-current`, `aria-selected` or
+   * `aria-disabled`, so every `td` holding a day gets them here, on the `td` (an `aria-label` on a
+   * role-less `span` is prohibited). The picked day's span also gets Optimus's `p-highlight`, which
+   * its `initFocusableCell` looks for to put the grid's Tab stop, and focus, on the picked day.
+   * Each attribute is written only when it differs, so this pass never schedules another render.
+   */
+  private daySemantics(): void {
+    const dayNames = this.names('dayNames');
+    const monthNames = this.names('monthNames');
+    for (const day of this.element.querySelectorAll<HTMLElement>('td > span[data-date]')) {
+      const cell = day.parentElement;
+      const [year, month, date] = (day.dataset['date'] ?? '').split('-').map(Number);
+      if (!cell || year === undefined || month === undefined || date === undefined) {
+        continue;
+      }
+      const weekday = dayNames[new Date(year, month, date).getDay()];
+      const monthName = monthNames[month];
+      const disabled = day.classList.contains('p-disabled');
+      const selected = day.classList.contains('p-datepicker-day-selected');
+      day.classList.toggle('p-highlight', selected);
+      setAttribute(
+        cell,
+        'aria-label',
+        weekday && monthName ? `${weekday}, ${String(date)} ${monthName} ${String(year)}` : null,
+      );
+      setAttribute(
+        cell,
+        'aria-current',
+        cell.classList.contains('p-datepicker-today') ? 'date' : null,
+      );
+      setAttribute(cell, 'aria-selected', disabled ? null : String(selected));
+      setAttribute(cell, 'aria-disabled', disabled ? 'true' : null);
+    }
+  }
+
+  /** A list of names from the translation, empty when it has none. */
+  private names(key: string): readonly string[] {
+    const names: unknown = this.translation.getTranslation(key);
+    return Array.isArray(names) ? names.filter((name) => typeof name === 'string') : [];
+  }
+
   /** One of Optimus's chrome labels from the translation `provideWeeljack` set. */
   private label(key: string): string | undefined {
     const text: unknown = this.translation.getTranslation(key);
@@ -226,6 +280,7 @@ export class WjDatePicker implements ControlValueAccessor, AfterViewInit {
 
   constructor() {
     afterEveryRender(() => {
+      this.daySemantics();
       this.focusableDay();
     });
   }

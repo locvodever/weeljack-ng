@@ -305,6 +305,52 @@ function declarationOf(expression, checker) {
 }
 
 /**
+ * The member a host directive declares under the public (aliased) name `name`, found through the
+ * directive's static `ɵdir` declaration: type argument 3 is the input map `{ member: { alias } }`
+ * and 4 the output map `{ member: alias }`. Optimus aliases some members (`onCompleteEvent` is
+ * the output `onComplete`), and `hostDirectives` can only name the public one.
+ * @param {ts.ClassDeclaration} declaration
+ * @param {string} name
+ * @param {'inputs' | 'outputs'} kind
+ * @param {ts.TypeChecker} checker
+ * @returns {ts.Symbol | undefined}
+ */
+function aliasedMember(declaration, name, kind, checker) {
+  const classSymbol =
+    declaration.name === undefined ? undefined : checker.getSymbolAtLocation(declaration.name);
+  if (classSymbol === undefined) return undefined;
+  const dir = checker.getTypeOfSymbolAtLocation(classSymbol, declaration).getProperty('ɵdir');
+  if (dir === undefined) return undefined;
+  // `ɵɵDirectiveDeclaration` is an alias of `unknown`, so the maps are read from the written type
+  // arguments of the declaration, not from the checker's type of the property.
+  const written = dir.declarations?.[0];
+  const reference =
+    written !== undefined && ts.isPropertyDeclaration(written) ? written.type : undefined;
+  const mapNode =
+    reference !== undefined && ts.isTypeReferenceNode(reference)
+      ? reference.typeArguments?.[kind === 'inputs' ? 3 : 4]
+      : undefined;
+  const map = mapNode === undefined ? undefined : checker.getTypeFromTypeNode(mapNode);
+  if (map === undefined) return undefined;
+  for (const entry of checker.getPropertiesOfType(map)) {
+    const entryType = checker.getTypeOfSymbolAtLocation(entry, declaration);
+    const publicType =
+      kind === 'inputs'
+        ? (() => {
+            const alias = entryType.getProperty('alias');
+            return alias === undefined
+              ? undefined
+              : checker.getTypeOfSymbolAtLocation(alias, declaration);
+          })()
+        : entryType;
+    if (publicType?.isStringLiteral() === true && publicType.value === name) {
+      return checker.getTypeAtLocation(declaration).getProperty(entry.name);
+    }
+  }
+  return undefined;
+}
+
+/**
  * Inputs and outputs a class re-exposes through `hostDirectives: [{ directive, inputs, outputs }]`
  * (`'name'` or `'name: alias'`). The host directive's own class is the source of the row: the type
  * is the checker's type of its member, the default is its `input()` / `model()` initialiser, and
@@ -361,7 +407,10 @@ function readHostDirectiveMembers(source, className, checker) {
             const [name = '', alias = name] = exposed.split(':').map((part) => part.trim());
             // An exposed input may be inherited (Optimus's `pt` lives on its base class), so the
             // checker's property lookup, not only the class's own members, finds it.
-            const symbol = checker.getTypeAtLocation(declaration).getProperty(name);
+            // A member Optimus aliases is named by its public name, so it is found through `ɵdir`.
+            const symbol =
+              checker.getTypeAtLocation(declaration).getProperty(name) ??
+              aliasedMember(declaration, name, kind, checker);
             const member = symbol?.declarations?.[0];
             if (member === undefined || symbol === undefined) {
               throw new Error(
@@ -369,7 +418,7 @@ function readHostDirectiveMembers(source, className, checker) {
               );
             }
             const type = checker.typeToString(checker.getTypeOfSymbolAtLocation(symbol, member));
-            const initialiser = initialisers.get(name);
+            const initialiser = initialisers.get(symbol.name);
             /** @type {ApiMember} */
             const api = {
               name,

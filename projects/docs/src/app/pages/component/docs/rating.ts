@@ -22,7 +22,7 @@ export const DOC: ComponentDoc = {
     {
       title: 'Basic',
       description:
-        'A visible text names the group through `ariaLabelledBy`. The rating starts empty: every star is an outline, and the first star takes focus on Tab. A click on a star rates that many, and a click on the current star clears the rating; no key clears it. Arrow keys move to and pick the next or previous star.',
+        'A visible text names the group through `ariaLabelledBy`. The rating starts empty: every star is an outline, and the first star takes focus on Tab. A click on a star rates that many, and a click on the current star clears the rating, and so do Backspace and Delete on a focused star. Arrow keys move to and pick the next or previous star.',
       sourceKey: 'rating/basic',
       component: RatingBasicExample,
     },
@@ -77,6 +77,11 @@ export const DOC: ComponentDoc = {
         'Picks the focused star while it is not the picked one. On the picked star it does nothing.',
     },
     {
+      key: 'Backspace, Delete',
+      effect:
+        'Clears the rating, as a click on the picked star does: the value becomes `null`. A read-only rating ignores them, and so does a rating that has no star picked.',
+    },
+    {
       key: 'Any key, while disabled',
       effect: 'The stars are not in the Tab order and do not react.',
     },
@@ -88,7 +93,7 @@ export const DOC: ComponentDoc = {
     'Inside a field, `aria-describedby` lists your own `ariaDescribedBy` ids first, then the hint, then the error, without duplicates. The group sets `aria-invalid="true"` exactly while the field shows an error, so the `invalid` input is not shown there.',
     'The group is touched, for `ngModel`, `FormControl` and `[formField]`, when focus leaves it: a `focusout` on the host whose `relatedTarget` is outside the host. Moving between the stars marks nothing. Optimus also marks the control touched on every pick, so a click on a star, or an arrow key that picks one, touches the control while focus is still inside.',
     'Keys work as native radio buttons do, with Optimus’s handlers on top, and Optimus gets two of them wrong. A key on a star makes the browser click its hidden radio, and that click reached the star’s own click handler as well as the radio’s `change`. Optimus had just marked the star as focused, and a pick of the focused star clears, so every arrow key (and Space) first cleared the rating, emitting `null`, and then picked the star again: the final value was right, but a form saw `null` in between. The component stops that click before it reaches Optimus, so each key picks once. Optimus also draws its focus ring from the same marker, which it records only while the rating is not read-only, so a read-only rating took focus with no ring: the component records it too. With `readonly` the click is also cancelled, so the radio does not stay checked on a star the value does not hold.',
-    'Gap: no key clears a rating. A click on the current star does, as Optimus designed it, but Space on the picked star does nothing and no other key reaches the clear. A keyboard user can change a rating and never remove it. An app that needs a clear action can offer a button that sets `value` to `null`.',
+    'Gap, fixed: no key cleared a rating. A click on the current star does, as Optimus designed it, but Space on the picked star does nothing, so a keyboard user could change a rating and never remove it. `wj-rating` now clears it on Backspace and Delete on a focused star, with the same result as the click (`null` in the model, `valueChange` and the form). Space and Enter on the picked star still do nothing.',
     'Gap: a click on a field’s label does not move focus. The group is not focusable, and `<label for>` cannot name a group of radios, so the label only names it. A click on the label does nothing.',
     'Gap, fixed: while a rating is invalid (`invalid`, or a field’s error), the stars that are not picked turn the invalid colour (4.83:1 on cards in light, 6.40:1 in dark) and the picked stars stay the primary, so the value still reads. Optimus 2.0.2 styles an invalid star through a token that no theme defines, so the preset’s `@layer wj` rule keys on `aria-invalid`. Still pair the rating with the field’s error text, which is how the Basic and In a field examples show it.',
     'Gap: in dark mode the filled and the outline star differ by 2.46:1 in colour (4.12:1 in light). The shape carries the value, a filled star against an outline star, so the rating does not rely on colour alone and meets WCAG 1.4.11; the off star against the page is 6.91:1 and the on star 16.97:1. If colour should carry it too, a dark off star in `surface.500` reads 3.67:1 on cards and 4.63:1 against the on star, a one-line change in the preset.',

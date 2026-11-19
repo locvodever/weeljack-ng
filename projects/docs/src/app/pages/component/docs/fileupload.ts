@@ -51,7 +51,7 @@ export const DOC: ComponentDoc = {
     {
       title: 'Disabled',
       description:
-        '`disabled` turns off Choose, Upload and Cancel and ignores a drop. A file that was queued before keeps its Remove button, which stays active: a gap listed below.',
+        '`disabled` turns off Choose, Upload, Cancel and each queued file’s Remove button, and ignores a drop. Enable it again and Remove works.',
       sourceKey: 'fileupload/disabled',
       component: FileUploadDisabledExample,
     },
@@ -67,7 +67,7 @@ export const DOC: ComponentDoc = {
     {
       key: 'Tab, Shift+Tab',
       effect:
-        'Moves through Choose, Upload and Cancel, then each queued file’s Remove button. A disabled button is skipped: Upload and Cancel while the queue is empty, and all three while the component is `disabled`. The hidden file input is never a stop. In `basic` mode there is the one button.',
+        'Moves through Choose, Upload and Cancel, then each queued file’s Remove button. A disabled button is skipped: Upload and Cancel while the queue is empty, and every button, Remove included, while the component is `disabled`. The hidden file input is never a stop. In `basic` mode there is the one button.',
     },
     {
       key: 'Enter, Space on Choose',
@@ -95,7 +95,7 @@ export const DOC: ComponentDoc = {
     'Fixed here: Optimus leaves Upload and Cancel enabled when the component is disabled after files were queued, and, with `fileLimit`, keeps counting an uploaded queue for good, so Choose would take fewer files after every upload. Upload and Cancel follow `disabled`, and the limit counts the queue only.',
     'Fixed here: the validation messages and the file-size units come from the translation (`en` and `vi` ship with `weeljack-ng/locale`), not from per-instance English. A message is a polite alert (`role="alert"`, `aria-live="polite"`) and stays until the next choice or `clear()`. Its enter animation does not run under `prefers-reduced-motion: reduce`.',
     'Gap, listed: every Remove button reads "Remove", not "Remove photo.png". The file name sits beside it in the same row. Optimus gives its `pt` call no per-file context to name it from.',
-    'Gap, listed: Remove stays active while the component is `disabled`.',
+    'Gap, fixed: Optimus leaves each Remove button active while the component is `disabled`, so a file queued before could still be removed. Remove is now disabled with the rest and works again once the component is enabled.',
     'Gap, listed: Enter on Choose calls Optimus’s `choose()` twice, once from its `keydown.enter` binding and once from the button’s click. Only one file dialog opens.',
     'Gap, listed: Remove buttons carry Optimus’s `autofocus="true"` attribute. It is written after the button is inserted, so the browser does not act on it and no focus moves.',
     'Gap, listed: Optimus binds the `empty` part to an `ng-container`, which has no element, so an attribute set on it in `pt` lands nowhere. Put your own markup in the `wjFileUploadEmpty` template instead.',
@@ -193,7 +193,7 @@ export const DOC: ComponentDoc = {
       optimus: 'disabled',
       weeljack: 'disabled',
       status: 'kept',
-      note: 'Disables Choose, Upload, Cancel and dropping.',
+      note: 'Disables Choose, Upload, Cancel, each Remove and dropping.',
     },
     {
       optimus: 'None',

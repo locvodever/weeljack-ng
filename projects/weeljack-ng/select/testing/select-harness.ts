@@ -19,7 +19,7 @@ export class WjSelectHarness extends ComponentHarness {
 
   private readonly control = this.locatorFor('[role="combobox"]');
   private readonly options = this.locatorForAll('[role="option"][aria-selected]');
-  private readonly empty = this.locatorForOptional('[role="option"]:not([aria-selected])');
+  private readonly empty = this.locatorForOptional('li[role="presentation"]');
 
   /** Finds the selects that match `options`. */
   static with(options: WjSelectHarnessFilters = {}): HarnessPredicate<WjSelectHarness> {

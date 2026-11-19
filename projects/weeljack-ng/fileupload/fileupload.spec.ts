@@ -517,6 +517,27 @@ describe('WjFileUpload', () => {
       expect(find(element, 'input[type="file"]', HTMLInputElement).disabled).toBe(true);
     });
 
+    it('disabled makes a queued file’s Remove inert, and enabling brings it back', async () => {
+      const { upload, element, component, fixture } = await render((host) => {
+        host.multiple.set(true);
+      });
+      await upload.chooseFiles([text('a.txt')]);
+      component.disabled.set(true);
+      await fixture.whenStable();
+
+      const remove = buttonAt(removeButtons(element), 0);
+      expect(remove.disabled).toBe(true);
+      remove.click();
+      await fixture.whenStable();
+      expect(await upload.getFileNames()).toEqual(['a.txt']);
+
+      component.disabled.set(false);
+      await fixture.whenStable();
+      expect(buttonAt(removeButtons(element), 0).disabled).toBe(false);
+      await upload.removeFile(0);
+      expect(await upload.getFileNames()).toEqual([]);
+    });
+
     it('ariaLabel, ariaLabelledBy and ariaDescribedBy are set on the Choose button', async () => {
       const { element } = await render((host) => {
         host.ariaLabel.set('Choose photos');
@@ -1227,7 +1248,7 @@ describe('WjFileUpload', () => {
         }
       });
 
-      it('skips Choose, Upload and Cancel when disabled, but not a queued Remove', async () => {
+      it('skips Choose, Upload, Cancel and a queued Remove when disabled', async () => {
         const { upload, element, component, fixture } = await render((host) => {
           host.multiple.set(true);
         });
@@ -1239,9 +1260,8 @@ describe('WjFileUpload', () => {
         before.focus();
         await userEvent.tab();
 
-        // The listed gap: Remove stays active while the component is disabled.
-        expect(document.activeElement).toBe(buttonAt(removeButtons(element), 0));
-        expect(buttonAt(removeButtons(element), 0).disabled).toBe(false);
+        expect(document.activeElement).toBe(find(element, '#after', HTMLButtonElement));
+        expect(buttonAt(removeButtons(element), 0).disabled).toBe(true);
       });
 
       it('Space on Choose calls the hidden inputs click once', async () => {

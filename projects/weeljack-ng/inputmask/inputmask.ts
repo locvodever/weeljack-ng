@@ -6,7 +6,6 @@ import {
   effect,
   inject,
   input,
-  output,
   signal,
 } from '@angular/core';
 import { InputMaskDirective } from '@openng/optimus-ui/inputmask';
@@ -28,6 +27,9 @@ import { _checkWeeljackSetup, _registerWithField } from 'weeljack-ng/private';
  * generated one, and merges a static `aria-describedby` ahead of the field's ids. Outside a field
  * it writes none of that.
  *
+ * Outputs: `completed` emits once every required slot of the mask is filled, and `unmaskedChange`
+ * emits the typed characters without literals or slot characters after every change.
+ *
  * Never combine it with `wjInputText` on one element: both compose Optimus's `InputText`.
  *
  * `pt` is the pass-through for the part Optimus renders. It tracks Optimus: its part names and
@@ -38,13 +40,15 @@ import { _checkWeeljackSetup, _registerWithField } from 'weeljack-ng/private';
 @Directive({
   selector: 'input[wjInputMask]',
   // `pt` is the inherited input, as in `wjInputText` (an alias fails with NG2018). Optimus's two
-  // outputs are not exposed through `hostDirectives`: lint bans an `on`-prefixed name there, and
-  // `onCompleteEvent` is an alias `extract-api.mjs` cannot resolve. They are relayed instead.
+  // outputs are exposed under their public names (`onComplete` is the alias of `onCompleteEvent`),
+  // renamed to `completed` and `unmaskedChange`.
   hostDirectives: [
     { directive: InputText, inputs: ['pSize: size', 'pt'] },
     {
       directive: InputMaskDirective,
       inputs: ['pInputMask: wjInputMask', 'slotChar', 'autoClear'],
+      // eslint-disable-next-line @angular-eslint/no-output-on-prefix -- Optimus's public names; the exposed names are completed and unmaskedChange
+      outputs: ['onComplete: completed', 'onUnmaskedChange: unmaskedChange'],
     },
   ],
   host: {
@@ -64,12 +68,6 @@ export class WjInputMask {
    */
   readonly invalid = input(false, { transform: booleanAttribute });
 
-  /** Emits once every required slot of the mask is filled. */
-  readonly completed = output();
-
-  /** Emits the typed characters without literals or slot characters, after every change. */
-  readonly unmaskedChange = output<string>();
-
   private readonly staticAttribute = (name: string): string | undefined =>
     inject(new HostAttributeToken(name), { optional: true }) ?? undefined;
 
@@ -85,13 +83,6 @@ export class WjInputMask {
 
   constructor() {
     _checkWeeljackSetup('input[wjInputMask]');
-    const mask = inject(InputMaskDirective);
-    mask.onCompleteEvent.subscribe(() => {
-      this.completed.emit();
-    });
-    mask.onUnmaskedChange.subscribe((value) => {
-      this.unmaskedChange.emit(value);
-    });
 
     if (this.field.inField) {
       const element = inject<ElementRef<HTMLInputElement>>(ElementRef).nativeElement;

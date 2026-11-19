@@ -2,10 +2,10 @@
    sizes the control with host `class`/`style`. The focused input sits above the calendar button, so
    its 2px ring is drawn whole, and a disabled button takes the disabled fill with the input. The
    inline calendar sizes to its content, starts at the start edge and scrolls inside itself when its
-   container is narrower. Month and year buttons take the page's font, and a day, month or year that
-   cannot be picked is the muted text colour at full opacity: Optimus dims the content colour to 0.6,
-   which is under 4.5:1 on white. Today keeps Optimus's fill and gets a 1px ring in the field
-   boundary colour, drawn on the day's own transparent border. */
+   container is narrower. Month and year buttons take the page's font. A day, month or year that
+   cannot be picked is the muted text colour at full opacity from the preset's `@layer wj` rule
+   (`src/layer-styles.ts`), so this file has no copy. Today keeps Optimus's fill and gets a 1px ring
+   in the field boundary colour, drawn on the day's own transparent border. */
 @layer wj {
   :host {
     display: inline-flex;
@@ -43,14 +43,6 @@
 
   :host ::ng-deep .p-datepicker-today > .p-datepicker-day {
     border-color: var(--wj-form-field-border-color);
-  }
-
-  :host ::ng-deep .p-datepicker-day.p-disabled,
-  :host ::ng-deep .p-datepicker-month.p-disabled,
-  :host ::ng-deep .p-datepicker-year.p-disabled {
-    opacity: 1;
-    color: var(--wj-text-muted-color);
-    cursor: default;
   }
 
   :host(.wj-datepicker-inline) ::ng-deep p-motion {

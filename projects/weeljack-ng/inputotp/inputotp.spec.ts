@@ -507,6 +507,17 @@ describe('WjInputOtp', () => {
       expect(await otp.isDisabled()).toBe(true);
     });
 
+    it('offers a one-time code on the first box only', async () => {
+      const { element } = await render();
+
+      expect(boxesOf(element).map((box) => box.getAttribute('autocomplete'))).toEqual([
+        'one-time-code',
+        null,
+        null,
+        null,
+      ]);
+    });
+
     it('reads a bare disabled attribute as true', async () => {
       const { fixture } = await renderAs(KeyboardHost);
 

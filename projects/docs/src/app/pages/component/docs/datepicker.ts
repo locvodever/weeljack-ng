@@ -106,7 +106,7 @@ export const DOC: ComponentDoc = {
     {
       key: 'ArrowDown, in the text box',
       effect:
-        'Moves focus into the open calendar, onto the first day that can be picked, or today in the current month. See Accessibility: it is not the picked day.',
+        'Moves focus into the open calendar, onto the picked day, or today in the current month when nothing is picked.',
     },
     {
       key: 'Escape, Enter',
@@ -155,9 +155,9 @@ export const DOC: ComponentDoc = {
     'An inline calendar is a `role="group"`, which Optimus does not set: it is named by the field’s label or `ariaLabelledBy`, else `ariaLabel`, else the translation’s `chooseDate`, and described by `ariaDescribedBy` and the field’s hint and error. A group takes no `aria-invalid`: invalid shows through the panel border only.',
     'The text box sets `aria-invalid="true"` while it is invalid. Inside a field that is exactly while the field shows an error, so the `invalid` input is not shown there. Outside a field it follows `invalid`.',
     'The month and year buttons are named by what they show, such as "March" and "2024". Optimus names them "Choose Month" and "Choose Year", which do not contain the visible text (WCAG 2.5.3, axe `label-content-name-mismatch`), so those labels are moved to `aria-description`.',
-    'Gap: a day is named only by its number, with no month or year, and today is marked on screen only. Optimus sets no `aria-current="date"`, and its pass-through gives the day parts no date, so `pt` cannot reach them.',
-    'Gap: a picked day has no `aria-selected`, and a day that cannot be picked has no `aria-disabled`. Optimus announces a pick through a live region, and mutes the days that cannot be picked on screen only. The same missing date blocks a fix through `pt`.',
-    'Gap: ArrowDown from the text box, and the grid’s Tab stop in a popup, land on the first day that can be picked (or today), not on the picked day, because Optimus looks for a class it renamed (`p-highlight`) to find it. Arrow to the picked day, or type the date.',
+    'Gap, fixed: each day cell is named by its full date, such as "Thursday, 19 November 2026", from the translation’s `dayNames` and `monthNames`, and today’s cell has `aria-current="date"`. Optimus names a day by its number and marks today on screen only.',
+    'Gap, fixed: the picked day’s cell has `aria-selected="true"` and every other day that can be picked `"false"`, and a day that cannot be picked has `aria-disabled="true"` and no `aria-selected`. The attributes are on the day cell, which Optimus’s pass-through cannot reach, so WeeljackNg writes them itself.',
+    'Gap, fixed: ArrowDown from the text box, and the grid’s Tab stop in a popup, land on the picked day (else today, else the first day that can be picked). Optimus looks for a `p-highlight` class it renamed, so WeeljackNg puts that class on the picked day.',
     'Gap: in an inline calendar, Optimus gives no day a Tab stop and its Tab handler never reaches the grid, so WeeljackNg gives the picked day, else the first day that can be picked, the Tab stop. A key that crosses into another month (PageUp, PageDown, an arrow past the end of the month) drops focus to the page, because Optimus restores focus after a month change only for a popup. Use the previous and next buttons to change month, or Tab back into the grid.',
     'Gap: the open calendar can cover the field’s hint and error.',
     'The calendar opens with `safe` motion, so under `prefers-reduced-motion: reduce` it appears at once. The motion is not configurable.',

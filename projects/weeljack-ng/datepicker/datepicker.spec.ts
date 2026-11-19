@@ -28,7 +28,7 @@ const INVALID_BORDER = 'rgb(220, 38, 38)';
  */
 const march15 = (): Date => new Date(2024, 2, 15);
 const KEY_MARCH_15 = '2024-2-15';
-/** Where Optimus puts the grid's Tab stop when the panel opens on March 2024: the first day. */
+/** The first day of March 2024, where an inline calendar's Home key lands. */
 const FIRST_DAY = '2024-2-1';
 
 /**
@@ -2120,6 +2120,24 @@ describe('WjDatePicker', () => {
           await closePanel(picker, element);
         });
 
+        it('has no axe violations with the day semantics: today, a pick, and days that cannot be picked', async () => {
+          pinToday();
+          const { fixture, element } = await render((host) => {
+            host.value.set(new Date(2024, 2, 20));
+            host.minDate.set(new Date(2024, 2, 5));
+            host.disabledDays.set([6]);
+            host.showIcon.set(true);
+          }, scheme);
+          const picker = await harnessOf(fixture);
+          await openPanel(picker, element);
+          await expect
+            .poll(() => dayOf(element, '2024-2-20').closest('td')?.getAttribute('aria-selected'))
+            .toBe('true');
+
+          await expectNoAxeViolations(hostOf(element));
+          await closePanel(picker, element);
+        });
+
         it('has no axe violations in the month and year views', async () => {
           const { fixture, element } = await render((host) => {
             host.minDate.set(new Date(2024, 1, 10));
@@ -2142,6 +2160,142 @@ describe('WjDatePicker', () => {
           await closePanel(picker, element);
         });
       });
+    });
+  });
+
+  describe('day semantics', () => {
+    beforeEach(() => {
+      // The overlay's own motion has to end for the keys and axe below.
+      document.getElementById('wj-spec-no-motion')?.remove();
+    });
+
+    /** The `td` that holds the day with the `data-date` key. */
+    const cellOf = (element: HTMLElement, key: string): HTMLElement => {
+      const cell = dayOf(element, key).closest('td');
+      if (cell === null) throw new Error(`${key} has no cell`);
+      return cell;
+    };
+
+    const DAYS = {
+      en: {
+        picked: 'Wednesday, 20 March 2024',
+        today: 'Sunday, 10 March 2024',
+        other: 'Thursday, 21 March 2024',
+        disabled: 'Monday, 4 March 2024',
+      },
+      vi: {
+        picked: 'Thứ tư, 20 Tháng 3 2024',
+        today: 'Chủ nhật, 10 Tháng 3 2024',
+        other: 'Thứ năm, 21 Tháng 3 2024',
+        disabled: 'Thứ hai, 4 Tháng 3 2024',
+      },
+    };
+
+    describe.each([
+      ['popup', false],
+      ['inline', true],
+    ])('%s', (_mode, inline) => {
+      describe.each<['en' | 'vi', Parameters<typeof provideWeeljack>[0]]>([
+        ['en', {}],
+        ['vi', { translation: viLocale }],
+      ])('in %s', (language, translation) => {
+        it('names each day by its full date and marks today, the picked day and the days that cannot be picked', async () => {
+          pinToday();
+          const { fixture, element } = await renderAs(
+            Host,
+            (host) => {
+              host.inline.set(inline);
+              host.value.set(new Date(2024, 2, 20));
+              host.minDate.set(new Date(2024, 2, 5));
+            },
+            'light',
+            translation,
+          );
+          const picker = await harnessOf(fixture);
+          if (!inline) await openPanel(picker, element);
+          else await panelOpen(element);
+          const names = DAYS[language];
+
+          await expect
+            .poll(() => cellOf(element, '2024-2-20').getAttribute('aria-label'))
+            .toBe(names.picked);
+          expect(cellOf(element, '2024-2-21').getAttribute('aria-label')).toBe(names.other);
+          expect(cellOf(element, '2024-2-10').getAttribute('aria-label')).toBe(names.today);
+          expect(cellOf(element, '2024-2-4').getAttribute('aria-label')).toBe(names.disabled);
+
+          const current = Array.from(element.querySelectorAll('td[aria-current]'));
+          expect(current).toEqual([cellOf(element, '2024-2-10')]);
+          expect(current[0]?.getAttribute('aria-current')).toBe('date');
+
+          expect(cellOf(element, '2024-2-20').getAttribute('aria-selected')).toBe('true');
+          expect(cellOf(element, '2024-2-21').getAttribute('aria-selected')).toBe('false');
+          expect(cellOf(element, '2024-2-4').getAttribute('aria-disabled')).toBe('true');
+          expect(cellOf(element, '2024-2-4').hasAttribute('aria-selected')).toBe(false);
+          expect(cellOf(element, '2024-2-21').hasAttribute('aria-disabled')).toBe(false);
+          expect(dayOf(element, '2024-2-20').classList.contains('p-highlight')).toBe(true);
+          expect(element.querySelectorAll('span.p-highlight')).toHaveLength(1);
+          expect(dayOf(element, '2024-2-20').hasAttribute('aria-label')).toBe(false);
+          if (!inline) await closePanel(picker, element);
+        });
+      });
+
+      it('follows the pick and the month: the label, aria-selected and p-highlight move', async () => {
+        const { fixture, component, element } = await render((host) => {
+          host.inline.set(inline);
+          host.value.set(new Date(2024, 2, 20));
+        });
+        const picker = await harnessOf(fixture);
+        if (!inline) await openPanel(picker, element);
+        else await panelOpen(element);
+
+        await picker.selectDay(22);
+        await fixture.whenStable();
+        if (!inline) {
+          await expect.poll(() => picker.isOpen()).toBe(false);
+          await openPanel(picker, element);
+        }
+        expect(component.value()).toEqual(new Date(2024, 2, 22));
+        expect(cellOf(element, '2024-2-22').getAttribute('aria-selected')).toBe('true');
+        expect(cellOf(element, '2024-2-20').getAttribute('aria-selected')).toBe('false');
+        expect(dayOf(element, '2024-2-22').classList.contains('p-highlight')).toBe(true);
+        expect(dayOf(element, '2024-2-20').classList.contains('p-highlight')).toBe(false);
+
+        await picker.nextMonth();
+        expect(await picker.getMonth()).toBe('April');
+        expect(cellOf(element, '2024-3-3').getAttribute('aria-label')).toBe(
+          'Wednesday, 3 April 2024',
+        );
+        expect(element.querySelectorAll('td[aria-selected="true"]')).toHaveLength(0);
+        expect(element.querySelectorAll('span.p-highlight')).toHaveLength(0);
+        if (!inline) await closePanel(picker, element);
+      });
+    });
+
+    it('ArrowDown from the input lands on the picked day, not the first', async () => {
+      const { fixture, element } = await render((host) => {
+        host.value.set(new Date(2024, 2, 20));
+      });
+      const picker = await harnessOf(fixture);
+      await openPanel(picker, element);
+
+      await userEvent.keyboard('{ArrowDown}');
+
+      await expect.poll(focusedDay).toBe('2024-2-20');
+      await userEvent.keyboard('{Escape}');
+      await expect.poll(() => picker.isOpen()).toBe(false);
+      await expect.poll(() => element.querySelector('[role="dialog"]')).toBeNull();
+    });
+
+    it('reopening the calendar puts the grid’s Tab stop on the picked day', async () => {
+      const { fixture, element } = await render((host) => {
+        host.value.set(new Date(2024, 2, 20));
+      });
+      const picker = await harnessOf(fixture);
+      await openPanel(picker, element);
+
+      await expect.poll(() => dayOf(element, '2024-2-20').tabIndex).toBe(0);
+      expect(element.querySelectorAll('span[data-date][tabindex="0"]')).toHaveLength(1);
+      await closePanel(picker, element);
     });
   });
 
@@ -2180,14 +2334,13 @@ describe('WjDatePicker', () => {
       await closePanel(last, element);
     });
 
-    it('ArrowDown moves focus from the input into the open calendar, onto its first day', async () => {
+    it('ArrowDown moves focus from the input into the open calendar, onto the picked day', async () => {
       const { picker } = await focusFirst();
 
       await userEvent.keyboard('{ArrowDown}');
 
-      // The Optimus gap the page lists: it looks for its old `p-highlight` class to find the picked
-      // day, so the grid's one Tab stop is the first day (or today), not 15 March.
-      expect(focusedDay()).toBe(FIRST_DAY);
+      // The wrapper sets Optimus's `p-highlight` on the picked day, which is where it looks.
+      expect(focusedDay()).toBe(KEY_MARCH_15);
       expect(await picker.isOpen()).toBe(true);
     });
 
@@ -2210,24 +2363,24 @@ describe('WjDatePicker', () => {
     it('the arrows move by day and by week, and PageUp and PageDown by month', async () => {
       const { picker } = await focusFirst();
       await userEvent.keyboard('{ArrowDown}');
-      expect(focusedDay()).toBe(FIRST_DAY);
+      expect(focusedDay()).toBe(KEY_MARCH_15);
 
       await userEvent.keyboard('{ArrowRight}');
-      expect(focusedDay()).toBe('2024-2-2');
+      expect(focusedDay()).toBe('2024-2-16');
       await userEvent.keyboard('{ArrowLeft}');
-      expect(focusedDay()).toBe(FIRST_DAY);
+      expect(focusedDay()).toBe(KEY_MARCH_15);
       await userEvent.keyboard('{ArrowDown}');
-      expect(focusedDay()).toBe('2024-2-8');
+      expect(focusedDay()).toBe('2024-2-22');
       await userEvent.keyboard('{ArrowUp}');
-      expect(focusedDay()).toBe(FIRST_DAY);
+      expect(focusedDay()).toBe(KEY_MARCH_15);
 
       await userEvent.keyboard('{PageDown}');
-      await expect.poll(focusedDay).toBe('2024-3-1');
+      await expect.poll(focusedDay).toBe('2024-3-15');
       expect(await picker.getMonth()).toBe('April');
       await userEvent.keyboard('{PageUp}');
-      await expect.poll(focusedDay).toBe(FIRST_DAY);
+      await expect.poll(focusedDay).toBe(KEY_MARCH_15);
       await userEvent.keyboard('{PageUp}');
-      await expect.poll(focusedDay).toBe('2024-1-1');
+      await expect.poll(focusedDay).toBe('2024-1-15');
       expect(await picker.getMonth()).toBe('February');
     });
 
@@ -2258,11 +2411,11 @@ describe('WjDatePicker', () => {
     it('Enter picks the focused day and Space does too, each closing the calendar onto the input', async () => {
       const { fixture, element, picker } = await focusFirst();
       await userEvent.keyboard('{ArrowDown}{ArrowRight}');
-      expect(focusedDay()).toBe('2024-2-2');
+      expect(focusedDay()).toBe('2024-2-16');
 
       await userEvent.keyboard('{Enter}');
       await fixture.whenStable();
-      expect(await picker.getText()).toBe('03/02/2024');
+      expect(await picker.getText()).toBe('03/16/2024');
       await expect.poll(() => picker.isOpen()).toBe(false);
       expect(await picker.isFocused()).toBe(true);
       await expect.poll(() => element.querySelector('[role="dialog"]')).toBeNull();
@@ -2271,10 +2424,10 @@ describe('WjDatePicker', () => {
       await expect.poll(() => picker.isOpen()).toBe(true);
       await panelOpen(element);
       await userEvent.keyboard('{ArrowDown}{ArrowDown}');
-      expect(focusedDay()).toBe('2024-2-8');
+      expect(focusedDay()).toBe('2024-2-23');
       await userEvent.keyboard(' ');
       await fixture.whenStable();
-      expect(await picker.getText()).toBe('03/08/2024');
+      expect(await picker.getText()).toBe('03/23/2024');
       await expect.poll(() => picker.isOpen()).toBe(false);
       await expect.poll(() => element.querySelector('[role="dialog"]')).toBeNull();
     });
@@ -2282,7 +2435,7 @@ describe('WjDatePicker', () => {
     it('Escape on a day closes the calendar and returns focus to the input', async () => {
       const { element, picker } = await focusFirst();
       await userEvent.keyboard('{ArrowDown}');
-      expect(focusedDay()).toBe(FIRST_DAY);
+      expect(focusedDay()).toBe(KEY_MARCH_15);
 
       await userEvent.keyboard('{Escape}');
 
@@ -2294,7 +2447,7 @@ describe('WjDatePicker', () => {
     it('Tab cycles inside the open calendar: previous, month, year, next, the day, and round', async () => {
       const { picker } = await focusFirst();
       await userEvent.keyboard('{ArrowDown}');
-      expect(focusedDay()).toBe(FIRST_DAY);
+      expect(focusedDay()).toBe(KEY_MARCH_15);
 
       await userEvent.tab();
       expect(focusedName()).toBe('Previous Month');
@@ -2305,11 +2458,11 @@ describe('WjDatePicker', () => {
       await userEvent.tab();
       expect(focusedName()).toBe('Next Month');
       await userEvent.tab();
-      expect(focusedDay()).toBe(FIRST_DAY);
+      expect(focusedDay()).toBe(KEY_MARCH_15);
       await userEvent.tab();
       expect(focusedName()).toBe('Previous Month');
       await userEvent.tab({ shift: true });
-      expect(focusedDay()).toBe(FIRST_DAY);
+      expect(focusedDay()).toBe(KEY_MARCH_15);
       expect(await picker.isOpen()).toBe(true);
     });
 

@@ -689,6 +689,43 @@ describe('WjPassword', () => {
       await expect.poll(() => password.getStrengthText()).toBeNull();
     });
 
+    it('makes the strength text a polite status that changes as the user types', async () => {
+      const { fixture, element } = await render();
+      const password = await harnessOf(fixture);
+      await password.focus();
+      await userEvent.keyboard('a');
+      await overlayOpen(element);
+
+      const text = (): HTMLElement => find(document, '.p-password-meter-text', HTMLElement);
+      expect(text().getAttribute('role')).toBe('status');
+      expect(text().getAttribute('aria-live')).toBe('polite');
+      expect(text().textContent.trim()).toBe('Weak');
+
+      await userEvent.keyboard('bcdefgh1A!');
+      await expect.poll(() => text().textContent.trim()).toBe('Strong');
+      expect(text().getAttribute('aria-live')).toBe('polite');
+
+      await password.blur();
+      await expect.poll(() => password.getStrengthText()).toBeNull();
+    });
+
+    it('keeps a consumer pt on the strength text and lets the routed attributes win', async () => {
+      const { fixture, element } = await render((host) => {
+        host.pt.set({ meterText: { 'data-text': 'x', 'aria-live': 'off' } });
+      });
+      const password = await harnessOf(fixture);
+      await password.focus();
+      await userEvent.keyboard('a');
+      await overlayOpen(element);
+
+      const text = find(document, '.p-password-meter-text', HTMLElement);
+      expect(text.getAttribute('data-text')).toBe('x');
+      expect(text.getAttribute('aria-live')).toBe('polite');
+
+      await password.blur();
+      await expect.poll(() => password.getStrengthText()).toBeNull();
+    });
+
     it('Escape closes the overlay and focus stays on the input', async () => {
       const { fixture, element } = await render();
       const password = await harnessOf(fixture);
@@ -1128,6 +1165,9 @@ describe('WjPassword', () => {
         await userEvent.keyboard('Abcdef1!');
         expect(await password.getStrengthText()).toBe('Strong');
         await overlayOpen(element);
+        expect(
+          find(document, '.p-password-meter-text', HTMLElement).getAttribute('aria-live'),
+        ).toBe('polite');
 
         await expectNoAxeViolations(find(element, 'wj-password', HTMLElement));
       });

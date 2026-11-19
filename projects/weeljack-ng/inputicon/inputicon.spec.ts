@@ -225,7 +225,8 @@ describe('WjInputIcon', () => {
   });
 
   describe('side and inset', () => {
-    // An icon takes the inset of its own side only, at Optimus's 14 px, at every input size. Inside
+    // An icon takes the inset of its own side only, at Optimus's 14 px, at every input size, and is
+    // 14 / 16 / 18 px beside a small / default / large input (FR-24). Inside
     // its host Optimus's root is both the first and the last child, so without the side fix it is
     // pinned to both edges and stretches across the input.
     it.each<[string, boolean, boolean]>([
@@ -234,7 +235,11 @@ describe('WjInputIcon', () => {
       ['on each side', true, true],
     ])('%s', async (_name, leading, trailing) => {
       const { fixture, host, element } = await render(Host);
-      for (const size of [undefined, 'small', 'large'] as const) {
+      for (const [size, iconSize] of [
+        [undefined, ICON],
+        ['small', 14],
+        ['large', 18],
+      ] as const) {
         host.size.set(size);
         host.leading.set(leading);
         host.trailing.set(trailing);
@@ -244,16 +249,16 @@ describe('WjInputIcon', () => {
         if (leading) {
           const icon = box(element, '#lead');
           expect(icon.left - field.left, label).toBe(INSET);
-          expect(icon.width, label).toBe(ICON);
-          expect(icon.height, label).toBe(ICON);
+          expect(icon.width, label).toBe(iconSize);
+          expect(icon.height, label).toBe(iconSize);
           const input = box(element, 'input');
           expect(icon.top + icon.height / 2, label).toBe(input.top + input.height / 2);
         }
         if (trailing) {
           const icon = box(element, '#trail');
           expect(field.right - icon.right, label).toBe(INSET);
-          expect(icon.width, label).toBe(ICON);
-          expect(icon.height, label).toBe(ICON);
+          expect(icon.width, label).toBe(iconSize);
+          expect(icon.height, label).toBe(iconSize);
           const input = box(element, 'input');
           expect(icon.top + icon.height / 2, label).toBe(input.top + input.height / 2);
         }

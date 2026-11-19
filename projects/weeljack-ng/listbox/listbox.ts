@@ -1,6 +1,7 @@
 import {
   Component,
   ElementRef,
+  afterNextRender,
   booleanAttribute,
   computed,
   inject,
@@ -21,6 +22,14 @@ import {
   _registerWithField,
 } from 'weeljack-ng/private';
 import type { WjListboxPt } from './listbox-types';
+
+/** How many pickable options PageDown and PageUp move focus by. */
+const PAGE_STEP = 10;
+
+/** An option index an Optimus finder returned, `-1` when it is not a number. */
+function asIndex(value: unknown): number {
+  return typeof value === 'number' ? value : -1;
+}
 
 /**
  * A single-choice list of `options` over Optimus's `p-listbox`: a box of rows that grows with its
@@ -176,6 +185,48 @@ export class WjListbox<T> implements ControlValueAccessor {
       };
     };
   });
+
+  constructor() {
+    // In the capture phase, so that Optimus's own handler (a reversed scroll) never sees the key.
+    afterNextRender(() => {
+      this.host.addEventListener(
+        'keydown',
+        (event) => {
+          this.page(event);
+        },
+        { capture: true },
+      );
+    });
+  }
+
+  /**
+   * PageDown and PageUp: focus moves ten pickable options (a disabled one is skipped), stopping at
+   * the last or first, where Optimus only scrolls the list, and the wrong way round.
+   */
+  private page(event: KeyboardEvent): void {
+    const forward = event.key === 'PageDown';
+    const list = this.inner();
+    if ((!forward && event.key !== 'PageUp') || !list) {
+      return;
+    }
+    let index = list.focusedOptionIndex();
+    if (index < 0) {
+      const picked = asIndex(list.findSelectedOptionIndex());
+      index = picked >= 0 ? picked : asIndex(list.findNextOptionIndex(-1));
+    }
+    for (let step = 0; step < PAGE_STEP; step++) {
+      const next = asIndex(
+        forward ? list.findNextOptionIndex(index) : list.findPrevOptionIndex(index),
+      );
+      if (next === index) {
+        break;
+      }
+      index = next;
+    }
+    list.changeFocusedOptionIndex(event, index);
+    event.preventDefault();
+    event.stopPropagation();
+  }
 
   /** Touched on blur: focus has left the host, rather than moved between its parts. */
   protected leave(event: FocusEvent): void {

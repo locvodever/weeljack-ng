@@ -105,8 +105,7 @@ export const DOC: ComponentDoc = {
     },
     {
       key: 'Home, End',
-      effect:
-        'Goes to `min` or `max`, when it is set. Nothing happens when it is `0`: see Accessibility.',
+      effect: 'Goes to `min` or `max`, when it is set, including a bound of `0`.',
     },
     {
       key: 'Enter, Tab',
@@ -133,7 +132,7 @@ export const DOC: ComponentDoc = {
     'Inside a `wj-field` the input is named by the field’s label: `<label for>` points at the input’s `id`, which is your `inputId` or a generated one. `aria-describedby` lists your own `ariaDescribedBy` ids first, then the hint, then the error, without duplicates.',
     'The input sets `aria-invalid="true"` while it is invalid. Inside a field that is exactly while the field shows an error, so the `invalid` input is not shown there. Outside a field it follows `invalid`.',
     'The spin buttons are for the mouse and touch only. Optimus hides them from assistive technology (`aria-hidden="true"`) and keeps them out of the Tab order (`tabindex="-1"`), so a keyboard or screen-reader user steps the number with ArrowUp and ArrowDown, which the input announces. The buttons draw a minus and a plus, and are 40 px wide and as tall as the control.',
-    'Gap: Home and End do nothing when `min` or `max` is `0`, because Optimus tests the value for truthiness. Use a range that does not end at `0`, or let the user type the number.',
+    'Gap, fixed: Home and End did nothing when `min` or `max` was `0`, because Optimus tests the bound for truthiness. `wj-inputnumber` handles the key for a `0` bound itself, sets the number to `0` and shows it, and leaves every other bound to Optimus.',
     'A lone minus sign stays on screen while the user types it, and the form value is `null` until a digit follows. On blur an incomplete number is cleared.',
     '`currency` and `locale` are codes, not text. A code `Intl.NumberFormat` does not know makes it throw a `RangeError`, which WeeljackNg never catches.',
     'The screen-reader pass (NVDA with Chrome) is recorded on this page before the release that carries this entry.',

@@ -18,9 +18,9 @@ import { _checkWeeljackSetup } from 'weeljack-ng/private';
  */
 @Directive({
   selector: '[wjAutoFocus]',
-  // Optimus's `pAutoFocus` input is the member `autofocus` under the alias `pAutoFocus`, which
-  // `extract-api.mjs` cannot map to a member, and it has no boolean transform (a bare attribute
-  // would pass `''`), so it is not exposed: the `wjAutoFocus` input below forwards to it.
+  // Optimus's `pAutoFocus` input is the member `autofocus` under the alias `pAutoFocus`. It is not
+  // exposed because it has no boolean transform (a bare attribute would pass `''`): the
+  // `wjAutoFocus` input below forwards to it.
   hostDirectives: [AutoFocus],
   // A bound `[wjAutoFocus]` leaves no attribute in the DOM, and the harness (and a consumer's
   // CSS) finds the element by `[wjAutoFocus]`. A static attribute in the template wins.

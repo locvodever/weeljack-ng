@@ -55,6 +55,13 @@ const LONG: WjOption<number>[] = Array.from({ length: 40 }, (_, index) => ({
   value: index + 1,
 }));
 
+/** Twenty-five numbered options; the fifth is disabled, so a ten-option step has one to skip. */
+const PAGED: WjOption<number>[] = Array.from({ length: 25 }, (_, index) => ({
+  label: `Option ${String(index + 1)}`,
+  value: index + 1,
+  disabled: index === 4,
+}));
+
 /** A consumer's template: one bare list, or the same list inside a field. */
 @Component({
   selector: 'wj-listbox-host',
@@ -301,6 +308,20 @@ class LongHost {
   readonly options = LONG;
   readonly value = signal<number | null>(null);
   readonly disabled = signal(false);
+}
+
+/** A long list with one disabled option, for PageDown and PageUp. */
+@Component({
+  selector: 'wj-listbox-paged-host',
+  imports: [WjListbox],
+  template: `
+    <button type="button" id="before">Before</button>
+    <wj-listbox ariaLabel="Number" [(value)]="value" [options]="options" />
+  `,
+})
+class PagedHost {
+  readonly options = PAGED;
+  readonly value = signal<number | null>(null);
 }
 
 type Scheme = 'light' | 'dark';
@@ -1710,22 +1731,41 @@ describe('WjListbox', () => {
       expect(await list.getSelectedLabel()).toBeNull();
     });
 
-    it('PageDown scrolls the list to its start and PageUp to its end, without moving the focused option', async () => {
-      const { element } = await renderAs(LongHost);
+    it('PageDown and PageUp move focus ten pickable options, skip a disabled one and stop at the ends', async () => {
+      const { element } = await renderAs(PagedHost);
       await tabFrom(element, 'before');
-      const box = containerOf(element);
-      await userEvent.keyboard('{ArrowDown}');
-      expect(activeLabel(element)).toBe('Option 2');
+      expect(activeLabel(element)).toBe('Option 1');
 
-      // Optimus 2.0.2 has them the wrong way round: documented as a gap.
+      // Option 5 is disabled, so ten steps from Option 1 land on Option 12, not 11.
+      await userEvent.keyboard('{PageDown}');
+      await expect.poll(() => activeLabel(element)).toBe('Option 12');
+
       await userEvent.keyboard('{PageUp}');
-      await expect.poll(() => box.scrollTop).toBeGreaterThan(0);
-      expect(activeLabel(element)).toBe('Option 2');
+      await expect.poll(() => activeLabel(element)).toBe('Option 1');
+
+      await userEvent.keyboard('{PageUp}');
+      await expect.poll(() => activeLabel(element)).toBe('Option 1');
+
+      await userEvent.keyboard('{PageDown}{PageDown}');
+      await expect.poll(() => activeLabel(element)).toBe('Option 22');
+      await userEvent.keyboard('{PageDown}');
+      await expect.poll(() => activeLabel(element)).toBe('Option 25');
+      await userEvent.keyboard('{PageDown}');
+      await expect.poll(() => activeLabel(element)).toBe('Option 25');
+      expect(document.activeElement).toBe(listOf(element));
+    });
+
+    it('PageDown moves focus without picking, and Enter then picks the option it reached', async () => {
+      const { fixture, component, element } = await renderAs(PagedHost);
+      await tabFrom(element, 'before');
 
       await userEvent.keyboard('{PageDown}');
-      // The first option scrolls into view with the list's own 4px padding above it.
-      await expect.poll(() => box.scrollTop).toBeLessThanOrEqual(4);
-      expect(activeLabel(element)).toBe('Option 2');
+      await expect.poll(() => activeLabel(element)).toBe('Option 12');
+      expect(component.value()).toBeNull();
+
+      await userEvent.keyboard('{Enter}');
+      await fixture.whenStable();
+      expect(component.value()).toBe(12);
     });
 
     it('Enter picks the focused option, Enter again unpicks it, and focus stays on the list', async () => {

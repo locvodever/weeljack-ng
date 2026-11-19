@@ -20,6 +20,12 @@ import {
 } from 'weeljack-ng/select';
 import { WjSelectHarness } from 'weeljack-ng/select/testing';
 import { expectNoAxeViolations } from '../spec-support/axe';
+import {
+  announcedText,
+  expectAnnouncerEmpty,
+  expectEmptyRowAnnounced,
+  expectPoliteStatus,
+} from '../spec-support/empty-row';
 
 const PAYLOAD = '<img src=x onerror="window.wjInjected = true">';
 const ROOT = document.documentElement;
@@ -52,10 +58,11 @@ const FRUIT: WjSelectOption<string>[] = [
   { label: 'Elderberry', value: 'elderberry' },
 ];
 
-/** Forty numbered options: enough to make the list scroll. */
-const LONG: WjSelectOption<number>[] = Array.from({ length: 40 }, (_, index) => ({
+/** Twenty-five numbered options; the fifth is disabled, so a ten-option step has one to skip. */
+const PAGED: WjSelectOption<number>[] = Array.from({ length: 25 }, (_, index) => ({
   label: `Option ${String(index + 1)}`,
   value: index + 1,
+  disabled: index === 4,
 }));
 
 /** A consumer's template: one bare select, or the same select inside a field. */
@@ -245,14 +252,15 @@ class KeyboardHost {
   readonly value = signal<string | null>(null);
 }
 
-/** A long list, for PageDown and PageUp. */
+/** A long list with one disabled option, for PageDown and PageUp. */
 @Component({
-  selector: 'wj-select-long-host',
+  selector: 'wj-select-paged-host',
   imports: [WjSelect],
-  template: `<wj-select ariaLabel="Number" [options]="options" />`,
+  template: `<wj-select ariaLabel="Number" [(value)]="value" [options]="options" />`,
 })
-class LongHost {
-  readonly options = LONG;
+class PagedHost {
+  readonly options = PAGED;
+  readonly value = signal<number | null>(null);
 }
 
 type Scheme = 'light' | 'dark';
@@ -302,8 +310,9 @@ const rootOf = (element: HTMLElement): HTMLElement => find(element, 'p-select', 
 const comboboxOf = (element: HTMLElement): HTMLElement =>
   find(element, '[role="combobox"]', HTMLElement);
 
+/** The list: a listbox, or a group while it holds only the empty message. */
 const listOf = (element: HTMLElement): HTMLElement =>
-  find(element, '[role="listbox"]', HTMLElement);
+  find(element, '[role="listbox"], [role="group"].p-select-list', HTMLElement);
 
 const byId = (element: HTMLElement, id: string): HTMLElement =>
   find(element, `#${id}`, HTMLElement);
@@ -346,7 +355,7 @@ async function overlayOpen(element: HTMLElement): Promise<void> {
 async function closeList(select: WjSelectHarness, element: HTMLElement): Promise<void> {
   await select.close();
   await expect.poll(() => select.isOpen()).toBe(false);
-  await expect.poll(() => element.querySelector('[role="listbox"]')).toBeNull();
+  await expect.poll(() => element.querySelector('.p-select-list')).toBeNull();
 }
 
 /** The label of the option the combobox points at with `aria-activedescendant`, or `null`. */
@@ -714,7 +723,8 @@ describe('WjSelect', () => {
 
       expect(await select.getEmptyMessage()).toBe('No available options');
       expect(await select.getOptionLabels()).toEqual([]);
-      expect(listOf(element).querySelectorAll('[role="option"]')).toHaveLength(1);
+      expect(listOf(element).getAttribute('role')).toBe('group');
+      expect(listOf(element).querySelectorAll('[role="option"]')).toHaveLength(0);
 
       await closeList(select, element);
     });
@@ -776,6 +786,87 @@ describe('WjSelect', () => {
       await expect.poll(() => select.isOpen()).toBe(false);
       expect(await select.isFocused()).toBe(true);
       await expect.poll(() => element.querySelector('[role="listbox"]')).toBeNull();
+    });
+  });
+
+  describe('announcements', () => {
+    const EMPTY_ROW = '.p-select-empty-message';
+    const hostOf = (element: HTMLElement): HTMLElement => find(element, 'wj-select', HTMLElement);
+    const renderEmpty = (scheme: Scheme = 'light', pt?: WjSelectPt): Promise<Rendered<Host>> =>
+      render((host) => {
+        host.options.set([]);
+        host.pt.set(pt);
+      }, scheme);
+
+    it('the empty row is not an option, and its text is read once by the wrapper’s live region', async () => {
+      const { fixture, element } = await renderEmpty();
+      const select = await harnessOf(fixture);
+      await select.open();
+      await overlayOpen(element);
+
+      await expectEmptyRowAnnounced(hostOf(element), EMPTY_ROW, 'No available options');
+
+      await closeList(select, element);
+      await expectAnnouncerEmpty(hostOf(element));
+    });
+
+    it('the routed role wins over the static role="option", and a consumer pt on the row is kept', async () => {
+      const { fixture, element } = await renderEmpty('light', {
+        emptyMessage: { 'data-empty': 'g' },
+      });
+      const select = await harnessOf(fixture);
+      await select.open();
+      await overlayOpen(element);
+
+      const row = find(element, EMPTY_ROW, HTMLElement);
+      expect(row.getAttribute('role')).not.toBe('option');
+      expect(row.getAttribute('data-empty')).toBe('g');
+
+      await closeList(select, element);
+    });
+
+    it('reads the empty message from a vi override', async () => {
+      const { fixture, element } = await renderAs(
+        Host,
+        (host) => {
+          host.options.set([]);
+        },
+        'light',
+        { translation: viLocale },
+      );
+      const select = await harnessOf(fixture);
+      await select.open();
+      await overlayOpen(element);
+
+      await expectEmptyRowAnnounced(hostOf(element), EMPTY_ROW, 'Không có tùy chọn nào');
+
+      await closeList(select, element);
+    });
+
+    it('is silent while the list has options, open or closed', async () => {
+      const { fixture, element } = await render();
+      expectPoliteStatus(hostOf(element));
+      const select = await harnessOf(fixture);
+      await select.open();
+      await overlayOpen(element);
+
+      expect(announcedText(hostOf(element))).toBe('');
+      expect(listOf(element).getAttribute('role')).toBe('listbox');
+
+      await closeList(select, element);
+    });
+
+    describe.each<Scheme>(['light', 'dark'])('axe, %s', (scheme) => {
+      it('finds nothing with the list open on no options', async () => {
+        const { fixture, element } = await renderEmpty(scheme);
+        const select = await harnessOf(fixture);
+        await select.open();
+        await overlayOpen(element);
+        await expect.poll(() => announcedText(hostOf(element))).toBe('No available options');
+
+        await expectNoAxeViolations(hostOf(element));
+        await closeList(select, element);
+      });
     });
   });
 
@@ -1290,28 +1381,65 @@ describe('WjSelect', () => {
       await closeList(select, element);
     });
 
-    it('PageDown and PageUp scroll the list to its end and its start without moving the focused option', async () => {
-      const { fixture, element } = await renderAs(LongHost);
+    it('PageDown and PageUp move focus ten pickable options, skip a disabled one and stop at the ends', async () => {
+      const { fixture, element } = await renderAs(PagedHost);
       const select = await harnessOf(fixture);
       await select.focus();
       await userEvent.keyboard('{ArrowDown}');
+      await overlayOpen(element);
       await userEvent.keyboard('{ArrowDown}');
       expect(activeLabel(element)).toBe('Option 1');
-      await overlayOpen(element);
-      const container = find(element, '.p-select-list-container', HTMLElement);
-      expect(container.scrollTop).toBe(0);
 
+      // Option 5 is disabled, so ten steps from Option 1 land on Option 12, not 11.
       await userEvent.keyboard('{PageDown}');
-      await expect.poll(() => container.scrollTop).toBeGreaterThan(0);
-      expect(activeLabel(element)).toBe('Option 1');
+      await expect.poll(() => activeLabel(element)).toBe('Option 12');
       expect(await select.isOpen()).toBe(true);
 
       await userEvent.keyboard('{PageUp}');
-      // The first option scrolls into view with the list's own 4px padding above it.
-      await expect.poll(() => container.scrollTop).toBeLessThanOrEqual(4);
-      expect(activeLabel(element)).toBe('Option 1');
+      await expect.poll(() => activeLabel(element)).toBe('Option 1');
+
+      await userEvent.keyboard('{PageUp}');
+      await expect.poll(() => activeLabel(element)).toBe('Option 1');
+
+      await userEvent.keyboard('{PageDown}{PageDown}');
+      await expect.poll(() => activeLabel(element)).toBe('Option 22');
+      await userEvent.keyboard('{PageDown}');
+      await expect.poll(() => activeLabel(element)).toBe('Option 25');
+      await userEvent.keyboard('{PageDown}');
+      await expect.poll(() => activeLabel(element)).toBe('Option 25');
+      expect(await select.isOpen()).toBe(true);
 
       await closeList(select, element);
+    });
+
+    it('PageDown moves focus without picking, and Enter then picks the option it reached', async () => {
+      const { fixture, component, element } = await renderAs(PagedHost);
+      const select = await harnessOf(fixture);
+      await select.focus();
+      await userEvent.keyboard('{ArrowDown}');
+      await overlayOpen(element);
+      await userEvent.keyboard('{ArrowDown}');
+
+      await userEvent.keyboard('{PageDown}');
+      await expect.poll(() => activeLabel(element)).toBe('Option 12');
+      expect(component.value()).toBeNull();
+
+      await userEvent.keyboard('{Enter}');
+      await fixture.whenStable();
+      expect(component.value()).toBe(12);
+      await expect.poll(() => select.isOpen()).toBe(false);
+    });
+
+    it('PageDown and PageUp leave a closed select alone: it stays closed and nothing is picked', async () => {
+      const { fixture, component } = await renderAs(PagedHost);
+      const select = await harnessOf(fixture);
+      await select.focus();
+
+      await userEvent.keyboard('{PageDown}{PageUp}');
+
+      expect(await select.isOpen()).toBe(false);
+      expect(component.value()).toBeNull();
+      expect(await select.isFocused()).toBe(true);
     });
 
     it('Enter picks the focused option, closes the list and keeps focus on the combobox', async () => {
