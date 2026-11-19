@@ -35,7 +35,7 @@
  *   reaches a disabled button (`.p-disabled` sets `pointer-events: none`), so no hover rule needs
  *   to be out-ranked. The datepicker rule takes exactly the day, month and year: Optimus dims
  *   them with the class's 0.6 opacity and shows no disabled state, while a generic `.p-disabled`
- *   rule would undim disabled selects and menus. It matches `datepicker.css`'s local rule.
+ *   rule would undim disabled selects and menus. `wj-datepicker` has no local copy.
  * - Menu focus: Optimus marks the active descendant with `.p-focus` and fills it with a surface
  *   about 1.1:1 against the menu, and outlines the list itself `0`. The rule draws the preset's 2px
  *   ring, inset (offset minus the width) so a menu's own clipping never cuts it, on that item's
