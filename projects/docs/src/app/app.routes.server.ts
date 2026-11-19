@@ -1,6 +1,7 @@
 import { RenderMode, type ServerRoute } from '@angular/ssr';
 import { COMPONENT_DOCS } from '../generated/component-docs';
 import apiIndex from '../generated/api/index.json';
+import errors from '../generated/errors.json';
 
 /**
  * Every route prerenders (FR-23); none uses `RenderMode.Client`. Component pages are listed from
@@ -22,6 +23,12 @@ export const serverRoutes: ServerRoute[] = [
       }
       return Promise.resolve(apiIndex.entries.map((entry) => ({ entry })));
     },
+  },
+  {
+    // The address every dev warning prints: `<docs>/errors/WJ<NNNN>`, one page per generated code.
+    path: 'errors/:code',
+    renderMode: RenderMode.Prerender,
+    getPrerenderParams: () => Promise.resolve(errors.codes.map(({ code }) => ({ code }))),
   },
   { path: '**', renderMode: RenderMode.Prerender },
 ];

@@ -342,13 +342,12 @@ if (shippedTargets + shippedOwn !== shipped.size) {
 const libraryManifest = /** @type {{ peerDependencies: Record<string, string> }} */ (
   readJson(join(libraryRoot, 'package.json'))
 );
-const peers = /** @type {Record<string, string>} */ ({});
+// Every peer the manifest lists, so Get started's Install section names what npm will install.
+const peers = /** @type {Record<string, string>} */ ({ ...libraryManifest.peerDependencies });
 for (const name of ['@angular/core', '@openng/optimus-ui', '@openng/optimus-ui-themes']) {
-  const range = libraryManifest.peerDependencies[name];
+  const range = peers[name];
   if (range === undefined || range === '') {
     failures.push(`projects/weeljack-ng/package.json has no peer range for ${name}.`);
-  } else {
-    peers[name] = range;
   }
 }
 const major = /^(\d+)\./.exec(apiIndex.version)?.[1];
