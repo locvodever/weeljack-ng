@@ -8,9 +8,9 @@ export interface WjGalleriaHarnessFilters extends BaseHarnessFilters {
 
 /**
  * Test harness for `wj-galleria`. Describes the gallery as a user meets it: the item shown (counted
- * from 0, as `activeIndex` is), the previous and next buttons, the caption, and the full screen.
- * `next` and `previous` need `showItemNavigators`; `getCaption` needs a `wjGalleriaCaption`
- * template. A full-screen gallery has no item until it is open, and `isFullScreenOpen` and
+ * from 0, as `activeIndex` is), the previous and next buttons, a jump to a thumbnail, the caption,
+ * and the full screen. `next` and `previous` need `showItemNavigators`; `selectThumbnail` needs
+ * `showThumbnails`; `getCaption` needs a `wjGalleriaCaption` template. A full-screen gallery has no item until it is open, and `isFullScreenOpen` and
  * `closeFullScreen` read the full-screen dialog, which only exists while it is open.
  */
 export class WjGalleriaHarness extends ComponentHarness {
@@ -20,6 +20,7 @@ export class WjGalleriaHarness extends ComponentHarness {
   private readonly previousButton = this.locatorFor('[data-pc-section="prevbutton"]');
   private readonly nextButton = this.locatorFor('[data-pc-section="nextbutton"]');
   private readonly item = this.locatorForOptional('[data-pc-section="item"]');
+  private readonly thumbnails = this.locatorForAll('[data-pc-section="thumbnail"]');
   private readonly caption = this.locatorForOptional('[data-pc-section="caption"]');
   private readonly dialog = this.locatorForOptional('[aria-modal="true"]');
   private readonly closeButton = this.locatorForOptional('[data-pc-section="closebutton"]');
@@ -56,6 +57,15 @@ export class WjGalleriaHarness extends ComponentHarness {
   /** Clicks the next button. */
   async next(): Promise<void> {
     await (await this.nextButton()).click();
+  }
+
+  /** Clicks thumbnail `index` (from 0); throws when there is none. */
+  async selectThumbnail(index: number): Promise<void> {
+    const thumbnail = (await this.thumbnails())[index];
+    if (!thumbnail) {
+      throw new Error(`wj-galleria has no thumbnail ${String(index)}`);
+    }
+    await thumbnail.click();
   }
 
   /** The caption's text, trimmed; `null` when there is no caption. */

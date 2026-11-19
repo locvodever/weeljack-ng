@@ -1,5 +1,9 @@
 import { Directive, TemplateRef, inject, input } from '@angular/core';
-import type { WjGalleriaCaptionContext, WjGalleriaItemContext } from './galleria-types';
+import type {
+  WjGalleriaCaptionContext,
+  WjGalleriaItemContext,
+  WjGalleriaThumbnailContext,
+} from './galleria-types';
 
 /**
  * What a `wj-galleria` shows for the active item: put an `<ng-template wjGalleriaItem>` inside it.
@@ -21,6 +25,28 @@ export class WjGalleriaItemSlot<T = unknown> {
     directive: WjGalleriaItemSlot<T>,
     context: unknown,
   ): context is WjGalleriaItemContext<T> {
+    return typeof context === 'object';
+  }
+}
+
+/**
+ * What each thumbnail shows. Required while `showThumbnails` is on. Optimus names every thumbnail
+ * "Page N", so give the thumbnail image `alt=""`.
+ *
+ * `[wjGalleriaThumbnailOf]` only types the template, like `wjGalleriaItemOf`.
+ */
+@Directive({ selector: 'ng-template[wjGalleriaThumbnail]' })
+export class WjGalleriaThumbnailSlot<T = unknown> {
+  /** The template a `wj-galleria` renders for each thumbnail. */
+  readonly template = inject<TemplateRef<WjGalleriaThumbnailContext<T>>>(TemplateRef);
+  /** Your items, bound only so the template type-checker infers the item type `T`. */
+  readonly wjGalleriaThumbnailOf = input<readonly T[] | null | undefined>();
+
+  /** Types `let-` variables in the template as {@link WjGalleriaThumbnailContext} of `T`. */
+  static ngTemplateContextGuard<T>(
+    directive: WjGalleriaThumbnailSlot<T>,
+    context: unknown,
+  ): context is WjGalleriaThumbnailContext<T> {
     return typeof context === 'object';
   }
 }

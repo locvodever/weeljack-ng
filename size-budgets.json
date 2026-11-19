@@ -37,6 +37,12 @@
       "optimus": "carousel",
       "kb": 2.75,
       "note": "Raised under CLAUDE.md § 5's rule (Loc, 2026-11-19): a dimmed navigator leaves the Tab order and reads as disabled (FR-9), and Home and End move focus on the indicators (FR-10)."
+    },
+    {
+      "entry": "weeljack-ng/galleria",
+      "optimus": "galleria",
+      "kb": 3.45,
+      "note": "Raised under CLAUDE.md § 5's rule (Loc, 2026-11-19): S1, the thumbnail strip (five inputs and the wjGalleriaThumbnail slot), plus the dimmed navigators (FR-9)."
     }
   ]
 }
