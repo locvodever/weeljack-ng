@@ -1,6 +1,8 @@
 import { CSP_NONCE, Component, type Provider } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
+import type { TreeNode } from '@openng/optimus-ui/api';
 import { Optimus } from '@openng/optimus-ui/config';
+import { OrganizationChart } from '@openng/optimus-ui/organizationchart';
 import { ButtonModule } from '@openng/optimus-ui/button';
 import { InputTextModule } from '@openng/optimus-ui/inputtext';
 import { provideWeeljack, type WjThemeOptions } from './public-api';
@@ -18,6 +20,16 @@ import { provideWeeljack, type WjThemeOptions } from './public-api';
   `,
 })
 class ThemeHost {}
+
+/** An org chart, so Optimus loads its component tokens (a token is emitted with its component). */
+@Component({
+  selector: 'wj-org-chart-host',
+  imports: [OrganizationChart],
+  template: `<p-organizationChart [value]="data" />`,
+})
+class OrgChartHost {
+  protected readonly data: TreeNode[] = [{ label: 'Lead', expanded: true, children: [] }];
+}
 
 /** An app's brand scales, as fixtures. */
 const APP_PRIMARY = {
@@ -72,6 +84,13 @@ async function render(
   document.body.appendChild(fixture.nativeElement as HTMLElement);
   await fixture.whenStable();
   return fixture;
+}
+
+async function renderOrgChart(options?: WjThemeOptions): Promise<void> {
+  TestBed.configureTestingModule({ providers: [provideWeeljack(options)] });
+  const fixture = TestBed.createComponent(OrgChartHost);
+  document.body.appendChild(fixture.nativeElement as HTMLElement);
+  await fixture.whenStable();
 }
 
 function variable(name: string, element: Element = ROOT): string {
@@ -148,6 +167,12 @@ describe('provideWeeljack', () => {
       expect(variable('--wj-navigation-submenu-icon-color')).toBe('#71717a');
       expect(variable('--wj-navigation-submenu-icon-focus-color')).toBe('#52525b');
       expect(variable('--wj-navigation-submenu-icon-active-color')).toBe('#52525b');
+    });
+
+    it('draws the org chart node border in zinc.500, as the connectors are (FR-18)', async () => {
+      await renderOrgChart();
+
+      expect(variable('--wj-organizationchart-node-border-color')).toBe('#71717a');
     });
 
     it('moves light severity fills to 700 with white text', async () => {
@@ -271,6 +296,13 @@ describe('provideWeeljack', () => {
   });
 
   describe('darkMode "class" menus', () => {
+    it('draws the org chart node border in zinc.500 in .wj-dark too (FR-18)', async () => {
+      await renderOrgChart({ darkMode: 'class' });
+      ROOT.classList.add('wj-dark');
+
+      expect(variable('--wj-organizationchart-node-border-color')).toBe('#71717a');
+    });
+
     it("keeps Aura's submenu indicator in .wj-dark (FR-13)", async () => {
       await render({ darkMode: 'class' });
       ROOT.classList.add('wj-dark');

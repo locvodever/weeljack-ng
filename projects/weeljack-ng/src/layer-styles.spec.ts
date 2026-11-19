@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Checkbox } from '@openng/optimus-ui/checkbox';
 import { ColorPicker } from '@openng/optimus-ui/colorpicker';
 import { DatePicker } from '@openng/optimus-ui/datepicker';
+import { Dock } from '@openng/optimus-ui/dock';
 import type { MenuItem } from '@openng/optimus-ui/api';
 import { InputText } from '@openng/optimus-ui/inputtext';
 import { Knob } from '@openng/optimus-ui/knob';
@@ -163,6 +164,25 @@ class RowsPerPageHost {}
   `,
 })
 class TextButtonsHost {}
+
+/** A dock with an enabled and a disabled tile, in a positioned box (FR-17). */
+@Component({
+  selector: 'wj-dock-surface-host',
+  imports: [Dock],
+  template: `
+    <div id="neutral" style="width: 40px; height: 20px"></div>
+    <div style="position: relative; height: 160px">
+      <p-dock [model]="items" position="bottom" ariaLabel="Shortcuts">
+        <ng-template #item let-item>
+          <span style="display: block; width: 24px; height: 24px">{{ item.label }}</span>
+        </ng-template>
+      </p-dock>
+    </div>
+  `,
+})
+class DockSurfaceHost {
+  protected readonly items: MenuItem[] = [{ label: 'A' }, { label: 'B', disabled: true }];
+}
 
 async function mount<T>(type: new () => T, dark: boolean): Promise<ComponentFixture<T>> {
   TestBed.configureTestingModule({ providers: [provideWeeljack({ darkMode: 'class' })] });
@@ -431,6 +451,48 @@ describe('layer styles', () => {
 
         const focused = query(fixture, '.p-focus > .p-tieredmenu-item-content');
         expect(getComputedStyle(focused).outlineStyle).toBe('none');
+      });
+    });
+
+    describe('the dock (FR-17)', () => {
+      const FRAME = 'rgb(113, 113, 122)'; // {zinc.500}, the boundary step in both schemes
+      const CLEAR = 'rgba(0, 0, 0, 0)';
+
+      it('draws a zinc.500 frame on the card surface', async () => {
+        const fixture = await mount(DockSurfaceHost, dark);
+        const frame = query(fixture, '.p-dock-list-container');
+        await settled(frame);
+
+        expect(getComputedStyle(frame).borderTopColor).toBe(FRAME);
+        expect(getComputedStyle(frame).backgroundColor).toBe(
+          resolved('background-color', '--wj-content-background'),
+        );
+      });
+
+      it('fills an enabled tile under the pointer and leaves a disabled one bare', async () => {
+        const fixture = await mount(DockSurfaceHost, dark);
+        const [enabled, disabled] = Array.from(
+          (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLElement>('.p-dock-item'),
+        );
+        if (!enabled || !disabled) {
+          throw new Error('the dock has fewer than two tiles');
+        }
+        const fill = resolved('background-color', '--wj-content-hover-background');
+
+        await userEvent.hover(query(fixture, '#neutral'));
+        await settled(enabled);
+        expect(getComputedStyle(enabled).backgroundColor).toBe(CLEAR);
+
+        await userEvent.hover(enabled);
+        await expect.poll(() => enabled.matches(':hover')).toBe(true);
+        await settled(enabled);
+        expect(getComputedStyle(enabled).backgroundColor).toBe(fill);
+
+        await userEvent.hover(query(fixture, '#neutral'));
+        await userEvent.hover(disabled, { force: true });
+        await settled(disabled);
+        expect(getComputedStyle(disabled).backgroundColor).toBe(CLEAR);
+        await userEvent.hover(query(fixture, '#neutral'));
       });
     });
 
