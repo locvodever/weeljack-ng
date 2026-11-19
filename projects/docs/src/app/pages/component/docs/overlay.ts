@@ -18,7 +18,7 @@ export const DOC: ComponentDoc = {
     {
       title: 'Basic',
       description:
-        'A "Resources" button toggles an overlay of three links. The button carries `aria-expanded`, bound to `visible`, and `aria-controls`, through its `pt`: the overlay has no role of its own, so the trigger says what it controls. Put `wj-overlay` right after the trigger, so the panel opens beneath it and Tab moves from the trigger into the links. Focus stays on the button when it opens; Escape closes it and focus is on the button.',
+        'A "Resources" button toggles an overlay of three links. The button carries `ariaExpanded`, bound to `visible`, and `aria-controls`, through its `pt` (`wj-button` has no input for it): the overlay has no role of its own, so the trigger says what it controls. It has no `ariaHasPopup`, because three links are a disclosure, not a menu or a dialog. Put `wj-overlay` right after the trigger, so the panel opens beneath it and Tab moves from the trigger into the links. Focus stays on the button when it opens; Escape closes it and focus is on the button.',
       sourceKey: 'overlay/basic',
       component: OverlayBasicExample,
     },
@@ -42,7 +42,8 @@ export const DOC: ComponentDoc = {
     },
     {
       key: 'Escape',
-      effect: 'Closes the overlay, and focus is on the trigger.',
+      effect:
+        'Closes the overlay when it is the top one, and focus is on the trigger. With a dialog, popover or another overlay open above it, Escape closes that one first.',
     },
     {
       key: 'Closing',
@@ -51,10 +52,10 @@ export const DOC: ComponentDoc = {
     },
   ],
   aria: [
-    'The overlay has no role of its own: its content decides what it is, a list of links, a set of buttons or a menu you build. Give the trigger `aria-expanded`, bound to `visible`, and `aria-controls` with the id of what it opens, through its `pt` as the example does. Add `aria-haspopup` only when the panel really is a menu or a dialog.',
+    'The overlay has no role of its own: its content decides what it is, a list of links, a set of buttons or a menu you build. On a `wj-button` trigger, bind `ariaExpanded` to `visible` and set `aria-controls` through its `pt`, as the example does; set `ariaHasPopup` (`menu` or `dialog`) only when the panel really is a menu or a dialog. On a native `button`, write `aria-expanded` and `aria-controls` yourself.',
     'Focus stays on the trigger when the overlay opens, so a screen reader announces "expanded" there, and the next Tab enters the panel. Nothing is announced for the panel itself, so give it content that reads on its own.',
     'Focus returns to the trigger on Escape, on a scroll or resize that closes it, and when you set `visible` to `false`. When the trigger is a `wj-button`, it returns to the button inside it. If the trigger has been removed, move focus yourself. In Safari, which does not focus a button when it is clicked, focus falls back to the last pressed control.',
-    'The overlay takes part in the overlay stack. Inside a non-closable `wj-dialog`, Escape closes the overlay and leaves the dialog open. Optimus’s own Escape listener is document-wide: an overlay that is open while another overlay is opened above it also closes on that overlay’s Escape.',
+    'The overlay takes part in the overlay stack. Inside a non-closable `wj-dialog`, Escape closes the overlay and leaves the dialog open. Gap, fixed: Escape reaches only the top overlay. An overlay that is open while a dialog, a popover or another overlay is opened above it stays open on that one’s Escape, and closes on the next.',
     'The panel renders inside `wj-overlay`, so a scroll container with `overflow: hidden` or `auto` around it can clip the panel. Put the overlay outside such a container, or leave room inside it.',
     'The panel sits below the target, or above it when there is no room, and at least as wide as the target. It is placed when it opens: it does not follow the target if the page moves under it, and a scroll or resize closes it. Right-to-left pages are not placed yet.',
     'With no `target` and no element before it, `wj-overlay` raises `WJ0154` in dev mode when it opens, and has nothing to anchor to. `aria-*` on `wj-overlay` is not forwarded: put them on your trigger.',
@@ -106,7 +107,10 @@ export const DOC: ComponentDoc = {
       'mode, responsive',
       'The overlay is always the anchored one: use `wj-dialog` or `wj-sheet` for a modal panel.',
     ),
-    dropped('options, listener, inline, hostAttrSelector, hostName', 'Internal.'),
+    dropped(
+      'options, listener, inline, hostAttrSelector, hostName',
+      'Internal. The wrapper binds `listener` itself, to keep Escape on the top overlay.',
+    ),
     dropped(
       'appendTo, autoZIndex, baseZIndex',
       'Fixed: the panel renders inside the host, layered by Optimus.',

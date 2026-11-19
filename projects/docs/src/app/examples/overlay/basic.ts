@@ -1,4 +1,4 @@
-import { Component, computed, signal } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { WjButton, type WjButtonPt } from 'weeljack-ng/button';
 import { WjOverlay } from 'weeljack-ng/overlay';
@@ -12,7 +12,8 @@ import { WjOverlay } from 'weeljack-ng/overlay';
         label="Resources"
         severity="secondary"
         variant="outlined"
-        [pt]="triggerPt()"
+        [ariaExpanded]="open()"
+        [pt]="triggerPt"
         (click)="open.set(!open())"
       >
         <svg
@@ -64,8 +65,6 @@ import { WjOverlay } from 'weeljack-ng/overlay';
 export class OverlayBasicExample {
   protected readonly open = signal(false);
 
-  /** `wj-button` has no ARIA inputs for a disclosure trigger yet: set them on its button through `pt`. */
-  protected readonly triggerPt = computed<WjButtonPt>(() => ({
-    root: { 'aria-expanded': String(this.open()), 'aria-controls': 'overlay-basic-links' },
-  }));
+  /** `wj-button` has no `aria-controls` input, so that one goes through `pt`. */
+  protected readonly triggerPt: WjButtonPt = { root: { 'aria-controls': 'overlay-basic-links' } };
 }

@@ -1,5 +1,5 @@
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
-import { Component, signal } from '@angular/core';
+import { Component, reflectComponentType, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import type { MockInstance } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
@@ -67,7 +67,6 @@ const MONTHS = [
       <wj-tabs
         [value]="value()"
         (valueChange)="changed($event)"
-        [scrollable]="scrollable()"
         [selectOnFocus]="selectOnFocus()"
         [pt]="pt()"
       >
@@ -102,7 +101,6 @@ const MONTHS = [
 class Host {
   readonly tabs = signal<TabData[]>(TABS);
   readonly value = signal<WjTabsValue>('overview');
-  readonly scrollable = signal(false);
   readonly selectOnFocus = signal(false);
   readonly ariaLabel = signal<string | undefined>('Product details');
   readonly ariaLabelledBy = signal<string | undefined>(undefined);
@@ -120,12 +118,12 @@ class Host {
   }
 }
 
-/** Bare attributes, the way a template writes `scrollable`, `selectOnFocus` and `disabled`. */
+/** Bare attributes, the way a template writes `selectOnFocus` and `disabled`. */
 @Component({
   selector: 'wj-tabs-bare-host',
   imports: [WjTabs, WjTabList, WjTab, WjTabPanels, WjTabPanel],
   template: `
-    <wj-tabs value="a" scrollable selectOnFocus>
+    <wj-tabs value="a" selectOnFocus>
       <wj-tablist ariaLabel="Bare">
         <wj-tab value="a">A</wj-tab>
         <wj-tab value="b" disabled>B</wj-tab>
@@ -300,7 +298,6 @@ async function narrow(): Promise<void> {
 const withMonths = (host: Host): void => {
   host.tabs.set(MONTHS);
   host.value.set('january');
-  host.scrollable.set(true);
   host.ariaLabel.set('Monthly reports');
 };
 
@@ -322,7 +319,7 @@ const STATES: [string, (host: Host) => void, boolean][] = [
     },
     false,
   ],
-  ['scrollable with both scroll buttons showing', withMonths, true],
+  ['many tabs with both scroll buttons showing', withMonths, true],
   [
     'a labelled tab list',
     (host) => {
@@ -605,12 +602,11 @@ describe('WjTabs', () => {
       expect(host.reported()).toEqual([]);
     });
 
-    it('takes bare scrollable, selectOnFocus and disabled attributes', async () => {
-      const { fixture, element } = await renderSmall(BareHost);
+    it('takes bare selectOnFocus and disabled attributes', async () => {
+      const { fixture } = await renderSmall(BareHost);
       const tabs = await TestbedHarnessEnvironment.loader(fixture).getHarness(WjTabsHarness);
       const [a, b] = await tabs.getTabs();
 
-      expect(element.querySelector('.p-tabs-scrollable')).not.toBeNull();
       expect(await a?.isDisabled()).toBe(false);
       expect(await b?.isDisabled()).toBe(true);
       expect(await tabs.getTabListAriaLabel()).toBe('Bare');
@@ -618,12 +614,15 @@ describe('WjTabs', () => {
   });
 
   describe('scrollable', () => {
-    it('adds the scrollable class, and the buttons follow overflow whatever scrollable says', async () => {
+    it('has no scrollable input (D2)', () => {
+      const inputs = reflectComponentType(WjTabs)?.inputs ?? [];
+
+      expect(inputs.map((input) => input.templateName)).not.toContain('scrollable');
+    });
+
+    it('shows the scroll buttons when the tabs overflow, with no scrollable class', async () => {
       await narrow();
-      const { element } = await render('light', (host) => {
-        withMonths(host);
-        host.scrollable.set(false);
-      });
+      const { element } = await render('light', withMonths);
 
       expect(element.querySelector('.p-tabs-scrollable')).toBeNull();
       await expect.poll(() => navButton(element, 'Next')).not.toBeNull();
@@ -634,7 +633,6 @@ describe('WjTabs', () => {
       await narrow();
       const { element } = await render('light', withMonths);
 
-      expect(element.querySelector('.p-tabs-scrollable')).not.toBeNull();
       await showBothScrollButtons(element);
       expect(navButton(element, 'Previous')?.getAttribute('aria-label')).toBe('Previous');
       expect(navButton(element, 'Next')?.getAttribute('aria-label')).toBe('Next');

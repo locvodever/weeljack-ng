@@ -36,7 +36,7 @@ export const DOC: ComponentDoc = {
     {
       title: 'Scrollable (many tabs)',
       description:
-        'Tabs never wrap or shrink: when they are wider than the row, the row scrolls and a Previous and a Next button appear at its ends, named from the translation. In Optimus 2.0.2 those buttons follow overflow whatever `scrollable` says, so the input only marks the strip as scrollable. Keep `value` on a tab that exists.',
+        'Tabs never wrap or shrink: when they are wider than the row, the row scrolls and a Previous and a Next button appear at its ends, named from the translation. There is nothing to turn on. Keep `value` on a tab that exists.',
       sourceKey: 'tabs/scrollable',
       component: TabsScrollableExample,
     },
@@ -100,7 +100,7 @@ export const DOC: ComponentDoc = {
     'Gap, fixed: Optimus gives a panel no `tabindex`. Every panel carries `tabindex="0"` (a hidden panel is not focusable), so a panel whose first content is not focusable is in the Tab sequence, as APG advises.',
     'Gap, listed: `p-tab` stops the propagation of every `keydown` it receives, so a key listener you put on an element above a tab never sees the keys pressed on that tab. Follow the `value` model for what the keys change.',
     'Motion: the bar under the active tab slides, and the row scrolls smoothly. Under `prefers-reduced-motion: reduce` the bar moves at once and the row scrolls without gliding.',
-    'No axe rule is tolerated on this page: the four documented states (first tab active, a disabled tab, scrollable with both scroll buttons showing, a labelled tab list) have no violations in the light and the dark scheme.',
+    'No axe rule is tolerated on this page: the four documented states (first tab active, a disabled tab, many tabs with both scroll buttons showing, a labelled tab list) have no violations in the light and the dark scheme.',
     'The keyboard walk and the screen-reader pass (NVDA with Chrome) are recorded on this page before `1.0.0`.',
   ],
   stylingIntro:
@@ -133,12 +133,10 @@ export const DOC: ComponentDoc = {
       status: 'kept',
       note: 'Required, and a two-way model: with no active tab Optimus gives every tab `tabindex="-1"`, so the tab list could not be reached by keyboard.',
     },
-    {
-      optimus: 'scrollable',
-      weeljack: 'scrollable',
-      status: 'kept',
-      note: 'Accepts a bare attribute. Scroll buttons appear when tabs overflow.',
-    },
+    dropped(
+      'scrollable',
+      'In Optimus 2.0.2 it only adds a class that no WeeljackNg preset styles, and the scroll buttons follow overflow whatever it says. Removed before `0.1.0` (gap-fill D2).',
+    ),
     {
       optimus: 'selectOnFocus',
       weeljack: 'selectOnFocus',
