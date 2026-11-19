@@ -143,6 +143,11 @@ export const wjAlwaysOn = definePreset(aura, {
       root: { width: '1.5rem', height: '1.5rem' },
       icon: { size: '1rem' },
     },
+    // Aura's own `lg` box and dot, so the radio's hit box reaches 24 px (22 Q3), as `checkbox` does.
+    radiobutton: {
+      root: { width: '1.5rem', height: '1.5rem' },
+      icon: { size: '1rem' },
+    },
     toggleswitch: {
       colorScheme: {
         light: {

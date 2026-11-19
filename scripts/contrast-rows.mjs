@@ -35,6 +35,8 @@ const PAIRS = {
     ['field border', 'form.field.border.color', 'form.field.background', NON_TEXT],
     ['checkbox border', 'checkbox.border.color', 'checkbox.background', NON_TEXT],
     ['checkbox check', 'checkbox.icon.checked.color', 'checkbox.checked.background', NON_TEXT],
+    ['radio border', 'radiobutton.border.color', 'radiobutton.background', NON_TEXT],
+    ['radio dot', 'radiobutton.icon.checked.color', 'radiobutton.checked.background', NON_TEXT],
     ['switch off track', 'toggleswitch.background', 'surface.0', NON_TEXT],
     [
       'switch handle on track',
@@ -207,6 +209,8 @@ const PAIRS = {
     ['field border on the field', 'form.field.border.color', 'form.field.background', NON_TEXT],
     ['field border around the field', 'form.field.border.color', 'content.background', NON_TEXT],
     ['checkbox check', 'checkbox.icon.checked.color', 'checkbox.checked.background', NON_TEXT],
+    ['radio border', 'radiobutton.border.color', 'radiobutton.background', NON_TEXT],
+    ['radio dot', 'radiobutton.icon.checked.color', 'radiobutton.checked.background', NON_TEXT],
     ['switch off track', 'toggleswitch.background', 'content.background', NON_TEXT],
     [
       'switch handle on track',
