@@ -8,6 +8,7 @@ import { WjBlockUI, type WjBlockUIPt } from 'weeljack-ng/blockui';
 import { WjBlockUIHarness } from 'weeljack-ng/blockui/testing';
 import { expectNoAxeViolations } from '../spec-support/axe';
 import { afterOverlay } from '../spec-support/teardown';
+import { FRAMES } from '../spec-support/frames';
 
 const ROOT = document.documentElement;
 
@@ -106,7 +107,7 @@ async function covered(): Promise<void> {
 
 /** Waits until Optimus has finished the leave: nothing of the mask is shown any more. */
 async function uncovered(): Promise<void> {
-  await expect.poll(() => document.querySelector('.p-blockui.p-overlay-mask')).toBeNull();
+  await expect.poll(() => document.querySelector('.p-blockui.p-overlay-mask'), FRAMES).toBeNull();
 }
 
 async function block({ fixture, component }: Rendered): Promise<void> {
@@ -440,7 +441,7 @@ describe('WjBlockUI', () => {
         expect(getComputedStyle(mask).getPropertyValue('--wj-mask-transition-duration')).toBe('0s');
         rendered.component.blocked.set(false);
         await rendered.fixture.whenStable();
-        await expect.poll(() => getComputedStyle(mask).display).toBe('none');
+        await expect.poll(() => getComputedStyle(mask).display, FRAMES).toBe('none');
         expect(ended).toHaveBeenCalled();
       } finally {
         rule.media.mediaText = original;
@@ -462,7 +463,7 @@ describe('WjBlockUI', () => {
         rendered.component.blocked.set(false);
         await rendered.fixture.whenStable();
         // Optimus takes the page's mask out of the body when it has left.
-        await expect.poll(() => document.querySelector(MASK)).toBeNull();
+        await expect.poll(() => document.querySelector(MASK), FRAMES).toBeNull();
       } finally {
         rule.media.mediaText = original;
       }

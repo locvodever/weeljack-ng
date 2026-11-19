@@ -19,6 +19,7 @@ import {
 } from 'weeljack-ng/stepper';
 import { WjStepHarness, WjStepperHarness } from 'weeljack-ng/stepper/testing';
 import { expectNoAxeViolations } from '../spec-support/axe';
+import { FRAMES } from '../spec-support/frames';
 
 const PAYLOAD = '<img src=x onerror="window.wjInjected = true">';
 const ROOT = document.documentElement;
@@ -326,7 +327,7 @@ async function render(
     throw new Error("Optimus's stepper styles did not load");
   }
   // Optimus shows the first active panel a frame after it renders: start from the settled page.
-  await expect.poll(() => panelsSettled(element)).toBe(true);
+  await expect.poll(() => panelsSettled(element), FRAMES).toBe(true);
   const stepper = await TestbedHarnessEnvironment.loader(fixture).getHarness(WjStepperHarness);
   return { fixture, host: fixture.componentInstance, stepper, element };
 }
@@ -515,7 +516,7 @@ describe('WjStepper', () => {
 
       host.value.set(1);
       await expect.poll(() => stepper.getActivePanelText()).toBe('Who you are.');
-      await expect.poll(() => panelsSettled(element)).toBe(true);
+      await expect.poll(() => panelsSettled(element), FRAMES).toBe(true);
       expect(find(element, '.body', HTMLElement)).toBe(first);
     });
 
@@ -1145,10 +1146,10 @@ describe('WjStepper', () => {
     ): Promise<void> => {
       host.value.set(2);
       await expect.poll(() => stepper.getActivePanelText()).toBe('How we reach you.');
-      await expect.poll(() => panelsSettled(element)).toBe(true);
+      await expect.poll(() => panelsSettled(element), FRAMES).toBe(true);
       host.value.set(1);
       await expect.poll(() => stepper.getActivePanelText()).toBe('Who you are.');
-      await expect.poll(() => panelsSettled(element)).toBe(true);
+      await expect.poll(() => panelsSettled(element), FRAMES).toBe(true);
     };
 
     it('changes a panel at once, with no enter or leave motion, by default', async () => {
