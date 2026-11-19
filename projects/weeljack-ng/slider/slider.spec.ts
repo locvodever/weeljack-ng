@@ -992,7 +992,7 @@ describe('WjSlider', () => {
       expect(await (await allHarnessesOf(fixture))(0).isDisabled()).toBe(true);
     });
 
-    it('invalid reaches the handle as aria-invalid and paints nothing', async () => {
+    it('invalid reaches the handle as aria-invalid and turns only its ring invalid', async () => {
       const { fixture, component, element } = await render();
       const slider = await harnessOf(fixture);
       expect(await slider.isInvalid()).toBe(false);
@@ -1009,8 +1009,12 @@ describe('WjSlider', () => {
       expect([invalid.backgroundColor, invalid.outlineStyle, invalid.borderTopStyle]).toEqual(
         clean,
       );
+      // The preset's `aria-invalid` rule: the ring takes `--wj-form-field-invalid-border-color`.
+      await expect
+        .poll(() => getComputedStyle(handleOf(element)).backgroundColor)
+        .toBe('rgb(220, 38, 38)');
       const now = getComputedStyle(handleOf(element));
-      expect([now.backgroundColor, now.outlineStyle, now.borderTopStyle]).toEqual(cleanHandle);
+      expect([now.outlineStyle, now.borderTopStyle]).toEqual(cleanHandle.slice(1));
 
       component.invalid.set(false);
       await fixture.whenStable();

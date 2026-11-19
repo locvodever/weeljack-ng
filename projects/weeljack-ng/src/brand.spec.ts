@@ -169,3 +169,73 @@ describe('WJ0010 brand contrast warning', () => {
     expect(warnings(warn).filter((m) => m.startsWith('WJ0010'))).toEqual([]);
   });
 });
+
+describe('WJ0200 brand colour validation', () => {
+  afterEach(() => {
+    document.body.replaceChildren();
+    document.head.querySelectorAll('style[data-optimus-style-id]').forEach((style) => {
+      style.remove();
+    });
+    vi.unstubAllGlobals();
+  });
+
+  const primaryVariable = () =>
+    getComputedStyle(document.documentElement).getPropertyValue('--wj-primary-500');
+
+  it("ignores primary 'red', warns once, and keeps the noir primary", async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    await bootstrap({});
+    const noir = primaryVariable();
+    TestBed.resetTestingModule();
+    document.head.querySelectorAll('style[data-optimus-style-id]').forEach((style) => {
+      style.remove();
+    });
+
+    await bootstrap({ primary: 'red' });
+
+    const messages = warnings(warn).filter((m) => m.startsWith('WJ0200'));
+    expect(messages).toHaveLength(1);
+    expect(messages[0]).toContain("provideWeeljack: not a colour: primary 'red'");
+    expect(messages[0]).toContain(
+      'Find more at https://locvodever.github.io/weeljack-ng/errors/WJ0200',
+    );
+    expect(primaryVariable()).toBe(noir);
+  });
+
+  it.each(['#abc', '#C2410C', '{indigo}'])('accepts %s', async (primary) => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+
+    await bootstrap({ primary });
+
+    expect(warnings(warn).filter((m) => m.startsWith('WJ0200'))).toEqual([]);
+  });
+
+  it('names surface.light only and keeps the valid dark scale', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+
+    await bootstrap({ surface: { light: 'nope', dark: '#1f1a17' }, darkMode: 'class' });
+
+    const messages = warnings(warn).filter((m) => m.startsWith('WJ0200'));
+    expect(messages).toHaveLength(1);
+    expect(messages[0]).toContain("not a colour: surface.light 'nope'.");
+    expect(messages[0]).not.toContain('surface.dark');
+    const css = document.head.textContent;
+    expect(css).toContain('#1f1a17');
+  });
+
+  it('does not warn outside dev mode, and the fallback still applies', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    await bootstrap({});
+    const noir = primaryVariable();
+    TestBed.resetTestingModule();
+    document.head.querySelectorAll('style[data-optimus-style-id]').forEach((style) => {
+      style.remove();
+    });
+    vi.stubGlobal('ngDevMode', false);
+
+    await bootstrap({ primary: 'red' });
+
+    expect(warnings(warn).filter((m) => m.startsWith('WJ0200'))).toEqual([]);
+    expect(primaryVariable()).toBe(noir);
+  });
+});

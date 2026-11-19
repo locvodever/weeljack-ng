@@ -107,6 +107,15 @@ export const wjAlwaysOn = definePreset(aura, {
           invalidBorderColor: '{red.600}',
         },
         error: { color: '{red.700}' },
+        // AA: the submenu indicator reaches 3:1 on the menu (zinc.400 on white was 2.56:1, now
+        // zinc.500 at 4.83:1); the focused and open states stay one step darker. Dark is Aura's.
+        navigation: {
+          submenuIcon: {
+            color: '{surface.500}',
+            focusColor: '{surface.600}',
+            activeColor: '{surface.600}',
+          },
+        },
       },
       dark: {
         formField: {
@@ -255,9 +264,17 @@ export const wjAlwaysOn = definePreset(aura, {
     // Aura paints the connector lines with `{content.border.color}`: surface.200, 1.3:1 on white, and
     // surface.700, 1.7:1 on zinc.900. They are the chart's only drawing of what sits under what, so
     // they need 3:1 (WCAG 1.4.11): surface.500 is the smallest step that clears it in both schemes,
-    // the step the control boundaries use. The node borders and the toggle ring stay Aura's
-    // (W5-effects FR-50).
-    organizationchart: { connector: { color: '{surface.500}' } },
+    // the step the control boundaries use. The node borders take it too (Aura's
+    // content.border.color read 1.3:1 light, 1.7:1 dark, lighter than the lines that join them); the
+    // toggle ring stays Aura's, since the chevron identifies the control (W5-effects FR-50, GF1 FR-18).
+    organizationchart: {
+      connector: { color: '{surface.500}' },
+      node: { borderColor: '{surface.500}' },
+    },
+    // Aura's dock frame is translucent white, built for use over imagery: 1.0:1 on a light page and
+    // 1.8:1 on a dark one. It becomes the card surface with the surface.500 boundary (3:1 on the
+    // page and on cards), scheme-resolving references, so they sit in the base (GF1 FR-17).
+    dock: { root: { background: '{content.background}', borderColor: '{surface.500}' } },
     // Aura's light home glyph is surface.400 (zinc.400), 2.56:1 on white, under the 3:1 a graphic
     // that is a link's only visible content needs (WCAG 1.4.11). Rest moves to surface.500 (4.83:1)
     // and hover to surface.700, so the glyph still darkens on hover (Aura's hover is surface.500).

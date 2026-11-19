@@ -41,6 +41,12 @@ const LOOK = {
   picked: 'rgb(255, 255, 255)', // surface.0, both schemes
 };
 
+/** Aura's disabled fill and text, which the preset applies to the `span` button (GF1 FR-10). */
+const DISABLED = {
+  light: { fill: 'rgb(228, 228, 231)', text: 'rgb(113, 113, 122)' }, // zinc.200, zinc.500
+  dark: { fill: 'rgb(63, 63, 70)', text: 'rgb(161, 161, 170)' }, // zinc.700, zinc.400
+};
+
 /**
  * Parks the pointer in the viewport's bottom-right corner before a colour read. The pointer is
  * page-wide in browser mode, so an earlier test can leave it over a button, and Optimus's hover
@@ -740,7 +746,7 @@ describe('WjSelectButton', () => {
         await expect.poll(() => getComputedStyle(day).color).toBe(look.unpicked);
       });
 
-      it('keeps a disabled button readable: the picked pill stays, and Optimus dims the button', async () => {
+      it('keeps a disabled button readable: the picked pill stays in the disabled colours at full opacity', async () => {
         await pointerAway();
         const { element } = await render((host) => {
           host.value.set('week');
@@ -749,23 +755,26 @@ describe('WjSelectButton', () => {
         const week = buttonOf(element, 'Week');
         const day = buttonOf(element, 'Day');
 
-        expect(getComputedStyle(pillOf(week)).backgroundColor).toBe(LOOK.pill);
-        expect(getComputedStyle(labelOf(week)).color).toBe(LOOK.picked);
-        expect(getComputedStyle(day).color).toBe(look.unpicked);
-        expect(getComputedStyle(day).opacity).toBe('0.6');
-        expect(getComputedStyle(week).opacity).toBe('0.6');
+        await expect
+          .poll(() => getComputedStyle(pillOf(week)).backgroundColor)
+          .toBe(DISABLED[scheme].text);
+        expect(getComputedStyle(labelOf(week)).color).toBe(DISABLED[scheme].fill);
+        expect(getComputedStyle(day).color).toBe(DISABLED[scheme].text);
+        expect(getComputedStyle(day).opacity).toBe('1');
+        expect(getComputedStyle(week).opacity).toBe('1');
       });
     });
 
-    it('Gap: Aura’s disabled fill and text never apply, because its rule uses :disabled and a toggle button is a span', async () => {
+    it('Gap, fixed: Aura’s disabled fill and text apply to a toggle button, which is a span the :disabled rule never matches', async () => {
       await pointerAway();
       const { element } = await render((host) => {
         host.disabled.set(true);
       });
 
-      // The disabled track and text colours would be zinc.200 and zinc.500.
-      expect(getComputedStyle(buttonOf(element, 'Day')).backgroundColor).toBe(LOOK.light.track);
-      expect(getComputedStyle(buttonOf(element, 'Day')).color).toBe(LOOK.light.unpicked);
+      // The disabled track and text colours are zinc.200 and zinc.500.
+      const day = buttonOf(element, 'Day');
+      await expect.poll(() => getComputedStyle(day).backgroundColor).toBe(DISABLED.light.fill);
+      expect(getComputedStyle(day).color).toBe(DISABLED.light.text);
     });
   });
 

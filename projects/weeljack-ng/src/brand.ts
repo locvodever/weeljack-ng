@@ -3,8 +3,9 @@ import { pairRatio, tokensFor } from './contrast';
 import { wjAlwaysOn, wjNoirOnZinc } from './noir-on-zinc';
 
 /**
- * A brand colour scale (05 Q3): a `#rrggbb` base, which becomes a 50-950 scale with the base on
- * 500, or a full scale with every step from 50 to 950 (and an optional `0`).
+ * A brand colour scale (05 Q3): a `#rgb` / `#rrggbb` base or a `{palette}` name such as
+ * `{indigo}`, which becomes a 50-950 scale, or a full scale with every step from 50 to 950 (and
+ * an optional `0`). Any other string is ignored and logs `WJ0200` in dev mode.
  */
 export type WjColorScale =
   | string
@@ -23,16 +24,27 @@ export type WjColorScale =
       readonly 950: string;
     };
 
-function toScale(input: WjColorScale): ColorScale {
+const COLOUR = /^(#([\da-f]{3}){1,2}|\{[\w-]+\})$/i;
+type Surface = WjColorScale | { light: WjColorScale; dark: WjColorScale } | undefined;
+
+const sides = (surface: Surface) =>
+  typeof surface === 'object' && 'light' in surface ? surface : { light: surface, dark: surface };
+
+/** The brand options whose string is not a colour, as `option 'value'`. */
+export function badColours(primary: WjColorScale | undefined, surface: Surface) {
+  const { light, dark } = sides(surface);
+  const bad = (name: string, value: WjColorScale | undefined) =>
+    typeof value === 'string' && !COLOUR.test(value) ? [`${name} '${value}'`] : [];
+  return [...bad('primary', primary), ...bad('surface.light', light), ...bad('surface.dark', dark)];
+}
+
+/** A usable scale, or `undefined` for an invalid string, which falls back to the default. */
+function toScale(input: WjColorScale | undefined): ColorScale | undefined {
   if (typeof input !== 'string') {
     return input;
   }
-  // `palette()` is typed `string | ColorScale` but returns a scale for a hex; a throw is the app's.
-  const scale = palette(input);
-  if (typeof scale === 'string') {
-    throw new Error(`provideWeeljack: '${input}' is not a colour scale`);
-  }
-  return scale;
+  // The pattern admits only what `palette()` turns into a scale; its `string` arm is for a bare name.
+  return COLOUR.test(input) ? (palette(input) as ColorScale) : undefined;
 }
 
 /**
@@ -42,22 +54,20 @@ function toScale(input: WjColorScale): ColorScale {
  */
 export function brandPreset(
   primary: WjColorScale | undefined,
-  surface: WjColorScale | { light: WjColorScale; dark: WjColorScale } | undefined,
+  surface: Surface,
 ): ReturnType<typeof definePreset> {
+  const brand = toScale(primary);
   const base =
-    primary === undefined
-      ? wjNoirOnZinc
-      : definePreset(wjAlwaysOn, { semantic: { primary: toScale(primary) } });
+    brand === undefined ? wjNoirOnZinc : definePreset(wjAlwaysOn, { semantic: { primary: brand } });
   if (surface === undefined) {
     return base;
   }
-  const { light, dark } =
-    typeof surface === 'object' && 'light' in surface ? surface : { light: surface, dark: surface };
+  const [one, two] = [toScale(sides(surface).light), toScale(sides(surface).dark)];
   return definePreset(base, {
     semantic: {
       colorScheme: {
-        light: { surface: { 0: '#ffffff', ...toScale(light) } },
-        dark: { surface: { 0: '#ffffff', ...toScale(dark) } },
+        light: one && { surface: { 0: '#ffffff', ...one } },
+        dark: two && { surface: { 0: '#ffffff', ...two } },
       },
     },
   });

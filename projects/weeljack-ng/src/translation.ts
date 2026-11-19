@@ -71,6 +71,14 @@ export interface WjTranslation {
     listLabel?: string;
     maximizeLabel?: string;
     minimizeLabel?: string;
+    /** A table or tree table row's checkbox. WeeljackNg's default names the action in both states. */
+    selectRow?: string;
+    /** The same checkbox when checked. WeeljackNg's default is the same name as `selectRow`. */
+    unselectRow?: string;
+    /** The select-all checkbox. WeeljackNg's default names the action in both states. */
+    selectAll?: string;
+    /** The same checkbox when checked. WeeljackNg's default is the same name as `selectAll`. */
+    unselectAll?: string;
     [key: string]: string | undefined;
   };
   /** WeeljackNg's own strings. */

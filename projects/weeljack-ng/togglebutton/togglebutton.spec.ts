@@ -37,6 +37,12 @@ const LOOK = {
   picked: 'rgb(255, 255, 255)', // surface.0, both schemes
 };
 
+/** Aura's disabled fill and text, which the preset applies to the `span` button (GF1 FR-10). */
+const DISABLED = {
+  light: { fill: 'rgb(228, 228, 231)', text: 'rgb(113, 113, 122)' }, // zinc.200, zinc.500
+  dark: { fill: 'rgb(63, 63, 70)', text: 'rgb(161, 161, 170)' }, // zinc.700, zinc.400
+};
+
 /**
  * Parks the pointer on the host's "After" button before a colour or border read. The pointer is
  * page-wide in browser mode, so an earlier test can leave it over the control, and Optimus's hover
@@ -714,16 +720,18 @@ describe('WjToggleButton', () => {
         expect(getComputedStyle(buttonOf(element)).backgroundColor).toBe(look.track);
       });
 
-      it('keeps a disabled button readable: the pill stays, and Optimus dims the button', async () => {
+      it('keeps a disabled button readable: the pill stays in the disabled colours at full opacity', async () => {
         const { element } = await render((host) => {
           host.checked.set(true);
           host.disabled.set(true);
         }, scheme);
         await pointerAway(element);
 
-        expect(getComputedStyle(pillOf(element)).backgroundColor).toBe(LOOK.pill);
-        expect(getComputedStyle(labelOf(element)).color).toBe(LOOK.picked);
-        expect(getComputedStyle(buttonOf(element)).opacity).toBe('0.6');
+        await expect
+          .poll(() => getComputedStyle(pillOf(element)).backgroundColor)
+          .toBe(DISABLED[scheme].text);
+        expect(getComputedStyle(labelOf(element)).color).toBe(DISABLED[scheme].fill);
+        expect(getComputedStyle(buttonOf(element)).opacity).toBe('1');
       });
     });
 
