@@ -183,15 +183,17 @@ class SignalHost {
   });
 }
 
-/** Two pickers between two buttons, the first disabled, for the keyboard specs. */
+/** Two pickers between two buttons, the first disabled, in a form that counts its submits. */
 @Component({
   selector: 'wj-colorpicker-keyboard-host',
   imports: [WjColorPicker],
   template: `
-    <button type="button" id="before">Before</button>
-    <wj-colorpicker ariaLabel="Skipped" disabled value="#0f766e" />
-    <wj-colorpicker ariaLabel="Keys" [(value)]="value" (valueChange)="log.push($event)" />
-    <button type="button" id="after">After</button>
+    <form (submit)="submit($event)">
+      <button type="button" id="before">Before</button>
+      <wj-colorpicker ariaLabel="Skipped" disabled value="#0f766e" />
+      <wj-colorpicker ariaLabel="Keys" [(value)]="value" (valueChange)="log.push($event)" />
+      <button type="button" id="after">After</button>
+    </form>
   `,
   styles: `
     :host {
@@ -202,7 +204,13 @@ class SignalHost {
 })
 class KeyboardHost {
   readonly value = signal<string | null>('#ff0000');
+  readonly submits = signal(0);
   readonly log: (string | null)[] = [];
+
+  protected submit(event: Event): void {
+    event.preventDefault();
+    this.submits.update((n) => n + 1);
+  }
 }
 
 type Scheme = 'light' | 'dark';
@@ -253,6 +261,11 @@ const previewOf = (element: HTMLElement, index = 0): HTMLInputElement => {
   }
   return found;
 };
+/** The panel's colour area, found by its ARIA like the harness does. */
+const areaOf = (element: HTMLElement): HTMLElement =>
+  find(element, '[role="slider"][aria-valuetext]', HTMLElement);
+const hueOf = (element: HTMLElement): HTMLElement =>
+  find(element, '[role="slider"][aria-orientation="vertical"]', HTMLElement);
 const byId = (element: HTMLElement, id: string): HTMLElement =>
   find(element, `#${id}`, HTMLElement);
 const swatchOf = (element: HTMLElement, index = 0): string =>
@@ -303,20 +316,13 @@ async function panelOpen(element: HTMLElement): Promise<void> {
 async function closePanel(picker: WjColorPickerHarness, element: HTMLElement): Promise<void> {
   await picker.close();
   await expect.poll(() => picker.isOpen()).toBe(false);
-  await expect.poll(() => element.querySelector('.p-colorpicker-panel')).toBeNull();
+  await expect.poll(() => element.querySelector('[role="slider"]')).toBeNull();
 }
 
 /** Clicks `target` a fraction of the way across and down its box, the way a pointer picks a colour. */
 async function clickAt(target: HTMLElement, x: number, y: number): Promise<void> {
   const box = target.getBoundingClientRect();
   await userEvent.click(target, { position: { x: box.width * x, y: box.height * y } });
-}
-
-/** Opens the panel and picks a colour in its area with the pointer, so the value changes. */
-async function pickColour(picker: WjColorPickerHarness, element: HTMLElement): Promise<void> {
-  await picker.open();
-  await panelOpen(element);
-  await clickAt(find(element, '.p-colorpicker-color-selector', HTMLElement), 0.25, 0.25);
 }
 
 /** Emulates the user's reduced-motion preference, or clears it. */
@@ -534,13 +540,13 @@ describe('WjColorPicker', () => {
 
       await userEvent.keyboard('{Escape}');
       await expect.poll(() => picker.isOpen()).toBe(false);
-      await expect.poll(() => element.querySelector('.p-colorpicker-panel')).toBeNull();
+      await expect.poll(() => element.querySelector('[role="slider"]')).toBeNull();
 
       await picker.open();
       await panelOpen(element);
       await userEvent.click(byId(element, 'before'));
       await expect.poll(() => picker.isOpen()).toBe(false);
-      await expect.poll(() => element.querySelector('.p-colorpicker-panel')).toBeNull();
+      await expect.poll(() => element.querySelector('[role="slider"]')).toBeNull();
     });
 
     it('does not open while disabled', async () => {
@@ -554,13 +560,13 @@ describe('WjColorPicker', () => {
       await fixture.whenStable();
 
       expect(await picker.isOpen()).toBe(false);
-      expect(element.querySelector('.p-colorpicker-panel')).toBeNull();
+      expect(element.querySelector('[role="slider"]')).toBeNull();
     });
   });
 
-  describe('the panel is pointer-only (FR-45)', () => {
+  describe('the panel keyboard (FR-42)', () => {
     beforeEach(() => {
-      // The spec-wide `transition: none !important` would also stop the panel's own motion from
+      // The spec-wide `transition: none !important` would also stop the overlay's own motion from
       // ever ending, and the motion is part of what these specs wait for.
       document.getElementById('wj-spec-no-motion')?.remove();
     });
@@ -575,6 +581,13 @@ describe('WjColorPicker', () => {
       return { ...rendered, picker };
     }
 
+    /** Presses Enter on the focused swatch and waits until focus has moved into the area. */
+    async function openByEnter(element: HTMLElement): Promise<void> {
+      await userEvent.keyboard('{Enter}');
+      await panelOpen(element);
+      await expect.poll(() => document.activeElement).toBe(areaOf(element));
+    }
+
     it('skips a disabled picker on Tab and Shift+Tab', async () => {
       const { element, picker } = await focusKeys();
 
@@ -583,42 +596,373 @@ describe('WjColorPicker', () => {
       expect(document.activeElement).toBe(byId(element, 'before'));
     });
 
-    it('opens on Space and closes on Escape, with focus staying on the swatch', async () => {
+    it('opens on Enter, never submits the form, and moves focus to the colour area', async () => {
+      const { component, element, picker } = await focusKeys();
+
+      await openByEnter(element);
+
+      expect(component.submits()).toBe(0);
+      expect(await picker.isOpen()).toBe(true);
+      expect(areaOf(element).getAttribute('role')).toBe('slider');
+      await closePanel(picker, element);
+    });
+
+    it('opens on Space too, and Enter on an open panel closes it', async () => {
       const { element, picker } = await focusKeys();
 
       await userEvent.keyboard(' ');
       await panelOpen(element);
-      expect(await picker.isOpen()).toBe(true);
+      await expect.poll(() => document.activeElement).toBe(areaOf(element));
+
+      await userEvent.tab({ shift: true });
+      await expect.poll(() => picker.isFocused()).toBe(true);
+      await userEvent.keyboard('{Enter}');
+      await expect.poll(() => picker.isOpen()).toBe(false);
+      await expect.poll(() => element.querySelector('[role="slider"]')).toBeNull();
+    });
+
+    it('changes saturation with Arrow Left and Right, and the model, the swatch and the handle follow', async () => {
+      const { component, element, picker } = await focusKeys();
+      await openByEnter(element);
+
+      await userEvent.keyboard('{ArrowLeft}');
+
+      // Red at saturation 99: every other channel is 255 × 1% = 2.55, rounded to 3.
+      await expect.poll(() => component.value()).toBe('#ff0303');
+      expect(component.log).toEqual(['#ff0303']);
+      expect(await picker.getValue()).toBe('#ff0303');
+      await expect.poll(() => swatchOf(element, 1)).toBe(rgb('#ff0303'));
+      expect(find(element, '.p-colorpicker-color-handle', HTMLElement).style.left).toBe('148px');
+      expect(areaOf(element).getAttribute('aria-valuenow')).toBe('99');
+
+      await userEvent.keyboard('{ArrowRight}');
+      await expect.poll(() => component.value()).toBe('#ff0000');
+      expect(areaOf(element).getAttribute('aria-valuenow')).toBe('100');
+      await closePanel(picker, element);
+    });
+
+    it('changes brightness with Arrow Up and Down', async () => {
+      const { component, element, picker } = await focusKeys();
+      await openByEnter(element);
+
+      await userEvent.keyboard('{ArrowDown}');
+
+      // Full red at brightness 99: 255 × 99% = 252.45, rounded to 252.
+      await expect.poll(() => component.value()).toBe('#fc0000');
+      await expect.poll(() => swatchOf(element, 1)).toBe(rgb('#fc0000'));
+      expect(find(element, '.p-colorpicker-color-handle', HTMLElement).style.top).toBe('1px');
+      expect(areaOf(element).getAttribute('aria-valuetext')).toBe(
+        'Saturation 100%, brightness 99%',
+      );
+
+      await userEvent.keyboard('{ArrowUp}');
+      await expect.poll(() => component.value()).toBe('#ff0000');
+      await closePanel(picker, element);
+    });
+
+    it('moves ten with Shift, and stops at 0 and 100', async () => {
+      const { component, element, picker } = await focusKeys();
+      await openByEnter(element);
+
+      await userEvent.keyboard('{Shift>}{ArrowLeft}{/Shift}');
+      await expect.poll(() => areaOf(element).getAttribute('aria-valuenow')).toBe('90');
+      await userEvent.keyboard('{Shift>}{ArrowRight}{ArrowRight}{/Shift}');
+      await expect.poll(() => areaOf(element).getAttribute('aria-valuenow')).toBe('100');
+      await userEvent.keyboard('{ArrowRight}');
+      expect(areaOf(element).getAttribute('aria-valuenow')).toBe('100');
+      expect(component.value()).toBe('#ff0000');
+
+      await userEvent.keyboard(`{Shift>}${'{ArrowLeft}'.repeat(10)}{/Shift}`);
+      await expect.poll(() => areaOf(element).getAttribute('aria-valuenow')).toBe('0');
+      await userEvent.keyboard('{ArrowLeft}');
+      expect(areaOf(element).getAttribute('aria-valuenow')).toBe('0');
+      await closePanel(picker, element);
+    });
+
+    it('moves hue from the strip with the family’s range keys: arrows, pages, Home and End', async () => {
+      const { component, element, picker } = await focusKeys();
+      await openByEnter(element);
+      await userEvent.tab();
+      await expect.poll(() => document.activeElement).toBe(hueOf(element));
+      const hue = (): string | null => hueOf(element).getAttribute('aria-valuenow');
+
+      await userEvent.keyboard('{ArrowUp}');
+      // Red at hue 1: green is 255 × 1 / 60 = 4.25, rounded to 4.
+      await expect.poll(() => component.value()).toBe('#ff0400');
+      expect(hue()).toBe('1');
+      await userEvent.keyboard('{ArrowRight}');
+      expect(hue()).toBe('2');
+      await userEvent.keyboard('{ArrowDown}{ArrowLeft}');
+      expect(hue()).toBe('0');
+      await userEvent.keyboard('{PageUp}');
+      await expect.poll(() => component.value()).toBe('#ff2b00');
+      expect(hue()).toBe('10');
+      await userEvent.keyboard('{PageDown}');
+      expect(hue()).toBe('0');
+      await userEvent.keyboard('{End}');
+      expect(hue()).toBe('360');
+      await userEvent.keyboard('{Home}');
+      expect(hue()).toBe('0');
+      await userEvent.keyboard('{PageUp}{PageUp}{PageUp}{PageUp}{PageUp}{PageUp}');
+      expect(hue()).toBe('60');
+      await expect.poll(() => component.value()).toBe('#ffff00');
+      // The hue handle sits at 150 - 150 × 60 / 360 = 125 px.
+      expect(find(element, '.p-colorpicker-hue-handle', HTMLElement).style.top).toBe('125px');
+      await closePanel(picker, element);
+    });
+
+    it('Enter in the panel closes it and returns focus to the swatch', async () => {
+      const { component, element, picker } = await focusKeys();
+      await openByEnter(element);
+
+      await userEvent.keyboard('{Enter}');
+
+      await expect.poll(() => picker.isOpen()).toBe(false);
       expect(await picker.isFocused()).toBe(true);
+      expect(component.submits()).toBe(0);
+      await expect.poll(() => element.querySelector('[role="slider"]')).toBeNull();
+    });
+
+    it('Tab goes area to hue, and on to the next element, which closes the panel', async () => {
+      const { element, picker } = await focusKeys();
+      await openByEnter(element);
+
+      await userEvent.tab();
+      await expect.poll(() => document.activeElement).toBe(hueOf(element));
+      expect(await picker.isOpen()).toBe(true);
+      await userEvent.tab();
+
+      expect(document.activeElement).toBe(byId(element, 'after'));
+      await expect.poll(() => picker.isOpen()).toBe(false);
+      await expect.poll(() => element.querySelector('[role="slider"]')).toBeNull();
+    });
+
+    it('Shift+Tab goes hue to area to the swatch, and on out of the picker', async () => {
+      const { element, picker } = await focusKeys();
+      await openByEnter(element);
+      await userEvent.tab();
+      await expect.poll(() => document.activeElement).toBe(hueOf(element));
+
+      await userEvent.tab({ shift: true });
+      expect(document.activeElement).toBe(areaOf(element));
+      await userEvent.tab({ shift: true });
+      expect(await picker.isFocused()).toBe(true);
+      expect(await picker.isOpen()).toBe(true);
+
+      await userEvent.tab({ shift: true });
+      expect(document.activeElement).toBe(byId(element, 'before'));
+      await expect.poll(() => picker.isOpen()).toBe(false);
+      await expect.poll(() => element.querySelector('[role="slider"]')).toBeNull();
+    });
+
+    it('Tab from the swatch of an open panel goes into the panel instead of closing it', async () => {
+      const { element, picker } = await focusKeys();
+      await openByEnter(element);
+      await userEvent.tab({ shift: true });
+      await expect.poll(() => picker.isFocused()).toBe(true);
+
+      await userEvent.tab();
+
+      await expect.poll(() => document.activeElement).toBe(areaOf(element));
+      expect(await picker.isOpen()).toBe(true);
+      await closePanel(picker, element);
+    });
+
+    it('Escape closes the panel and returns focus to the swatch, from the area and from the hue', async () => {
+      const { element, picker } = await focusKeys();
+      await openByEnter(element);
 
       await userEvent.keyboard('{Escape}');
       await expect.poll(() => picker.isOpen()).toBe(false);
       expect(await picker.isFocused()).toBe(true);
-      await expect.poll(() => element.querySelector('.p-colorpicker-panel')).toBeNull();
+      await expect.poll(() => element.querySelector('[role="slider"]')).toBeNull();
+
+      await openByEnter(element);
+      await userEvent.tab();
+      await expect.poll(() => document.activeElement).toBe(hueOf(element));
+      await userEvent.keyboard('{Escape}');
+      await expect.poll(() => picker.isOpen()).toBe(false);
+      expect(await picker.isFocused()).toBe(true);
+      await expect.poll(() => element.querySelector('[role="slider"]')).toBeNull();
     });
 
-    it('draws the family ink ring on the swatch after Tab: 2 px solid at 2 px', async () => {
-      const { element } = await focusKeys();
-      const ring = getComputedStyle(previewOf(element, 1));
+    it('keeps the panel’s own colour while it is open: a dark colour does not reset hue and saturation', async () => {
+      // Optimus rebuilds { h, s, b } from the hex on every write. A black hex has no hue and no
+      // saturation, so without the skipped echo the strip would jump to 300 and the area to 0.
+      const { element, picker } = await renderAs(KeyboardHost).then(async (rendered) => {
+        rendered.component.value.set('#3366cc');
+        await rendered.fixture.whenStable();
+        const keys = (await allHarnessesOf(rendered.fixture))(1);
+        byId(rendered.element, 'before').focus();
+        await userEvent.tab();
+        await expect.poll(() => keys.isFocused()).toBe(true);
+        await openByEnter(rendered.element);
+        return { ...rendered, picker: keys };
+      });
+      const hueBefore = await picker.getHue();
+      const saturationBefore = await picker.getSaturation();
+      expect(hueBefore).toBe(220);
+      expect(saturationBefore).toBe(75);
 
-      expect(ring.outlineStyle).toBe('solid');
-      expect(ring.outlineWidth).toBe('2px');
-      expect(ring.outlineOffset).toBe('2px');
+      for (let step = 0; step < 8; step += 1) {
+        await userEvent.keyboard('{Shift>}{ArrowDown}{/Shift}');
+      }
+
+      await expect.poll(() => swatchOf(element, 1)).toBe(rgb('#000000'));
+      expect(await picker.getHue()).toBe(220);
+      expect(await picker.getSaturation()).toBe(75);
+      expect(await picker.getAreaValueText()).toBe('Saturation 75%, brightness 0%');
+      await userEvent.keyboard('{ArrowUp}');
+      await expect.poll(() => swatchOf(element, 1)).not.toBe(rgb('#000000'));
+      expect(await picker.getHue()).toBe(220);
+      await closePanel(picker, element);
     });
 
-    it('gives the area and the hue strip no focus and no role, and Tab leaves the picker', async () => {
-      // The gap the docs page lists. A failure here means Optimus changed the panel: revisit FR-42.
+    it('steps one value per key even when the hex does not change', async () => {
+      // At brightness 1 a 1-point step of saturation lands on the same hex, and the strip stays.
+      const { component, element, picker } = await renderAs(KeyboardHost).then(async (rendered) => {
+        rendered.component.value.set('#030000');
+        await rendered.fixture.whenStable();
+        const keys = (await allHarnessesOf(rendered.fixture))(1);
+        byId(rendered.element, 'before').focus();
+        await userEvent.tab();
+        await expect.poll(() => keys.isFocused()).toBe(true);
+        await openByEnter(rendered.element);
+        return { ...rendered, picker: keys };
+      });
+      const start = await picker.getSaturation();
+
+      await userEvent.keyboard('{ArrowLeft}{ArrowLeft}{ArrowLeft}');
+
+      expect(await picker.getSaturation()).toBe(start - 3);
+      expect(component.value()).toBe('#030000');
+      await closePanel(picker, element);
+    });
+
+    it('does not scroll the page on an arrow key in the panel', async () => {
       const { element, picker } = await focusKeys();
-      await userEvent.keyboard(' ');
-      await panelOpen(element);
-      const panel = find(element, '.p-colorpicker-panel', HTMLElement);
+      await openByEnter(element);
+      const top = window.scrollY;
 
-      expect(panel.querySelector('[tabindex], [role]')).toBeNull();
+      await userEvent.keyboard('{ArrowUp}{ArrowDown}{ArrowLeft}{ArrowRight}');
+      await userEvent.tab();
+      await userEvent.keyboard('{PageUp}{PageDown}{Home}{End}');
+
+      expect(window.scrollY).toBe(top);
+      await closePanel(picker, element);
+    });
+
+    it('leaves Alt+Arrow to the browser', async () => {
+      const { component, element, picker } = await focusKeys();
+      await openByEnter(element);
+
+      const handled = !areaOf(element).dispatchEvent(
+        new KeyboardEvent('keydown', {
+          key: 'ArrowLeft',
+          altKey: true,
+          cancelable: true,
+          bubbles: true,
+        }),
+      );
+
+      expect(handled).toBe(false);
+      expect(component.value()).toBe('#ff0000');
+      await closePanel(picker, element);
+    });
+
+    it('draws the white ring, 2 px at 2 px, on the area and the hue strip after a key press', async () => {
+      const { element, picker } = await focusKeys();
+      await openByEnter(element);
+      const white = getComputedStyle(ROOT).getPropertyValue('--wj-colorpicker-handle-color').trim();
+      expect(white).not.toBe('');
+
+      const area = getComputedStyle(areaOf(element));
+      expect(area.outlineStyle).toBe('solid');
+      expect(area.outlineWidth).toBe('2px');
+      expect(area.outlineOffset).toBe('2px');
+      expect(area.outlineColor).toBe('rgb(255, 255, 255)');
 
       await userEvent.tab();
-      expect(document.activeElement).toBe(byId(element, 'after'));
-      await expect.poll(() => picker.isOpen()).toBe(false);
-      await expect.poll(() => element.querySelector('.p-colorpicker-panel')).toBeNull();
+      await expect.poll(() => document.activeElement).toBe(hueOf(element));
+      const hue = getComputedStyle(hueOf(element));
+      expect(hue.outlineStyle).toBe('solid');
+      expect(hue.outlineWidth).toBe('2px');
+      expect(hue.outlineOffset).toBe('2px');
+      expect(hue.outlineColor).toBe('rgb(255, 255, 255)');
+      await closePanel(picker, element);
+    });
+
+    it('draws the family ink ring on the swatch after Escape, and none while focus is in the panel', async () => {
+      const { element, picker } = await focusKeys();
+      const preview = previewOf(element, 1);
+      const ink = getComputedStyle(ROOT).getPropertyValue('--wj-focus-ring-color').trim();
+      expect(ink).not.toBe('');
+      expect(getComputedStyle(preview).outlineStyle).toBe('solid');
+      expect(getComputedStyle(preview).outlineWidth).toBe('2px');
+
+      await openByEnter(element);
+      expect(getComputedStyle(preview).outlineStyle).not.toBe('solid');
+      await userEvent.keyboard('{Escape}');
+      await expect.poll(() => picker.isFocused()).toBe(true);
+
+      expect(getComputedStyle(preview).outlineStyle).toBe('solid');
+      expect(getComputedStyle(preview).outlineWidth).toBe('2px');
+      expect(getComputedStyle(preview).outlineOffset).toBe('2px');
+      await expect.poll(() => element.querySelector('[role="slider"]')).toBeNull();
+    });
+
+    it('draws no ring on the panel after a mouse click', async () => {
+      const { fixture, element } = await renderAs(KeyboardHost);
+      const keys = (await allHarnessesOf(fixture))(1);
+      await userEvent.click(previewOf(element, 1));
+      await panelOpen(element);
+      await userEvent.click(areaOf(element));
+
+      expect(getComputedStyle(areaOf(element)).outlineStyle).not.toBe('solid');
+      await closePanel(keys, element);
+    });
+
+    it('is driven by a harness: open, step each of the three, close', async () => {
+      const { fixture, component, element } = await render();
+      const picker = await harnessOf(fixture);
+      component.value.set('#ff0000');
+      await fixture.whenStable();
+      await expect.poll(() => picker.getValue()).toBe('#ff0000');
+
+      await picker.open();
+      await panelOpen(element);
+      await picker.stepSaturation(-1);
+      await expect.poll(() => picker.getValue()).toBe('#ff0303');
+      await picker.stepBrightness(-1);
+      await expect.poll(() => picker.getValue()).not.toBe('#ff0303');
+      await picker.stepBrightness(1);
+      await picker.stepSaturation(1);
+      await expect.poll(() => picker.getValue()).toBe('#ff0000');
+      await picker.stepHue(10);
+      await expect.poll(() => picker.getValue()).toBe('#ff2b00');
+      expect(await picker.getHue()).toBe(10);
+      expect(await picker.getSaturation()).toBe(100);
+      expect(await picker.getAreaValueText()).toBe('Saturation 100%, brightness 100%');
+      await closePanel(picker, element);
+    });
+
+    it('writes a number from null on the first key, and the swatch follows', async () => {
+      const { component, element, picker } = await renderAs(KeyboardHost).then(async (rendered) => {
+        rendered.component.value.set(null);
+        await rendered.fixture.whenStable();
+        const keys = (await allHarnessesOf(rendered.fixture))(1);
+        byId(rendered.element, 'before').focus();
+        await userEvent.tab();
+        await expect.poll(() => keys.isFocused()).toBe(true);
+        await openByEnter(rendered.element);
+        return { ...rendered, picker: keys };
+      });
+      expect(component.value()).toBeNull();
+
+      await userEvent.keyboard('{ArrowLeft}');
+
+      await expect.poll(() => component.value()).toBe('#ff0303');
+      await closePanel(picker, element);
     });
   });
 
@@ -720,75 +1064,107 @@ describe('WjColorPicker', () => {
 
   describe('routed parts (the pt child-forwarding trap)', () => {
     beforeEach(() => {
+      // The spec-wide `transition: none !important` would also stop the panel's own motion from
+      // ever ending, and the motion is part of what these specs wait for.
       document.getElementById('wj-spec-no-motion')?.remove();
     });
 
-    it('lands the swatch’s and the panel’s attributes on open, after a colour change, and after close and reopen', async () => {
+    /** The colour area's and the strip's routed attributes. */
+    const partsOf = (element: HTMLElement) => ({
+      area: areaOf(element),
+      hue: hueOf(element),
+    });
+
+    it('lands the area’s and the strip’s attributes on open, after a colour change, and after close and reopen', async () => {
       const { fixture, element } = await render();
       const picker = await harnessOf(fixture);
-      const preview = previewOf(element);
-      expect(preview.getAttribute('role')).toBe('combobox');
-      expect(preview.getAttribute('aria-haspopup')).toBe('dialog');
-      expect(preview.getAttribute('aria-expanded')).toBe('false');
-      expect(preview.hasAttribute('aria-controls')).toBe(false);
 
       await picker.open();
       await panelOpen(element);
-      const panelId = find(element, '.p-colorpicker-panel', HTMLElement).id;
-      expect(panelId).toMatch(/^wj-colorpicker-panel-\d+$/);
-      expect(preview.getAttribute('aria-expanded')).toBe('true');
-      expect(preview.getAttribute('aria-controls')).toBe(panelId);
+      let { area, hue } = partsOf(element);
+      expect(area.getAttribute('role')).toBe('slider');
+      expect(area.getAttribute('tabindex')).toBe('0');
+      expect(area.getAttribute('aria-label')).toBe('Saturation and brightness');
+      expect(area.getAttribute('aria-valuemin')).toBe('0');
+      expect(area.getAttribute('aria-valuemax')).toBe('100');
+      expect(area.getAttribute('aria-valuenow')).toBe('87');
+      expect(area.getAttribute('aria-valuetext')).toBe('Saturation 87%, brightness 46%');
+      expect(hue.getAttribute('role')).toBe('slider');
+      expect(hue.getAttribute('tabindex')).toBe('0');
+      expect(hue.getAttribute('aria-label')).toBe('Hue');
+      expect(hue.getAttribute('aria-orientation')).toBe('vertical');
+      expect(hue.getAttribute('aria-valuemin')).toBe('0');
+      expect(hue.getAttribute('aria-valuemax')).toBe('360');
+      expect(hue.getAttribute('aria-valuenow')).toBe('175');
 
-      await clickAt(find(element, '.p-colorpicker-color-selector', HTMLElement), 0.25, 0.25);
+      await picker.stepSaturation(-2);
+      await picker.stepHue(5);
       await fixture.whenStable();
-      expect(preview.getAttribute('aria-expanded')).toBe('true');
-      expect(preview.getAttribute('aria-controls')).toBe(panelId);
-      expect(preview.getAttribute('role')).toBe('combobox');
-      expect(preview.getAttribute('aria-haspopup')).toBe('dialog');
+      await expect.poll(() => areaOf(element).getAttribute('aria-valuenow')).toBe('85');
+      expect(areaOf(element).getAttribute('aria-valuetext')).toBe('Saturation 85%, brightness 46%');
+      expect(hueOf(element).getAttribute('aria-valuenow')).toBe('180');
+      expect(areaOf(element).getAttribute('role')).toBe('slider');
+      expect(hueOf(element).getAttribute('aria-orientation')).toBe('vertical');
 
       await closePanel(picker, element);
-      expect(preview.getAttribute('aria-expanded')).toBe('false');
-      expect(preview.hasAttribute('aria-controls')).toBe(false);
-
       await picker.open();
       await panelOpen(element);
-      expect(find(element, '.p-colorpicker-panel', HTMLElement).id).toBe(panelId);
-      expect(preview.getAttribute('aria-expanded')).toBe('true');
-      expect(preview.getAttribute('aria-controls')).toBe(panelId);
-      expect(preview.getAttribute('role')).toBe('combobox');
+      ({ area, hue } = partsOf(element));
+      expect(area.getAttribute('role')).toBe('slider');
+      expect(area.getAttribute('aria-label')).toBe('Saturation and brightness');
+      expect(area.getAttribute('aria-valuenow')).toBe('85');
+      expect(hue.getAttribute('role')).toBe('slider');
+      expect(hue.getAttribute('aria-valuenow')).toBe('180');
+      expect(hue.getAttribute('aria-label')).toBe('Hue');
       await closePanel(picker, element);
     });
 
-    it('keeps a consumer’s pt on the parts, and routed attributes win over it', async () => {
+    it('follows a value the app sets while the panel is open', async () => {
+      const { fixture, component, element } = await render();
+      const picker = await harnessOf(fixture);
+      await picker.open();
+      await panelOpen(element);
+
+      component.value.set('#ff0000');
+      await fixture.whenStable();
+
+      await expect
+        .poll(() => areaOf(element).getAttribute('aria-valuetext'))
+        .toBe('Saturation 100%, brightness 100%');
+      expect(hueOf(element).getAttribute('aria-valuenow')).toBe('0');
+      await closePanel(picker, element);
+    });
+
+    it('keeps a consumer’s pt on the panel’s parts, and routed attributes win over it', async () => {
       const { fixture, component, element } = await render((host) => {
         host.pt.set({
           root: { 'data-probe': 'root' },
-          panel: { 'data-probe': 'panel', id: 'consumer' },
-          hue: { 'data-probe': 'hue' },
-          preview: { 'data-probe': 'preview', 'aria-haspopup': 'menu', role: 'textbox' },
+          panel: { 'data-probe': 'panel' },
+          colorSelector: { 'data-probe': 'area', role: 'img', 'aria-valuenow': '1' },
+          hue: { 'data-probe': 'hue', 'aria-label': 'Mine' },
+          preview: { 'data-probe': 'preview', 'aria-haspopup': 'menu' },
         });
       });
       const picker = await harnessOf(fixture);
       expect(find(element, '.p-colorpicker', HTMLElement).getAttribute('data-probe')).toBe('root');
       expect(previewOf(element).getAttribute('data-probe')).toBe('preview');
       expect(previewOf(element).getAttribute('aria-haspopup')).toBe('dialog');
-      expect(previewOf(element).getAttribute('role')).toBe('combobox');
 
       await picker.open();
       await panelOpen(element);
-      const panel = find(element, '.p-colorpicker-panel', HTMLElement);
-      expect(panel.getAttribute('data-probe')).toBe('panel');
-      expect(panel.id).toMatch(/^wj-colorpicker-panel-\d+$/);
-      expect(find(element, '.p-colorpicker-hue', HTMLElement).getAttribute('data-probe')).toBe(
-        'hue',
+      expect(find(element, '.p-colorpicker-panel', HTMLElement).getAttribute('data-probe')).toBe(
+        'panel',
       );
+      expect(areaOf(element).getAttribute('data-probe')).toBe('area');
+      expect(areaOf(element).getAttribute('role')).toBe('slider');
+      expect(areaOf(element).getAttribute('aria-valuenow')).toBe('87');
+      expect(hueOf(element).getAttribute('data-probe')).toBe('hue');
+      expect(hueOf(element).getAttribute('aria-label')).toBe('Hue');
 
-      component.pt.set({ hue: { 'data-probe': 'hue two' } });
+      component.pt.set({ colorSelector: { 'data-probe': 'area two' } });
       await fixture.whenStable();
-      await expect
-        .poll(() => find(element, '.p-colorpicker-hue', HTMLElement).getAttribute('data-probe'))
-        .toBe('hue two');
-      expect(previewOf(element).getAttribute('aria-haspopup')).toBe('dialog');
+      await expect.poll(() => areaOf(element).getAttribute('data-probe')).toBe('area two');
+      expect(areaOf(element).getAttribute('role')).toBe('slider');
       await closePanel(picker, element);
     });
 
@@ -805,10 +1181,8 @@ describe('WjColorPicker', () => {
       await picker.open();
       await panelOpen(element);
 
-      expect(
-        find(element, '.p-colorpicker-color-selector', HTMLElement).getAttribute('data-probe'),
-      ).toBe('fn area');
-      expect(previewOf(element).getAttribute('role')).toBe('combobox');
+      expect(areaOf(element).getAttribute('data-probe')).toBe('fn area');
+      expect(areaOf(element).getAttribute('role')).toBe('slider');
       await closePanel(picker, element);
     });
 
@@ -943,7 +1317,7 @@ describe('WjColorPicker', () => {
         const picker = await harnessOf(fixture);
         await expect.poll(() => picker.getValue()).toBe('#0f766e');
 
-        await pickColour(picker, fixture.nativeElement as HTMLElement);
+        await picker.stepHue(1);
         await fixture.whenStable();
         expect(component.value()).not.toBe('#0f766e');
         expect(component.value()).toBe(await picker.getValue());
@@ -999,7 +1373,7 @@ describe('WjColorPicker', () => {
         await expect.poll(() => picker.getValue()).toBe('#facc15');
         expect(component.control.dirty).toBe(false);
 
-        await pickColour(picker, fixture.nativeElement as HTMLElement);
+        await picker.stepHue(3);
         await fixture.whenStable();
 
         expect(component.control.value).not.toBe('#facc15');
@@ -1046,7 +1420,7 @@ describe('WjColorPicker', () => {
         const picker = await harnessOf(fixture);
         await expect.poll(() => picker.getValue()).toBe('#0f766e');
 
-        await pickColour(picker, fixture.nativeElement as HTMLElement);
+        await picker.stepHue(2);
         await fixture.whenStable();
         expect(component.value().accent).toBe(await picker.getValue());
         expect(component.value().accent).not.toBe('#0f766e');
@@ -1241,28 +1615,37 @@ describe('WjColorPicker', () => {
         await expectNoAxeViolations(element.querySelector('wj-field') ?? hostOf(element));
       });
 
-      it('has no axe violations open, with the panel shown', async () => {
+      it('has no axe violations open with focus in the colour area, the strip’s target-size included', async () => {
         // The panel's own motion must end for axe to read its final colours.
         document.getElementById('wj-spec-no-motion')?.remove();
         const { fixture, element } = await render(undefined, scheme);
         const picker = await harnessOf(fixture);
-        await picker.open();
+        byId(element, 'before').focus();
+        await userEvent.tab();
+        await expect.poll(() => picker.isFocused()).toBe(true);
+        await userEvent.keyboard('{Enter}');
         await panelOpen(element);
+        await expect.poll(() => document.activeElement).toBe(areaOf(element));
         expect(await picker.isOpen()).toBe(true);
 
         await expectNoAxeViolations(hostOf(element));
         await closePanel(picker, element);
       });
 
-      it('has no axe violations open, in a field', async () => {
+      it('has no axe violations open, in a field, with focus on the strip', async () => {
         document.getElementById('wj-spec-no-motion')?.remove();
         const { fixture, element } = await render((host) => {
           host.inField.set(true);
           host.hint.set('Used for links and buttons.');
         }, scheme);
         const picker = await harnessOf(fixture);
-        await picker.open();
+        byId(element, 'before').focus();
+        await userEvent.tab();
+        await expect.poll(() => picker.isFocused()).toBe(true);
+        await userEvent.keyboard('{Enter}');
         await panelOpen(element);
+        await userEvent.tab();
+        await expect.poll(() => document.activeElement).toBe(hueOf(element));
 
         await expectNoAxeViolations(find(element, 'wj-field', HTMLElement));
         await closePanel(picker, element);

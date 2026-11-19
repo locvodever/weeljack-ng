@@ -1,4 +1,9 @@
-import { ComponentHarness, HarnessPredicate, type BaseHarnessFilters } from '@angular/cdk/testing';
+import {
+  ComponentHarness,
+  HarnessPredicate,
+  TestKey,
+  type BaseHarnessFilters,
+} from '@angular/cdk/testing';
 
 /** Criteria for finding a `wj-colorpicker` with {@link WjColorPickerHarness.with}. */
 export interface WjColorPickerHarnessFilters extends BaseHarnessFilters {
@@ -8,14 +13,16 @@ export interface WjColorPickerHarnessFilters extends BaseHarnessFilters {
 
 /**
  * Test harness for `wj-colorpicker`. Describes the picker as a user meets it: the colour it holds,
- * opening and closing the panel, its disabled and invalid states, the swatch's id and ARIA
- * attributes, and focus. It never names an Optimus class. The panel's area and hue strip answer
- * the pointer only in Optimus 2.0.2, so there is no key to step them with.
+ * opening and closing the panel, the keys that move saturation, brightness and hue, its disabled
+ * and invalid states, the swatch's id and ARIA attributes, and focus. It never names an Optimus
+ * class: the panel's two sliders are found by their ARIA.
  */
 export class WjColorPickerHarness extends ComponentHarness {
   static hostSelector = 'wj-colorpicker';
 
   private readonly swatch = this.locatorFor('input');
+  private readonly area = this.locatorFor('[role="slider"][aria-valuetext]');
+  private readonly hue = this.locatorFor('[role="slider"][aria-orientation="vertical"]');
 
   /** Finds the pickers that match `options`. */
   static with(options: WjColorPickerHarnessFilters = {}): HarnessPredicate<WjColorPickerHarness> {
@@ -46,23 +53,57 @@ export class WjColorPickerHarness extends ComponentHarness {
       .join('')}`;
   }
 
-  /** Opens the panel with a click on the swatch. Does nothing while it is open. */
+  /** Opens the panel, and waits until its sliders are there. Does nothing while it is open. */
   async open(): Promise<void> {
     if (!(await this.isOpen())) {
       await (await this.swatch()).click();
     }
+    await this.area();
   }
 
-  /** Closes the panel with a click on the swatch, which toggles it. Does nothing while closed. */
+  /** Closes the panel with Escape, which returns focus to the swatch. Does nothing while closed. */
   async close(): Promise<void> {
     if (await this.isOpen()) {
-      await (await this.swatch()).click();
+      await (await this.area()).sendKeys(TestKey.ESCAPE);
     }
   }
 
   /** Whether the panel is open: the swatch's `aria-expanded`. */
   async isOpen(): Promise<boolean> {
     return (await (await this.swatch()).getAttribute('aria-expanded')) === 'true';
+  }
+
+  /** The saturation, 0 to 100, read from the panel's area. Opens the panel. */
+  async getSaturation(): Promise<number> {
+    await this.open();
+    return Number(await (await this.area()).getAttribute('aria-valuenow'));
+  }
+
+  /** The area's spoken value, such as "Saturation 99%, brightness 100%". Opens the panel. */
+  async getAreaValueText(): Promise<string> {
+    await this.open();
+    return (await (await this.area()).getAttribute('aria-valuetext')) ?? '';
+  }
+
+  /** The hue, 0 to 360, read from the panel's strip. Opens the panel. */
+  async getHue(): Promise<number> {
+    await this.open();
+    return Number(await (await this.hue()).getAttribute('aria-valuenow'));
+  }
+
+  /** Moves saturation by `steps` with Arrow Right (up) or Arrow Left (down). Opens the panel. */
+  async stepSaturation(steps: number): Promise<void> {
+    await this.press(this.area, steps, TestKey.RIGHT_ARROW, TestKey.LEFT_ARROW);
+  }
+
+  /** Moves brightness by `steps` with Arrow Up (up) or Arrow Down (down). Opens the panel. */
+  async stepBrightness(steps: number): Promise<void> {
+    await this.press(this.area, steps, TestKey.UP_ARROW, TestKey.DOWN_ARROW);
+  }
+
+  /** Moves hue by `steps` with Arrow Up (up) or Arrow Down (down). Opens the panel. */
+  async stepHue(steps: number): Promise<void> {
+    await this.press(this.hue, steps, TestKey.UP_ARROW, TestKey.DOWN_ARROW);
   }
 
   /** Whether the swatch cannot be used (`disabled`). */
@@ -107,5 +148,19 @@ export class WjColorPickerHarness extends ComponentHarness {
   /** Whether the swatch has focus. */
   async isFocused(): Promise<boolean> {
     return (await this.swatch()).isFocused();
+  }
+
+  private async press(
+    part: () => Promise<{ sendKeys(...keys: TestKey[]): Promise<void>; focus(): Promise<void> }>,
+    steps: number,
+    up: TestKey,
+    down: TestKey,
+  ): Promise<void> {
+    await this.open();
+    const slider = await part();
+    await slider.focus();
+    for (let index = 0; index < Math.abs(steps); index += 1) {
+      await slider.sendKeys(steps > 0 ? up : down);
+    }
   }
 }

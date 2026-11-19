@@ -65,6 +65,33 @@ class PlainHost {
   }
 }
 
+/** One part with two axes, as a colour area has: `x` on Left and Right, `y` on Down and Up. */
+@Component({
+  selector: 'wj-range-keys-axes-host',
+  template: `<span #part tabindex="0" (keydown)="optimus.push($event.key)"></span>`,
+})
+class AxesHost {
+  readonly written: string[] = [];
+  readonly optimus: string[] = [];
+  readonly part = viewChild.required<ElementRef<HTMLElement>>('part');
+
+  constructor() {
+    for (const axis of ['x', 'y'] as const) {
+      _rangeKeys({
+        min: () => 0,
+        max: () => 100,
+        step: () => 1,
+        value: () => 50,
+        part: () => this.part().nativeElement,
+        write: (next) => {
+          this.written.push(axis + String(next));
+        },
+        axis,
+      });
+    }
+  }
+}
+
 async function render(
   setup: (host: Host) => void = () => undefined,
 ): Promise<{ fixture: ComponentFixture<Host>; host: Host; part: HTMLElement }> {
@@ -266,6 +293,14 @@ describe('_rangeKeys', () => {
     expect(host.written.map(([next]) => next)).toEqual([51]);
   });
 
+  it('moves one step on Shift with an arrow when there is no axis', async () => {
+    const { host, part } = await render();
+
+    press(part, 'ArrowRight', { shiftKey: true });
+
+    expect(host.written.map(([next]) => next)).toEqual([51]);
+  });
+
   it('leaves every other key to the browser and Optimus', async () => {
     const { host, part } = await render();
 
@@ -307,6 +342,42 @@ describe('_rangeKeys', () => {
 
     expect(host.written.map(([next]) => next)).toEqual([51, 40, 100]);
     expect(host.optimus).toEqual([]);
+  });
+
+  describe('with an axis', () => {
+    async function renderAxes(): Promise<{ host: AxesHost; part: HTMLElement }> {
+      const fixture = TestBed.createComponent(AxesHost);
+      document.body.append(fixture.nativeElement as HTMLElement);
+      await fixture.whenStable();
+      return {
+        host: fixture.componentInstance,
+        part: fixture.componentInstance.part().nativeElement,
+      };
+    }
+
+    it('gives each axis its own two arrows, and Shift ten steps', async () => {
+      const { host, part } = await renderAxes();
+
+      for (const key of ['ArrowRight', 'ArrowLeft', 'ArrowUp', 'ArrowDown']) {
+        press(part, key);
+      }
+      press(part, 'ArrowRight', { shiftKey: true });
+      press(part, 'ArrowDown', { shiftKey: true });
+
+      expect(host.written).toEqual(['x51', 'x49', 'y51', 'y49', 'x60', 'y40']);
+    });
+
+    it('stops its arrows before Optimus and leaves Home, End and the pages alone', async () => {
+      const { host, part } = await renderAxes();
+
+      expect(press(part, 'ArrowUp')).toBe(false);
+      for (const key of ['Home', 'End', 'PageUp', 'PageDown']) {
+        expect(press(part, key)).toBe(true);
+      }
+
+      expect(host.written).toEqual(['y51']);
+      expect(host.optimus).toEqual(['Home', 'End', 'PageUp', 'PageDown']);
+    });
   });
 
   it('removes its listener when the host is destroyed', async () => {

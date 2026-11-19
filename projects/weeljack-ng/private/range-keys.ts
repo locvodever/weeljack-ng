@@ -21,10 +21,18 @@ export interface _RangeKeysOptions {
   readonly part: () => unknown;
   /** Applies the next value, already clamped to [`min`, `max`] and on the step grid. */
   readonly write: (next: number, event: KeyboardEvent) => void;
+  /**
+   * For one axis of a part that has two, such as a colour area: only that axis's two arrows move
+   * the value (`'x'` is Left and Right, `'y'` is Down and Up), Shift with an arrow moves
+   * ten steps, and Home, End, Page Up and Page Down are left alone. Register once per
+   * axis. Without it the part is one range and Shift changes nothing.
+   */
+  readonly axis?: 'x' | 'y' | undefined;
 }
 
-/** Page Up and Page Down move this many steps. */
+/** Page Up and Page Down move this many steps, and so does Shift with an arrow of an `axis`. */
 const PAGE = 10;
+const AXES = { x: ['ArrowLeft', 'ArrowRight'], y: ['ArrowDown', 'ArrowUp'] };
 const MOVES = new Map([
   ['ArrowRight', 1],
   ['ArrowUp', 1],
@@ -35,13 +43,17 @@ const MOVES = new Map([
 ]);
 
 /** The value `key` moves to, or `undefined` for a key the map does not know. */
-function nextValue(key: string, options: _RangeKeysOptions): number | undefined {
+function nextValue(event: KeyboardEvent, options: _RangeKeysOptions): number | undefined {
+  const { key } = event;
+  const { axis } = options;
+  if (axis && !AXES[axis].includes(key)) return undefined;
   const min = options.min();
   const max = options.max();
   if (key === 'Home') return min;
   if (key === 'End') return max;
-  const moves = MOVES.get(key);
-  if (moves === undefined) return undefined;
+  const arrow = MOVES.get(key);
+  if (arrow === undefined) return undefined;
+  const moves = axis && event.shiftKey ? arrow * PAGE : arrow;
   const step = options.step() || 1;
   // Where the value sits on the grid. A value between two grid points steps to the next one in
   // the direction of the key; the rounding keeps `0.1 * 3` from landing just off a point.
@@ -51,8 +63,8 @@ function nextValue(key: string, options: _RangeKeysOptions): number | undefined 
 }
 
 /**
- * The key map of a value range, shared by the slider, the knob and the colour picker's hue
- * (w2-forms-choice FR-7). Optimus's own handlers disagree with each other and with `step`, so a
+ * The key map of a value range, shared by the slider, the knob and the colour picker's hue and
+ * area (w2-forms-choice FR-7). Optimus's own handlers disagree with each other and with `step`, so a
  * wrapper turns them off for these keys:
  *
  * | Key | Effect |
@@ -61,6 +73,9 @@ function nextValue(key: string, options: _RangeKeysOptions): number | undefined 
  * | Arrow Left, Arrow Down | − `step` |
  * | Page Up, Page Down | ± 10 × `step` |
  * | Home, End | `min`, `max` |
+ *
+ * With `axis` set, the part is one axis of a two-axis control: only that axis's arrows apply, with
+ * Shift for ± 10 × `step`, and the other keys are left to the part.
  *
  * It registers one capture-phase `keydown` listener on the wrapper's host, added in
  * `afterNextRender` and removed when the host is destroyed, so it never runs on the server. A key
@@ -89,7 +104,7 @@ export function _rangeKeys(options: _RangeKeysOptions): void {
   const destroyed = inject(DestroyRef);
   const onKeyDown = (event: KeyboardEvent): void => {
     if (event.target !== options.part() || event.altKey || event.ctrlKey || event.metaKey) return;
-    const next = nextValue(event.key, options);
+    const next = nextValue(event, options);
     if (next === undefined) return;
     event.preventDefault();
     event.stopPropagation();

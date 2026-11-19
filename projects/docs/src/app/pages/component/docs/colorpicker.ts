@@ -21,7 +21,7 @@ export const DOC: ComponentDoc = {
     {
       title: 'Basic',
       description:
-        'A visible text names the swatch through `ariaLabelledBy`. The picker holds `#0f766e`. Click the swatch, or press Space on it, to open the panel; click or drag in the area and the strip to pick a colour. A click outside, or Escape, closes the panel.',
+        'A visible text names the swatch through `ariaLabelledBy`. The picker holds `#0f766e`. Click the swatch, or press Enter or Space on it, to open the panel; click or drag in the area and the strip, or use the arrow keys, to pick a colour. A click outside, or Escape, closes the panel.',
       sourceKey: 'colorpicker/basic',
       component: ColorpickerBasicExample,
     },
@@ -42,7 +42,7 @@ export const DOC: ComponentDoc = {
     {
       title: 'Testing with the harness',
       description:
-        'Import `WjColorPickerHarness` from `weeljack-ng/colorpicker/testing` to read the colour (`#rrggbb`, or `null` while none is set), read the colour the swatch shows, open and close the panel, check the disabled and invalid states, read the swatch’s id and ARIA attributes, and move focus onto the swatch and away, without touching the DOM. Find a picker by its `ariaLabel`.',
+        'Import `WjColorPickerHarness` from `weeljack-ng/colorpicker/testing` to read the colour (`#rrggbb`, or `null` while none is set), read the colour the swatch shows, open and close the panel, step the saturation, brightness and hue with the keys and read them back, check the disabled and invalid states, read the swatch’s id and ARIA attributes, and move focus onto the swatch and away, without touching the DOM. Find a picker by its `ariaLabel`.',
       sourceKey: 'colorpicker/testing',
       component: null,
     },
@@ -51,18 +51,36 @@ export const DOC: ComponentDoc = {
     {
       key: 'Tab, Shift+Tab',
       effect:
-        'Move focus onto the swatch and off it. A disabled picker is skipped. Focus draws the family’s 2 px ring round the swatch, after a key press and not after a click. Tab from the swatch of an open panel closes it, because Optimus’s own handler does.',
+        'Move focus onto the swatch and off it. A disabled picker is skipped. Focus draws the family’s 2 px ring round the swatch after a key press, and not after a click. From the swatch of an open panel, Tab goes into the panel: the colour area, then the hue strip. Shift+Tab goes back, from the strip to the area to the swatch. Focus leaving the picker closes the panel.',
     },
-    { key: 'Space', effect: 'Open the panel, or close it while it is open.' },
-    { key: 'Escape', effect: 'Close the panel. Focus stays on the swatch.' },
     {
-      key: 'Any key, in the panel',
+      key: 'Enter, Space',
       effect:
-        'Nothing: the colour area and the hue strip answer the mouse and touch only. See the first accessibility note below.',
+        'On the swatch: open the panel, and move focus to the colour area. Enter never submits a form. In an open panel, Enter closes it.',
+    },
+    {
+      key: 'Arrow Left, Arrow Right',
+      effect:
+        'In the colour area: lower or raise the saturation by 1, from 0 to 100. With Shift, by 10.',
+    },
+    {
+      key: 'Arrow Down, Arrow Up',
+      effect:
+        'In the colour area: lower or raise the brightness by 1, from 0 to 100. With Shift, by 10.',
+    },
+    {
+      key: 'Arrow Up, Arrow Right; Arrow Down, Arrow Left',
+      effect: 'In the hue strip: raise or lower the hue by 1, from 0 to 360.',
+    },
+    { key: 'Page Up, Page Down', effect: 'In the hue strip: raise or lower the hue by 10.' },
+    { key: 'Home, End', effect: 'In the hue strip: the hue 0, or 360.' },
+    {
+      key: 'Escape',
+      effect: 'Close the panel from anywhere inside it, and return focus to the swatch.',
     },
   ],
   aria: [
-    'Gap: the colour panel is not keyboard-operable. In Optimus 2.0.2 the colour area and the hue strip answer only the mouse and touch, and a keyboard user can open the panel but never change the colour inside it (WCAG 2.1.1). The fix is built and tested (focusable area and strip with slider roles and names, arrow keys, Tab and Escape), but with it this entry weighs 2.62 KB against its 2.50 KB limit, so this release keeps Optimus’s pointer-only panel: no limit is raised (21 Q2). Until the fix returns as an additive minor, give a keyboard user another way to set the value, such as a hex text field or a native `<input type="color">` bound to the same value. The three strings it needs, `colorArea`, `colorAreaValue` and `colorHue`, are already in the translation.',
+    'The colour area and the hue strip are `role="slider"` with `tabindex="0"`, named “Saturation and brightness” and “Hue” (from the translation’s `colorArea` and `colorHue`). The area’s `aria-valuenow` is the saturation, 0 to 100, and its `aria-valuetext` reads “Saturation 87%, brightness 46%” (`colorAreaValue`); the strip is `aria-orientation="vertical"`, 0 to 360, with the hue as `aria-valuenow`. They follow every key, drag and value you set. A routed attribute wins over the same attribute in your `pt`.',
     'The swatch is Optimus’s read-only `input`. The component gives it `role="combobox"`, because a text input may not carry `aria-expanded`, and routes the rest through `pt`: `aria-haspopup="dialog"`, `aria-expanded` (which follows the panel), `aria-controls` (the panel’s generated id, only while it is open), `aria-label` (only while `ariaLabel` is set), `aria-labelledby`, `aria-describedby` and `aria-invalid`. With no `ariaLabel`, Optimus’s own translated name, “Select a color” (“Chọn màu” in Vietnamese), stays. A routed attribute wins over the same attribute in your `pt`. An `aria-*` attribute on the host is not forwarded and raises `WJ0003` in development.',
     'Name the picker for what it sets; a screen reader then says “Accent color, combobox, collapsed”. Outside a field use `ariaLabelledBy` (the id of a visible text) or `ariaLabel`. Inside a field the field’s label names it, and a consumer’s `ariaLabelledBy` wins over it. The swatch is not labelable by `<label for>`, because Optimus always names it with `aria-label`; the field’s label is a `span`, and a click on it moves focus to the swatch.',
     'Inside a field, `aria-describedby` lists your own `ariaDescribedBy` ids first, then the hint, then the error, without duplicates. The swatch sets `aria-invalid="true"` exactly while the field shows an error, so the `invalid` input is not shown there.',
@@ -75,7 +93,7 @@ export const DOC: ComponentDoc = {
     'The keyboard walk and the screen-reader pass (NVDA with Chrome) are recorded on this page before `0.2.0`.',
   ],
   stylingIntro:
-    'Colours, radius and the focus ring come from the `--wj-*` variables that `provideWeeljack` emits. The preset’s `colorpicker` tokens are Aura’s: a 24 px preview with the field radius, and a dark panel with white handles in both schemes. The host is `inline-block`, so its box is the swatch. The component adds a 1 px inset boundary to the swatch in `--wj-form-field-border-color`, which Optimus’s own focus rule replaces while the swatch is focused. For anything else, `pt` reaches the parts of the Optimus colour picker underneath: `root`, `preview`, `panel`, `content`, `colorSelector`, `colorBackground`, `colorHandle`, `hue` and `hueHandle`. It tracks Optimus 2.0: part names and attributes follow the installed `@openng/optimus-ui` minor and are outside the stable API of `wj-colorpicker`. Changes to them ship only in the release that takes a new Optimus minor, and are not breaking. `pt` attributes on `preview` lose to `role`, `aria-haspopup`, `aria-expanded`, `aria-controls`, `aria-labelledby`, `aria-describedby`, `aria-invalid` and (while `ariaLabel` is set) `aria-label`, and on `panel` to `id`, which the component routes there. The function form of `pt` and a function per part both work.',
+    'Colours, radius and the focus ring come from the `--wj-*` variables that `provideWeeljack` emits. The preset’s `colorpicker` tokens are Aura’s: a 24 px preview with the field radius, and a dark panel with white handles in both schemes. The host is `inline-block`, so its box is the swatch. The component adds a 1 px inset boundary to the swatch in `--wj-form-field-border-color`, which Optimus’s own focus rule replaces while the swatch is focused. For anything else, `pt` reaches the parts of the Optimus colour picker underneath: `root`, `preview`, `panel`, `content`, `colorSelector`, `colorBackground`, `colorHandle`, `hue` and `hueHandle`. It tracks Optimus 2.0: part names and attributes follow the installed `@openng/optimus-ui` minor and are outside the stable API of `wj-colorpicker`. Changes to them ship only in the release that takes a new Optimus minor, and are not breaking. The area and the strip take the same ring in white, because the ink ring is invisible on the dark panel. `pt` attributes on `preview` lose to `role`, `aria-haspopup`, `aria-expanded`, `aria-controls`, `aria-labelledby`, `aria-describedby`, `aria-invalid` and (while `ariaLabel` is set) `aria-label`, on `panel` to `id`, and on `colorSelector` and `hue` to the slider role, name, range and value attributes, which the component routes there. The function form of `pt` and a function per part both work.',
   parts: [
     { part: 'root', description: 'Optimus’s root element, which holds the swatch and the panel.' },
     {
@@ -88,10 +106,17 @@ export const DOC: ComponentDoc = {
       description: 'The dark panel that opens below the swatch. It takes the generated id.',
     },
     { part: 'content', description: 'The panel’s positioned content box.' },
-    { part: 'colorSelector', description: 'The 150 px colour area: saturation by brightness.' },
+    {
+      part: 'colorSelector',
+      description:
+        'The 150 px colour area: saturation by brightness. A focusable slider; it takes the slider attributes.',
+    },
     { part: 'colorBackground', description: 'The area’s gradient.' },
     { part: 'colorHandle', description: 'The ring that marks the picked point in the area.' },
-    { part: 'hue', description: 'The 17 px hue strip.' },
+    {
+      part: 'hue',
+      description: 'The 17 px hue strip. A focusable slider; it takes the slider attributes.',
+    },
     { part: 'hueHandle', description: 'The bar that marks the hue on the strip.' },
   ],
   optimusSelector: 'p-colorpicker',
