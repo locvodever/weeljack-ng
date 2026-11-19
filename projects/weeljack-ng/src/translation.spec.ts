@@ -125,6 +125,21 @@ describe('provideWeeljack translation', () => {
       expect(read('aria')).toMatchObject({ close: 'Close', listLabel: 'Option List' });
     });
 
+    it('names the selection checkboxes for the action in en and vi (FR-22)', () => {
+      expect(_WJ_EN.aria).toMatchObject({
+        selectRow: 'Select row',
+        unselectRow: 'Select row',
+        selectAll: 'Select all',
+        unselectAll: 'Select all',
+      });
+      expect(viLocale.aria).toMatchObject({
+        selectRow: 'Chọn hàng',
+        unselectRow: 'Chọn hàng',
+        selectAll: 'Chọn tất cả',
+        unselectAll: 'Chọn tất cả',
+      });
+    });
+
     it('keeps every other English key when the top level is partial', async () => {
       await setup({ translation: { weak: 'Yếu' } });
 

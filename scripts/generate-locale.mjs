@@ -66,6 +66,28 @@ const OWN_STRINGS = {
   },
 };
 
+/**
+ * Upstream `aria` strings that describe a checkbox's state ("Row Selected"), not its name. The
+ * checkbox's own checked state already says whether it is on, so WeeljackNg names it for the action
+ * in both states (FR-22). An app's `translation` still overrides these.
+ *
+ * @type {Record<string, Record<string, string>>}
+ */
+const ARIA_OVERRIDES = {
+  en: {
+    selectRow: 'Select row',
+    unselectRow: 'Select row',
+    selectAll: 'Select all',
+    unselectAll: 'Select all',
+  },
+  vi: {
+    selectRow: 'Chọn hàng',
+    unselectRow: 'Chọn hàng',
+    selectAll: 'Chọn tất cả',
+    unselectAll: 'Chọn tất cả',
+  },
+};
+
 /** @type {{ lang: string, file: string, code: (json: string) => string }[]} */
 const OUTPUTS = [
   {
@@ -112,7 +134,15 @@ function withOwnGroup(lang, strings) {
     }
     wj[own] = value;
   }
-  return { ...strings, wj: { ...wj, ...OWN_STRINGS[lang] } };
+  /** @type {Dictionary} */
+  const overridden = { ...aria };
+  for (const [key, value] of Object.entries(ARIA_OVERRIDES[lang] ?? {})) {
+    if (typeof aria[key] !== 'string') {
+      throw new Error(`generate-locale: ${lang}.json has no aria.${key} to override.`);
+    }
+    overridden[key] = value;
+  }
+  return { ...strings, aria: overridden, wj: { ...wj, ...OWN_STRINGS[lang] } };
 }
 
 /** @returns {string[]} the `LICENSE`'s copyright lines, verbatim */

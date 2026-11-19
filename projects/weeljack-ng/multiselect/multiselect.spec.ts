@@ -943,12 +943,12 @@ describe('WjMultiSelect', () => {
       const { fixture, component, element } = await render();
       const select = await openAt(fixture, element);
       expect(toggleAllOf(element).checked).toBe(false);
-      expect(toggleAllOf(element).getAttribute('aria-label')).toBe('All items unselected');
+      expect(toggleAllOf(element).getAttribute('aria-label')).toBe('Select all');
 
       await select.toggleAll();
       await fixture.whenStable();
       await expect.poll(() => toggleAllOf(element).checked).toBe(true);
-      expect(toggleAllOf(element).getAttribute('aria-label')).toBe('All items selected');
+      expect(toggleAllOf(element).getAttribute('aria-label')).toBe('Select all');
 
       await select.toggleOption('Monday');
       await fixture.whenStable();
@@ -1726,7 +1726,7 @@ describe('WjMultiSelect', () => {
 
       expect(await select.getText()).toBe('4 items selected');
       expect(listOf(element).getAttribute('aria-label')).toBe('Option List');
-      expect(toggleAllOf(element).getAttribute('aria-label')).toBe('All items unselected');
+      expect(toggleAllOf(element).getAttribute('aria-label')).toBe('Select all');
 
       component.options.set([]);
       await fixture.whenStable();
@@ -1747,13 +1747,13 @@ describe('WjMultiSelect', () => {
 
       expect(await select.getText()).toBe('Đã chọn 4 mục');
       expect(listOf(element).getAttribute('aria-label')).toBe(viLocale.aria?.listLabel);
-      expect(toggleAllOf(element).getAttribute('aria-label')).toBe(viLocale.aria?.['unselectAll']);
+      expect(toggleAllOf(element).getAttribute('aria-label')).toBe(viLocale.aria?.unselectAll);
 
       await select.toggleAll();
       await fixture.whenStable();
       await expect
         .poll(() => toggleAllOf(element).getAttribute('aria-label'))
-        .toBe(viLocale.aria?.['selectAll']);
+        .toBe(viLocale.aria?.selectAll);
 
       component.options.set([]);
       await fixture.whenStable();

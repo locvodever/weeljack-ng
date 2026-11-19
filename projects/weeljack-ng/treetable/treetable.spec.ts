@@ -943,7 +943,7 @@ describe('WjTreeTable', () => {
       expect(part(element, 'table').classList.contains('consumer-table')).toBe(true);
       const box = part(element, 'p-treetablecheckbox input');
       expect(box.dataset['probe']).toBe('box');
-      expect(box.getAttribute('aria-label')).toBe('Row Selected');
+      expect(box.getAttribute('aria-label')).toBe('Select row');
       const toggle = part(element, '[data-pc-section="rowtogglebutton"]');
       expect(toggle.classList.contains('consumer-toggle')).toBe(true);
       expect(toggle.getAttribute('aria-hidden')).toBe('true');
@@ -980,7 +980,7 @@ describe('WjTreeTable', () => {
         expect(toggle.getAttribute('aria-hidden')).toBe('true');
       }
       for (const box of parts(element, 'p-treetablecheckbox input')) {
-        expect(box.getAttribute('aria-label')).toBe('Row Selected');
+        expect(box.getAttribute('aria-label')).toBe('Select row');
       }
     });
   });
@@ -1052,11 +1052,11 @@ describe('WjTreeTable', () => {
         expandAll(host);
       });
 
-      expect(part(element, 'thead input').getAttribute('aria-label')).toBe('All items selected');
+      expect(part(element, 'thead input').getAttribute('aria-label')).toBe('Select all');
       const boxes = parts(element, 'tbody p-treetablecheckbox input');
       expect(boxes).toHaveLength(9);
       for (const box of boxes) {
-        expect(box.getAttribute('aria-label')).toBe('Row Selected');
+        expect(box.getAttribute('aria-label')).toBe('Select row');
         expect(box.getAttribute('tabindex')).toBe('-1');
       }
     });

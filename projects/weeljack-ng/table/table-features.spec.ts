@@ -425,17 +425,17 @@ describe('WjTable features', () => {
         box.getAttribute('aria-label'),
       );
       expect(labels).toEqual([
-        'Row Unselected',
-        'Row Unselected',
-        'Row Unselected',
-        'Row Selected',
-        'Row Selected',
+        'Select row',
+        'Select row',
+        'Select row',
+        'Select row',
+        'Select row',
       ]);
       const select = part(element, 'thead p-tableheadercheckbox input');
-      expect(select.getAttribute('aria-label')).toBe('All items unselected');
+      expect(select.getAttribute('aria-label')).toBe('Select all');
 
       await table.toggleAllRows();
-      expect(select.getAttribute('aria-label')).toBe('All items selected');
+      expect(select.getAttribute('aria-label')).toBe('Select all');
     });
 
     it('names the checkboxes from a changed translation', async () => {
