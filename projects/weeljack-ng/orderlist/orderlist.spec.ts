@@ -947,9 +947,18 @@ describe('WjOrderList', () => {
       return focused?.getAttribute('aria-label') ?? focused?.getAttribute('role') ?? '';
     }
 
-    /** Tabs from the button before the list into the listbox (nothing is selected). */
+    /**
+     * Tabs from the button before the list into the listbox (nothing is selected), with the pointer
+     * parked on that button first. While the list has focus, Optimus moves its focused option to the
+     * option under the pointer (`focusOnHover`), and Chrome sends a hover to whatever a layout change
+     * puts under a resting pointer: a pointer an earlier spec file left over an option would
+     * otherwise take the focus once the list has it.
+     */
     async function enterList(element: HTMLElement): Promise<void> {
-      part(element, '#before').focus();
+      const before = part(element, '#before');
+      await userEvent.hover(before);
+      await expect.poll(() => before.matches(':hover')).toBe(true);
+      before.focus();
       await userEvent.keyboard('{Tab}');
       await expect.poll(() => document.activeElement).toBe(part(element, '[role="listbox"]'));
     }
