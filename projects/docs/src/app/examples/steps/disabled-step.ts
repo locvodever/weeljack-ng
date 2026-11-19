@@ -6,10 +6,13 @@ import { WjSteps } from 'weeljack-ng/steps';
   selector: 'docs-steps-disabled-step-example',
   imports: [WjSteps],
   template: `
-    <section aria-labelledby="steps-disabled-caption">
-      <p id="steps-disabled-caption" class="caption">Checkout</p>
-      <wj-steps [model]="steps" [(activeIndex)]="step" [readonly]="false" />
-    </section>
+    <p id="steps-disabled-caption" class="caption">Checkout</p>
+    <wj-steps
+      [model]="steps"
+      [(activeIndex)]="step"
+      [readonly]="false"
+      ariaLabelledBy="steps-disabled-caption"
+    />
   `,
   styles: `
     :host {

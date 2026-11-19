@@ -10,6 +10,26 @@ import {
 } from 'weeljack-ng/private';
 import type { WjBreadcrumbPt } from './breadcrumb-types';
 
+/** The parts of an item that decide whether its link is a Tab stop. */
+interface LinkState {
+  disabled?: boolean;
+  url?: string;
+  routerLink?: unknown;
+}
+
+/**
+ * The attributes a link needs beyond Optimus's own. A disabled link keeps its `href` and stays a
+ * Tab stop in Optimus, so it is announced disabled and taken out; a current page with no link is
+ * not interactive, so it is taken out. Any other link gets no key: `undefined` would remove
+ * Optimus's `tabindex`.
+ */
+function linkAttributes(item: LinkState | undefined, current: boolean): Record<string, string> {
+  if (item?.disabled) {
+    return { 'aria-disabled': 'true', tabindex: '-1' };
+  }
+  return current && !item?.url && !item?.routerLink ? { tabindex: '-1' } : {};
+}
+
 /**
  * Where the current page sits in the site's hierarchy, as a trail of links, over Optimus's
  * `p-breadcrumb`. Describe the trail as `WjMenuItem` objects in `model` and the first link as
@@ -67,12 +87,38 @@ export class WjBreadcrumb {
     };
   });
 
-  /** `pt` forwarded as given, plus the landmark's name routed to the `nav`. */
-  protected readonly partAttributes = computed<WjBreadcrumbPt>(() =>
-    _mergePartAttributes(this.pt(), 'root', {
+  /**
+   * `pt` forwarded as given, plus the landmark's name routed to the `nav` and, on every link, the
+   * Tab-stop state of {@link linkAttributes}. Optimus calls the function `itemLink` part per link
+   * with `context.item`, and for the home link with no context.
+   */
+  protected readonly partAttributes = computed<WjBreadcrumbPt>(() => {
+    const routed = _mergePartAttributes(this.pt(), 'root', {
       'aria-label': this.ariaLabel() ?? this.strings('breadcrumb'),
-    }),
-  );
+    });
+    const { items, home } = this.shown();
+    const current = items?.at(-1);
+    return (context) => {
+      const pt = routed(context);
+      const own = pt.itemLink;
+      return {
+        ...pt,
+        itemLink: (options) => {
+          const attributes = typeof own === 'function' ? own(options) : own;
+          const picked: unknown = Reflect.get(
+            Object(Reflect.get(Object(options), 'context')),
+            'item',
+          );
+          const item =
+            picked === undefined ? home : items?.find((candidate) => candidate === picked);
+          return {
+            ...(typeof attributes === 'string' ? { class: attributes } : attributes),
+            ...linkAttributes(item, item !== undefined && item === current),
+          };
+        },
+      };
+    };
+  });
 
   constructor() {
     _checkWeeljackSetup('wj-breadcrumb');

@@ -6,11 +6,14 @@ import { WjSteps } from 'weeljack-ng/steps';
   selector: 'docs-steps-interactive-example',
   imports: [WjSteps],
   template: `
-    <section aria-labelledby="steps-interactive-caption">
-      <p id="steps-interactive-caption" class="caption">Checkout</p>
-      <wj-steps [model]="steps" [(activeIndex)]="step" [readonly]="false" />
-      <p class="status" role="status">{{ status() }}</p>
-    </section>
+    <p id="steps-interactive-caption" class="caption">Checkout</p>
+    <wj-steps
+      [model]="steps"
+      [(activeIndex)]="step"
+      [readonly]="false"
+      ariaLabelledBy="steps-interactive-caption"
+    />
+    <p class="status" role="status">{{ status() }}</p>
   `,
   styles: `
     :host {

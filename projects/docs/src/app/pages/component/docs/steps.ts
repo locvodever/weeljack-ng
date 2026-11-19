@@ -63,8 +63,8 @@ export const DOC: ComponentDoc = {
   aria: [
     '`wj-steps` needs the app’s router: Optimus injects `Router` and `ActivatedRoute`, which only `provideRouter(...)` provides. `@angular/router` is not a peer of `weeljack-ng`, so the wrapper cannot provide it, and Angular’s `NG0201` reaches your app as thrown.',
     'The current step carries `aria-current="step"`. With a `routerLink` on the steps, Optimus asks the router which one is current instead of reading `activeIndex`, so the marker follows the URL; the Tab stop still follows `activeIndex`.',
-    'Each step is named by its visible `label`. `wj-steps` takes no ARIA input: an `aria-*` attribute on the host logs the dev-mode warning `WJ0003` and is not forwarded.',
-    'Gap (Optimus): the `nav` has no name, and Optimus 2.0.2 renders no part, so the wrapper cannot set one. Put a heading before the steps, or wrap them in a labelled region, as the examples here do with a `section` named by its caption.',
+    'Each step is named by its visible `label`. The `nav` landmark is named by `ariaLabel` (the name) or `ariaLabelledBy` (the id of an element that names it, such as a heading), set on the `nav` and not on the `wj-steps` host: an `aria-*` attribute on the host logs the dev-mode warning `WJ0003` and is not forwarded.',
+    'Gap, fixed: Optimus’s `nav` has no name, and Optimus 2.0.2 renders no part for it, so `pt` cannot set one. `wj-steps` writes `aria-label` and `aria-labelledby` on the `nav` after each render, from `ariaLabel` and `ariaLabelledBy`, and keeps them when the steps appear later. Unset, neither attribute is present.',
     'Labels must be unique. Optimus tracks the steps by `label`, and Angular logs `NG0955` in development when two steps in a list already drawn share one.',
     'The current step is a filled circle, so it does not rely on colour of the text alone. A disabled step is faded in interactive steps and keeps a number and a label, so it is still read.',
     'Gap (Optimus): the arrow keys, Home and End also reach a disabled step and, in read-only steps, every inactive one. They are announced as unavailable (`aria-disabled`) and the keys do nothing there.',

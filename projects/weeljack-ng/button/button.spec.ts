@@ -4,7 +4,12 @@ import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import type { MockInstance } from 'vitest';
 import { userEvent } from 'vitest/browser';
 import { provideWeeljack } from 'weeljack-ng';
-import { WjButton, type WjButtonPt, type WjButtonSeverity } from 'weeljack-ng/button';
+import {
+  WjButton,
+  type WjButtonAriaHasPopup,
+  type WjButtonPt,
+  type WjButtonSeverity,
+} from 'weeljack-ng/button';
 import { WjButtonHarness } from 'weeljack-ng/button/testing';
 import { expectNoAxeViolations } from '../spec-support/axe';
 
@@ -41,6 +46,8 @@ const SEVERITIES: WjButtonSeverity[] = [
           [ariaLabel]="ariaLabel()"
           [ariaLabelledBy]="ariaLabelledBy()"
           [ariaDescribedBy]="ariaDescribedBy()"
+          [ariaHasPopup]="ariaHasPopup()"
+          [ariaExpanded]="ariaExpanded()"
           [pt]="pt()"
           (click)="clicks.update((count) => count + 1)"
         >
@@ -68,6 +75,8 @@ class Host {
   readonly ariaLabel = signal<string | undefined>(undefined);
   readonly ariaLabelledBy = signal<string | undefined>(undefined);
   readonly ariaDescribedBy = signal<string | undefined>(undefined);
+  readonly ariaHasPopup = signal<WjButtonAriaHasPopup | undefined>(undefined);
+  readonly ariaExpanded = signal<boolean | undefined>(undefined);
   readonly pt = signal<WjButtonPt>(undefined);
   readonly icon = signal(false);
   readonly width = signal<string | undefined>(undefined);
@@ -484,6 +493,72 @@ describe('WjButton', () => {
       const { host } = parts(element);
       expect(host.getAttributeNames().filter((name) => name.startsWith('aria-'))).toEqual([]);
       expect(warn).not.toHaveBeenCalled();
+    });
+
+    it('sets neither aria-haspopup nor aria-expanded until asked', async () => {
+      const { element } = await render();
+
+      const { control } = parts(element);
+      expect(control.hasAttribute('aria-haspopup')).toBe(false);
+      expect(control.hasAttribute('aria-expanded')).toBe(false);
+    });
+
+    it('routes ariaHasPopup and ariaExpanded to the focusable element, and follows their changes', async () => {
+      const { element, host, fixture } = await render('light', (h) => {
+        h.ariaHasPopup.set('menu');
+        h.ariaExpanded.set(false);
+      });
+      const { control, host: wjHost } = parts(element);
+
+      expect(control.getAttribute('aria-haspopup')).toBe('menu');
+      expect(control.getAttribute('aria-expanded')).toBe('false');
+
+      host.ariaExpanded.set(true);
+      host.ariaHasPopup.set('dialog');
+      await fixture.whenStable();
+      expect(control.getAttribute('aria-haspopup')).toBe('dialog');
+      expect(control.getAttribute('aria-expanded')).toBe('true');
+      expect(wjHost.getAttributeNames().filter((name) => name.startsWith('aria-'))).toEqual([]);
+
+      host.ariaHasPopup.set(undefined);
+      host.ariaExpanded.set(undefined);
+      await fixture.whenStable();
+      expect(control.hasAttribute('aria-haspopup')).toBe(false);
+      expect(control.hasAttribute('aria-expanded')).toBe(false);
+      expect(warn).not.toHaveBeenCalled();
+    });
+
+    it.each<WjButtonAriaHasPopup>(['menu', 'listbox', 'tree', 'grid', 'dialog'])(
+      'ariaHasPopup %s is written as the token itself',
+      async (popup) => {
+        const { element } = await render('light', (host) => {
+          host.ariaHasPopup.set(popup);
+        });
+
+        expect(parts(element).control.getAttribute('aria-haspopup')).toBe(popup);
+      },
+    );
+
+    it('wins over a pt root value for the same attribute and keeps its other keys', async () => {
+      const { element, host, fixture } = await render('light', (h) => {
+        h.pt.set({
+          root: { 'aria-haspopup': 'tree', 'aria-expanded': 'true', 'data-probe': 'root' },
+        });
+        h.ariaHasPopup.set('menu');
+        h.ariaExpanded.set(false);
+      });
+      const { control } = parts(element);
+
+      expect(control.getAttribute('aria-haspopup')).toBe('menu');
+      expect(control.getAttribute('aria-expanded')).toBe('false');
+      expect(control.getAttribute('data-probe')).toBe('root');
+
+      // Unset, the consumer's own pt value is the one that stays.
+      host.ariaHasPopup.set(undefined);
+      host.ariaExpanded.set(undefined);
+      await fixture.whenStable();
+      expect(control.getAttribute('aria-haspopup')).toBe('tree');
+      expect(control.getAttribute('aria-expanded')).toBe('true');
     });
 
     it('warns WJ0003 once and forwards nothing when aria-* is written on the host', async () => {

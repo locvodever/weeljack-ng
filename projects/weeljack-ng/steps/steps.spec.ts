@@ -34,15 +34,20 @@ const checkout = (): WjMenuItem[] => [
         [activeIndex]="activeIndex()"
         (activeIndexChange)="changed($event)"
         [readonly]="readonly()"
+        [ariaLabel]="ariaLabel()"
+        [ariaLabelledBy]="ariaLabelledBy()"
       />
     </div>
     <button id="after" type="button">After</button>
+    <h2 id="heading">Checkout progress heading</h2>
   `,
 })
 class Host {
   readonly model = signal<WjMenuItem[]>(checkout());
   readonly activeIndex = signal(0);
   readonly readonly = signal(true);
+  readonly ariaLabel = signal<string | undefined>(undefined);
+  readonly ariaLabelledBy = signal<string | undefined>(undefined);
   readonly width = signal<string | undefined>(undefined);
   /** Every index `activeIndexChange` reported, in order. */
   readonly reported = signal<number[]>([]);
@@ -344,6 +349,86 @@ describe('WjSteps', () => {
     });
   });
 
+  describe('the nav’s name', () => {
+    it('ariaLabel names the nav landmark, and follows a change', async () => {
+      const { fixture, component } = await render((host) => {
+        host.ariaLabel.set('Checkout progress');
+      });
+      const steps = await harnessOf(fixture);
+
+      expect(find(document, 'nav', HTMLElement).getAttribute('aria-label')).toBe(
+        'Checkout progress',
+      );
+      expect(await steps.getAriaAttributes()).toEqual({
+        label: 'Checkout progress',
+        labelledBy: null,
+      });
+
+      component.ariaLabel.set('Order steps');
+      await fixture.whenStable();
+      expect(await steps.getAriaAttributes()).toEqual({ label: 'Order steps', labelledBy: null });
+
+      component.ariaLabel.set(undefined);
+      await fixture.whenStable();
+      expect(find(document, 'nav', HTMLElement).hasAttribute('aria-label')).toBe(false);
+    });
+
+    it('ariaLabelledBy names the nav landmark by another element, and follows a change', async () => {
+      const { fixture, component } = await render((host) => {
+        host.ariaLabelledBy.set('heading');
+      });
+      const steps = await harnessOf(fixture);
+
+      expect(find(document, 'nav', HTMLElement).getAttribute('aria-labelledby')).toBe('heading');
+      expect(await steps.getAriaAttributes()).toEqual({ label: null, labelledBy: 'heading' });
+
+      component.ariaLabelledBy.set(undefined);
+      await fixture.whenStable();
+      expect(find(document, 'nav', HTMLElement).hasAttribute('aria-labelledby')).toBe(false);
+    });
+
+    it('sets neither attribute when no name is given', async () => {
+      const { fixture } = await render();
+
+      expect(await (await harnessOf(fixture)).getAriaAttributes()).toEqual({
+        label: null,
+        labelledBy: null,
+      });
+      expect(
+        find(document, 'nav', HTMLElement)
+          .getAttributeNames()
+          .filter((n) => n.startsWith('aria-')),
+      ).toEqual([]);
+    });
+
+    it('keeps the name when the steps appear after the nav was absent', async () => {
+      const { fixture, component } = await render((host) => {
+        host.model.set([]);
+        host.ariaLabel.set('Checkout progress');
+      });
+      const steps = await harnessOf(fixture);
+      expect(document.querySelector('nav')).toBeNull();
+      expect(await steps.getAriaAttributes()).toEqual({ label: null, labelledBy: null });
+
+      component.model.set(checkout());
+      await fixture.whenStable();
+
+      expect(await steps.getAriaAttributes()).toEqual({
+        label: 'Checkout progress',
+        labelledBy: null,
+      });
+    });
+
+    it('renders ariaLabel as attribute text', async () => {
+      await render((host) => {
+        host.ariaLabel.set(PAYLOAD);
+      });
+
+      expect(find(document, 'nav', HTMLElement).getAttribute('aria-label')).toBe(PAYLOAD);
+      expect(document.querySelector('img')).toBeNull();
+    });
+  });
+
   describe('items', () => {
     it('a read-only step other than the current one does nothing', async () => {
       const run = vi.fn<(event: WjMenuItemCommandEvent) => void>();
@@ -499,7 +584,7 @@ describe('WjSteps', () => {
       expect(warn).toHaveBeenCalledTimes(1);
       expect(String(warn.mock.calls[0]?.[0])).toContain('WJ0003: wj-steps:');
       expect(String(warn.mock.calls[0]?.[0])).toContain(
-        'wj-steps takes no ARIA input; each step is named by its label',
+        'Use the ariaLabel or ariaLabelledBy input to name the nav landmark; each step is named by its label',
       );
       expect(
         find(fixture.nativeElement as HTMLElement, 'nav', HTMLElement).hasAttribute('aria-label'),
@@ -842,6 +927,18 @@ describe('WjSteps', () => {
   describe('axe', () => {
     const states: { name: string; setup: (host: Host) => void }[] = [
       { name: 'read-only, the first step current', setup: () => undefined },
+      {
+        name: 'named by ariaLabel',
+        setup: (host) => {
+          host.ariaLabel.set('Checkout progress');
+        },
+      },
+      {
+        name: 'named by ariaLabelledBy',
+        setup: (host) => {
+          host.ariaLabelledBy.set('heading');
+        },
+      },
       {
         name: 'read-only, a middle step current',
         setup: (host) => {

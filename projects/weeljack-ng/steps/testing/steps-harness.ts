@@ -94,6 +94,18 @@ export class WjStepsHarness extends ComponentHarness {
     return labels;
   }
 
+  /**
+   * The name of the `nav` landmark as set by `ariaLabel` and `ariaLabelledBy`, `null` for an
+   * attribute that is absent. Both are `null` when nothing renders.
+   */
+  async getAriaAttributes(): Promise<{ label: string | null; labelledBy: string | null }> {
+    const nav = await this.nav();
+    return {
+      label: (await nav?.getAttribute('aria-label')) ?? null,
+      labelledBy: (await nav?.getAttribute('aria-labelledby')) ?? null,
+    };
+  }
+
   /** The position of the current step among the steps, from 0, or -1 when none is current. */
   async getActiveIndex(): Promise<number> {
     const steps = await this.getSteps();

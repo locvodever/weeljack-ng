@@ -58,7 +58,7 @@ export const DOC: ComponentDoc = {
     {
       key: 'Tab, Shift+Tab',
       effect:
-        'Moves through the links in order, the home link first. A disabled item with no link is not a Tab stop, and the current page is one (see the gaps below).',
+        'Moves through the links in order, the home link first. Disabled items and a current page with no link are not Tab stops: a current page that is a link keeps its stop.',
     },
     {
       key: 'Enter',
@@ -71,8 +71,8 @@ export const DOC: ComponentDoc = {
     'The last visible item carries `aria-current="page"`. Give it no `url` or `routerLink`, and give every other item one.',
     'Setting an `aria-*` attribute on the `wj-breadcrumb` host logs the dev-mode warning `WJ0003` and is not forwarded: use `ariaLabel` and `homeAriaLabel`.',
     'Gap (Optimus): an item with only a `command` and no `url` or `routerLink` is an `a` with no `href`. It is a Tab stop, but it has no link role and Enter does not activate it. Give every item except the current one a link; a `command` runs beside the link.',
-    'Gap (Optimus): the current page is also an `a` with no `href` and `tabindex="0"`: a Tab stop that is announced as text with “current page”.',
-    'Gap (Optimus): a disabled item with a `url` keeps its `href`, so it stays a Tab stop. It does nothing, because Optimus prevents the click and the item carries no command, but Optimus sets no `aria-disabled` on it. A disabled item with no link is not a Tab stop. A disabled item is dimmed, so its text is below 4.5:1 by design, and axe cannot tell it is inactive: the spec allows that one result on that one node.',
+    'Gap, fixed: Optimus leaves the current page, an `a` with no `href`, a Tab stop (`tabindex="0"`). The wrapper sets `tabindex="-1"` on it through the `itemLink` part, so it is announced as text with “current page” and Tab passes it. A current page that has a `url` or `routerLink` is a link and keeps its stop.',
+    'Gap, fixed: Optimus keeps the `href` of a disabled item and leaves it a Tab stop with no `aria-disabled`. The wrapper sets `aria-disabled="true"` and `tabindex="-1"` on a disabled item, the home link included, through the `itemLink` part: it is announced as unavailable and Tab passes it, and it still does nothing, because Optimus prevents the click and runs no command. Other links get no key from the wrapper, and a `pt.itemLink` of your own keeps its keys beside the routed ones.',
     'Gap (Optimus): long trails scroll sideways with the scrollbar hidden in Chromium and Safari, starting at home, so on a narrow viewport the current page can sit off the end. Focus scrolls a link into view. Keep labels to one to three words and trails to five levels with home.',
     'Colour fix: Aura’s light home glyph is zinc.400, 2.56:1 on white, under the 3:1 a graphic needs when it is the link’s only content. The default preset sets it to zinc.500 (4.83:1) and its hover to zinc.700, so the glyph still darkens on hover; the dark scheme keeps Aura’s colours. Both are rows of the contrast gate. The chevron separators are decoration (`aria-hidden`).',
     'Every link, the home glyph’s included, is at least 24 × 24 px, with its content centred.',
