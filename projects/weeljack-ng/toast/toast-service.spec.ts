@@ -10,9 +10,9 @@ import { WJ_TOAST_MESSAGES } from './toast-service';
 @Component({ selector: 'wj-toast-shell', imports: [WjToast], template: `<wj-toast />` })
 class Shell {}
 
-/** An app's own service shaped like quanoi's `ToastService`: four named methods over `show`. */
+/** An app's own toast service: four named methods over `show`. */
 @Injectable({ providedIn: 'root' })
-class QuanoiToastService {
+class AppToastService {
   private readonly toast = inject(WjToastService);
 
   error(code: string): void {
@@ -182,10 +182,10 @@ describe('WjToastService', () => {
     });
   });
 
-  describe('an app service over WjToastService (FR-35, the quanoi shape)', () => {
+  describe('an app service over WjToastService (FR-35, named methods over show)', () => {
     it('runs the four methods with no other provider', async () => {
       const fixture = await render();
-      const toasts = TestBed.inject(QuanoiToastService);
+      const toasts = TestBed.inject(AppToastService);
 
       toasts.error('internal');
       toasts.errorDetail('Không đọc được dữ liệu.');
@@ -210,11 +210,11 @@ describe('WjToastService', () => {
       ]);
     });
 
-    it('can be spied on the way quanoi spies on MessageService.add', () => {
+    it('can be spied on the way an app spies on MessageService.add', () => {
       TestBed.configureTestingModule({ providers: [provideWeeljack()] });
       const show = vi.spyOn(TestBed.inject(WjToastService), 'show');
 
-      TestBed.inject(QuanoiToastService).error('internal');
+      TestBed.inject(AppToastService).error('internal');
 
       expect(show).toHaveBeenCalledWith(expect.objectContaining({ severity: 'error' }));
     });

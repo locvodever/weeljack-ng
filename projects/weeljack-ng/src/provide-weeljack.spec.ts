@@ -19,8 +19,8 @@ import { provideWeeljack, type WjThemeOptions } from './public-api';
 })
 class ThemeHost {}
 
-/** quanoi's brand scales (`apps/owner/src/app/app.config.ts`), copied as fixtures. */
-const QUANOI_PRIMARY = {
+/** An app's brand scales, as fixtures. */
+const APP_PRIMARY = {
   50: '#fff3ef',
   100: '#ffd9c7',
   200: '#ffb59f',
@@ -33,7 +33,7 @@ const QUANOI_PRIMARY = {
   900: '#4d1803',
   950: '#310f01',
 };
-const QUANOI_SURFACE = {
+const APP_SURFACE = {
   0: '#ffffff',
   50: '#f6f4f1',
   100: '#ede9e4',
@@ -196,7 +196,7 @@ describe('provideWeeljack', () => {
     });
 
     it('takes a full scale unchanged', async () => {
-      await render({ primary: QUANOI_PRIMARY });
+      await render({ primary: APP_PRIMARY });
 
       expect(variable('--wj-primary-50')).toBe('#fff3ef');
       expect(variable('--wj-primary-400')).toBe('#f06030');
@@ -204,7 +204,7 @@ describe('provideWeeljack', () => {
     });
 
     it('takes one surface for both schemes and keeps surface.0 white', async () => {
-      await render({ surface: QUANOI_SURFACE });
+      await render({ surface: APP_SURFACE });
 
       expect(variable('--wj-surface-0')).toBe('#ffffff');
       expect(variable('--wj-surface-500')).toBe('#9e948c');
@@ -213,14 +213,14 @@ describe('provideWeeljack', () => {
     });
 
     it('lets a scale that sets 0 override the white', async () => {
-      await render({ surface: { ...QUANOI_SURFACE, 0: '#fffdfa' } });
+      await render({ surface: { ...APP_SURFACE, 0: '#fffdfa' } });
 
       expect(variable('--wj-surface-0')).toBe('#fffdfa');
     });
 
     it('reads each scheme from its own surface under { light, dark }', async () => {
       await render({
-        surface: { light: QUANOI_SURFACE, dark: STONE_DARK },
+        surface: { light: APP_SURFACE, dark: STONE_DARK },
         darkMode: 'class',
       });
 
@@ -233,7 +233,7 @@ describe('provideWeeljack', () => {
     });
 
     it('keeps the always-on layer whatever the brand', async () => {
-      const fixture = await render({ primary: QUANOI_PRIMARY, surface: QUANOI_SURFACE });
+      const fixture = await render({ primary: APP_PRIMARY, surface: APP_SURFACE });
       const button = (fixture.nativeElement as HTMLElement).querySelector('button');
 
       expect(variable('--wj-focus-ring-width')).toBe('2px');

@@ -12,8 +12,8 @@ import { fileURLToPath } from 'node:url';
  * Stop it before `npm run build` or `npm run check` in the same checkout: they write the same
  * `dist/`.
  *
- * Pattern ported from quanoi's `scripts/dev.mjs` (spawn through the shell, prefixed output, tree
- * kill on Ctrl-C); nothing else of it applies.
+ * The pattern: spawn through the shell, prefix each process's output, and kill the whole tree
+ * on Ctrl-C.
  *
  * The docs registries are generated once at start (`npm run generate`); a new entry's docs page or
  * public API needs a restart to show up.

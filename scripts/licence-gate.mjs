@@ -1,7 +1,7 @@
 // @ts-check
 /**
- * Pure licence-gate module, no side effects at import. Ported from quanoi's `licence-gate.mjs`
- * (the allow-list test and the offender evaluation), with two deliberate departures (FR-33):
+ * Pure licence-gate module, no side effects at import: the allow-list test and the offender
+ * evaluation, with two deliberate choices (FR-33):
  * the allow-list drops MPL-2.0, Unlicense and CC0-1.0, and the package set is the shipped
  * closure computed by `check-licences.mjs`, not a lockfile production walk (every package here is
  * a root devDependency).

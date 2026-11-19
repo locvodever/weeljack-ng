@@ -6,8 +6,8 @@ import { vi as viLocale } from 'weeljack-ng/locale';
 import { _WJ_EN, _checkWeeljackSetup } from 'weeljack-ng/private';
 import { provideWeeljack, type WjThemeOptions, type WjTranslation } from './public-api';
 
-/** quanoi's Vietnamese translation (`apps/owner/src/app/app.config.ts`), copied as a fixture. */
-const QUANOI_VI = {
+/** An app's own Vietnamese translation, as a fixture. */
+const APP_VI = {
   accept: 'Đồng ý',
   reject: 'Hủy',
   choose: 'Chọn',
@@ -77,8 +77,8 @@ const QUANOI_VI = {
 // Type level (FR-9): the library's translation feeds Optimus, and an Optimus-shaped object feeds
 // the library's, directly and spread over a complete locale. A failure here is a compile error.
 const toOptimus: Translation = _WJ_EN satisfies WjTranslation;
-const fromQuanoi: WjTranslation = QUANOI_VI;
-const spread: WjTranslation = { ...viLocale, ...QUANOI_VI };
+const fromApp: WjTranslation = APP_VI;
+const spread: WjTranslation = { ...viLocale, ...APP_VI };
 
 /** Stands in for the first `wj-*` component: it runs the setup check the way a wrapper will. */
 @Component({ selector: 'wj-translation-probe', template: 'probe' })
@@ -108,7 +108,7 @@ describe('provideWeeljack translation', () => {
 
   it('accepts the shapes the type-level checks above compile', () => {
     expect(toOptimus).toBe(_WJ_EN);
-    expect(fromQuanoi.aria?.close).toBe('Đóng');
+    expect(fromApp.aria?.close).toBe('Đóng');
     expect(spread['reject']).toBe('Hủy');
   });
 
@@ -164,10 +164,10 @@ describe('provideWeeljack translation', () => {
     });
   });
 
-  describe('quanoi', () => {
+  describe('an app translation', () => {
     it('keeps its own strings over vi and the vi own group', async () => {
       await setup({
-        translation: { ...viLocale, ...QUANOI_VI },
+        translation: { ...viLocale, ...APP_VI },
         primary: '#c2410c',
         darkMode: 'off',
       });
