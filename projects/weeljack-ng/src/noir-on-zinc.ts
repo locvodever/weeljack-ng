@@ -148,6 +148,8 @@ export const wjAlwaysOn = definePreset(aura, {
       root: { width: '1.5rem', height: '1.5rem' },
       icon: { size: '1rem' },
     },
+    // Aura's star is 1rem; 1.5rem makes each option a 24 px hit box (22 Q3).
+    rating: { icon: { size: '1.5rem' } },
     toggleswitch: {
       colorScheme: {
         light: {

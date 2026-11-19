@@ -37,6 +37,8 @@ const PAIRS = {
     ['checkbox check', 'checkbox.icon.checked.color', 'checkbox.checked.background', NON_TEXT],
     ['radio border', 'radiobutton.border.color', 'radiobutton.background', NON_TEXT],
     ['radio dot', 'radiobutton.icon.checked.color', 'radiobutton.checked.background', NON_TEXT],
+    ['rating off star on cards', 'rating.icon.color', 'surface.0', NON_TEXT],
+    ['rating on star on cards', 'rating.icon.active.color', 'surface.0', NON_TEXT],
     ['switch off track', 'toggleswitch.background', 'surface.0', NON_TEXT],
     [
       'switch handle on track',
@@ -211,6 +213,8 @@ const PAIRS = {
     ['checkbox check', 'checkbox.icon.checked.color', 'checkbox.checked.background', NON_TEXT],
     ['radio border', 'radiobutton.border.color', 'radiobutton.background', NON_TEXT],
     ['radio dot', 'radiobutton.icon.checked.color', 'radiobutton.checked.background', NON_TEXT],
+    ['rating off star on cards', 'rating.icon.color', 'content.background', NON_TEXT],
+    ['rating on star on cards', 'rating.icon.active.color', 'content.background', NON_TEXT],
     ['switch off track', 'toggleswitch.background', 'content.background', NON_TEXT],
     [
       'switch handle on track',

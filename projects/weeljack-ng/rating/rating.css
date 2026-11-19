@@ -1,0 +1,8 @@
+/* The host is the box of the Optimus row inside (already inline-flex) and adds none of its own.
+   The star size (24 px), the on and off colours, the hover, the focus ring and the transitions are
+   Optimus's, through the preset's `rating` tokens; nothing of the look is set here. */
+@layer wj {
+  :host {
+    display: inline-flex;
+  }
+}
