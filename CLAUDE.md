@@ -155,7 +155,10 @@ a family's own:
   measured as one module, so every family's helpers and `wj` strings add up there; its row in
   `size-budgets.json` sets `kb: 7`. A wrapper entry needs no row: `size` defaults
   `weeljack-ng/<x>` to `@openng/optimus-ui/<x>`, and only the root, `private` and own entries have
-  a row in `size-budgets.json`. No family PR raises a limit.
+  a row in `size-budgets.json`, or a wrapper raised under the rule below. Since 2026-11-19 a
+  wrapper may get a `size-budgets.json` row with `kb` under Loc's raise rule: the measured gzip plus
+  at most 0.05 KB, capped at +0.25 KB (+0.75 KB for galleria); the root and `private` never change;
+  each raise is a row in the PR body. No PR raises a limit outside that rule.
 - SSR is claimed; hydration is not, in v1.
 - Optimus errors are never caught or re-wrapped.
 - Own errors follow `WJ<NNNN>: <wj-selector>: <what is wrong>. <what to do>. Find more at
@@ -234,7 +237,8 @@ a family's own:
    the docs page.
 4. A docs page (purpose and import → examples → Accessibility → Styling → generated API) that
    prerenders, never with `RenderMode.Client`.
-5. A size within budget (no row to add for a wrapper; an own entry needs a row).
+5. A size within budget (no row to add for a wrapper, unless raised under § 5's raise rule; an own
+   entry needs a row).
 6. OnPush and zoneless.
 7. `npm run check` exits 0.
 
@@ -417,7 +421,7 @@ Copied from the roadmap's engineering baseline (one line per area that applies).
 - **B14 NFRs and failure modes:**
   - each wrapper entry ≤ max(2.5 KB, 25% of the Optimus entry it wraps), and own entries ≤ 5 KB,
     esbuild + gzip-6 (raised from 1.5 KB and 3.2 KB by Loc, 2026-11-16), except `private` ≤ 7 KB
-    (Loc, 2026-11-18); no family PR raises a limit;
+    (Loc, 2026-11-18); no PR raises a limit outside § 5's raise rule (Loc, 2026-11-19);
   - no app-level budget;
   - OnPush and zoneless as hard rules;
   - SSR claimed, hydration not in v1;

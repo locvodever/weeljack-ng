@@ -21,9 +21,9 @@ import type { WjKeyFilterPattern } from './keyfilter-types';
  */
 @Directive({
   selector: 'input[wjKeyFilter]',
-  // Optimus's pattern input is the member `pattern` under the alias `pKeyFilter`, which
-  // `extract-api.mjs` cannot map to a member, so it is not exposed: the `wjKeyFilter` input below
-  // forwards to it instead.
+  // Optimus's pattern input is the member `pattern` under the alias `pKeyFilter`. It is not exposed
+  // (`pKeyFilter: wjKeyFilter`): the generated docs row would then show Optimus's `KeyFilterPattern`
+  // type and JSDoc across the seam (09). The `wjKeyFilter` input below forwards to it instead.
   hostDirectives: [KeyFilter],
   // A bound `[wjKeyFilter]` leaves no attribute in the DOM, and the harness (and a consumer's
   // CSS) finds the input by `input[wjKeyFilter]`. A static attribute in the template wins.
