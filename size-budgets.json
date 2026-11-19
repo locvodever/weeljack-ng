@@ -61,6 +61,12 @@
       "optimus": "speeddial",
       "kb": 2.75,
       "note": "Raised under CLAUDE.md § 5's rule (Loc, 2026-11-19): S3, Enter or Space on an action reached with Tab runs it, Enter on the list no longer reopens the dial, and the arrow keys skip a disabled action (FR-20)."
+    },
+    {
+      "entry": "weeljack-ng/picklist",
+      "optimus": "picklist",
+      "kb": 2.6,
+      "note": "Raised under CLAUDE.md § 5's rule (Loc, 2026-11-19): S2, showSourceControls and showTargetControls hide a list's four reorder buttons. The filters did not fit the 2.75 KB cap (the lean variant measured 2846 B)."
     }
   ]
 }

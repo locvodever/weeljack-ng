@@ -48,6 +48,8 @@ function makeColumns(names: readonly string[]): Column[] {
         [targetAriaLabel]="targetAriaLabel()"
         [dragdrop]="dragdrop()"
         [stripedRows]="stripedRows()"
+        [showSourceControls]="showSourceControls()"
+        [showTargetControls]="showTargetControls()"
         [disabled]="disabled()"
         [scrollHeight]="scrollHeight()"
         [pt]="pt()"
@@ -106,6 +108,8 @@ class Host {
   readonly targetAriaLabel = signal<string | undefined>('Visible columns');
   readonly dragdrop = signal(false);
   readonly stripedRows = signal(false);
+  readonly showSourceControls = signal(true);
+  readonly showTargetControls = signal(true);
   readonly disabled = signal(false);
   readonly scrollHeight = signal('14rem');
   readonly pt = signal<WjPickListPt | undefined>(undefined);
@@ -276,6 +280,19 @@ const STATES: [string, (host: Host) => void][] = [
     },
   ],
   [
+    'source controls off',
+    (host) => {
+      host.showSourceControls.set(false);
+    },
+  ],
+  [
+    'both controls off',
+    (host) => {
+      host.showSourceControls.set(false);
+      host.showTargetControls.set(false);
+    },
+  ],
+  [
     'source empty',
     (host) => {
       host.source.set([]);
@@ -433,6 +450,42 @@ describe('WjPickList', () => {
       expect(transfer.getBoundingClientRect().bottom).toBeLessThanOrEqual(
         target?.getBoundingClientRect().top ?? 0,
       );
+    });
+
+    it('hides a list’s four reorder buttons with its show-controls input off, and never the transfer buttons', async () => {
+      const { element, fixture, host } = await render();
+      expect(labels(buttons(element, 'source-controls'))).toHaveLength(4);
+
+      host.showSourceControls.set(false);
+      await fixture.whenStable();
+      expect(buttons(element, 'source-controls')).toHaveLength(0);
+      expect(buttons(element, 'target-controls')).toHaveLength(4);
+      expect(buttons(element, 'transfer-controls')).toHaveLength(4);
+
+      host.showTargetControls.set(false);
+      await fixture.whenStable();
+      expect(buttons(element, 'source-controls')).toHaveLength(0);
+      expect(buttons(element, 'target-controls')).toHaveLength(0);
+      expect(buttons(element, 'transfer-controls')).toHaveLength(4);
+
+      host.showSourceControls.set(true);
+      host.showTargetControls.set(true);
+      await fixture.whenStable();
+      expect(buttons(element, 'source-controls')).toHaveLength(4);
+      expect(buttons(element, 'target-controls')).toHaveLength(4);
+    });
+
+    it('still transfers with both reorder groups hidden', async () => {
+      const { host, list } = await render('light', (h) => {
+        h.showSourceControls.set(false);
+        h.showTargetControls.set(false);
+      });
+
+      await list.selectSourceItem('Email');
+      await list.moveToTarget();
+
+      expect(names(host.source())).toEqual(['Name', 'Phone', 'City']);
+      expect(names(host.target())).toEqual([...TARGET_NAMES, 'Email']);
     });
 
     it('renders no filter input, as it has no filter inputs', async () => {

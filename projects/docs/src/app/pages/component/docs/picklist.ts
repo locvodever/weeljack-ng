@@ -4,7 +4,7 @@ import type { ComponentDoc, MappingRow } from '../component-doc';
 
 const droppedAlways = 'Never exposed on any wrapper (ADR 0002).';
 const droppedForSize =
-  'Dropped: size (21), can return as an additive minor, once the entry has room in its 2.50 KB.';
+  'Dropped: size (21), can return as an additive minor. The filters measured 2846 B with the lean variant (`filterBy` and a name per filter input), over the 2.75 KB cap (2816 B).';
 
 const dropped = (optimus: string, note: string): MappingRow => ({
   optimus,
@@ -17,7 +17,7 @@ export const DOC: ComponentDoc = {
   entry: 'picklist',
   title: 'Pick list',
   purpose:
-    'Two lists and the buttons that move items from one to the other. Give `wj-picklist` its `source` and `target` as `[(source)]` and `[(target)]`, select one or more items in a list, and move them with the buttons between the lists: the selected items, or every item. Four more buttons beside each list move the selected items up, to the top, down and to the bottom of that list. Every move writes new arrays: your arrays are never changed, because Optimus moves items by splicing the arrays it is given and the pick list works on copies. Items show their `name` field, or the field `dataKey` names, or the content of a `wjPickListItem` template. Name the lists with `sourceAriaLabel` and `targetAriaLabel`. Below a viewport width of 960 px the lists stack, with the transfer buttons between them turned to a row. There is no filter in this release.',
+    'Two lists and the buttons that move items from one to the other. Give `wj-picklist` its `source` and `target` as `[(source)]` and `[(target)]`, select one or more items in a list, and move them with the buttons between the lists: the selected items, or every item. Four more buttons beside each list move the selected items up, to the top, down and to the bottom of that list; `showSourceControls` and `showTargetControls` set to `false` hide a list’s four, and the transfer buttons always stay. Every move writes new arrays: your arrays are never changed, because Optimus moves items by splicing the arrays it is given and the pick list works on copies. Items show their `name` field, or the field `dataKey` names, or the content of a `wjPickListItem` template. Name the lists with `sourceAriaLabel` and `targetAriaLabel`. Below a viewport width of 960 px the lists stack, with the transfer buttons between them turned to a row. There is no filter in this release.',
   examples: [
     {
       title: 'Basic',
@@ -133,10 +133,12 @@ export const DOC: ComponentDoc = {
     dropped('showSourceFilter, showTargetFilter', droppedForSize),
     dropped('sourceFilterPlaceholder, targetFilterPlaceholder', droppedForSize),
     dropped('ariaSourceFilterLabel, ariaTargetFilterLabel', droppedForSize),
-    dropped(
-      'showSourceControls, showTargetControls',
-      `${droppedForSize} Both groups of reorder buttons are always shown.`,
-    ),
+    {
+      optimus: 'showSourceControls, showTargetControls',
+      weeljack: 'same',
+      status: 'kept',
+      note: '`false` hides that list’s four reorder buttons (up, top, down, bottom); `true` unless set. The transfer buttons between the lists always show.',
+    },
     dropped(
       'rightButtonAriaLabel, leftButtonAriaLabel, allRightButtonAriaLabel, allLeftButtonAriaLabel, upButtonAriaLabel, downButtonAriaLabel, topButtonAriaLabel, bottomButtonAriaLabel',
       'Labels come from the translation (`aria.*`, 22 Q8).',
