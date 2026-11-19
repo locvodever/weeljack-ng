@@ -14,6 +14,7 @@ import { _overlayEscapeGate } from 'weeljack-ng/private';
 import { WjTooltip, type WjTooltipPosition } from 'weeljack-ng/tooltip';
 import { WjTooltipHarness } from 'weeljack-ng/tooltip/testing';
 import { expectNoAxeViolations } from '../spec-support/axe';
+import { FRAMES } from '../spec-support/frames';
 
 const PAYLOAD = '<img src=x onerror="window.wjInjected = true">';
 const TEXT = 'Downloads the current view as a CSV file.';
@@ -157,7 +158,7 @@ async function park(rendered: Rendered): Promise<void> {
 /** Waits for the bubble, and for Optimus's 250 ms fade to finish (it is JavaScript, not CSS). */
 async function shown(): Promise<HTMLElement> {
   await expect.poll(bubbleEl).not.toBeNull();
-  await expect.poll(() => getComputedStyle(bubbleEl() ?? document.body).opacity).toBe('1');
+  await expect.poll(() => getComputedStyle(bubbleEl() ?? document.body).opacity, FRAMES).toBe('1');
   return find(document, '[role="tooltip"]', HTMLElement);
 }
 

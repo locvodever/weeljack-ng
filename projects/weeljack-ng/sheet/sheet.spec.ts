@@ -14,6 +14,7 @@ import { WjSheet } from './sheet';
 import { WJ_SHEET_WIDE } from './sheet-wide';
 import { WjSheetHarness } from './testing/sheet-harness';
 import { afterOverlay } from '../spec-support/teardown';
+import { FRAMES } from '../spec-support/frames';
 
 const PAYLOAD = '<img src=x onerror="window.wjInjected = true">';
 const ROOT = document.documentElement;
@@ -188,9 +189,9 @@ async function open({ fixture, component }: Rendered): Promise<void> {
 
 /** Waits until the sheet has left and nothing of it, its backdrop or its scroll lock remains. */
 async function gone(): Promise<void> {
-  await expect.poll(panelEl).toBeNull();
-  await expect.poll(masks).toEqual([]);
-  await expect.poll(scrollLocked).toBe(false);
+  await expect.poll(panelEl, FRAMES).toBeNull();
+  await expect.poll(masks, FRAMES).toEqual([]);
+  await expect.poll(scrollLocked, FRAMES).toBe(false);
 }
 
 /** Closes the sheet from the app and waits for the leave to end. */
