@@ -1,11 +1,21 @@
 import { NgTemplateOutlet } from '@angular/common';
-import { Component, booleanAttribute, computed, contentChild, input, model } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  booleanAttribute,
+  computed,
+  contentChild,
+  inject,
+  input,
+  model,
+} from '@angular/core';
 import { Step, StepList, StepPanel, StepPanels, Stepper } from '@openng/optimus-ui/stepper';
 import {
   _OVERLAY_MOTION,
   _checkAriaOnHost,
   _checkWeeljackSetup,
   _mergePartAttributes,
+  _rovingFocus,
 } from 'weeljack-ng/private';
 import { WjStepList } from './step-list/step-list';
 import { WjStepPanels } from './step-panels/step-panels';
@@ -17,6 +27,11 @@ import type { WjStepperPt, WjStepperValue } from './stepper-types';
  * `wj-step-panel` children; a step and its panel share a `value` (1, 2, 3 and so on), and `value`
  * here is the active one. Move between steps by setting it from your own buttons. Only
  * `wj-step-list` and `wj-step-panels` children render.
+ *
+ * The steps are a tab list with one Tab stop: Tab enters on the active step and the next Tab goes
+ * on to the active panel's controls. Arrow Right and Arrow Left, Home and End move focus between
+ * the enabled steps and wrap, without changing `value`; Enter or Space on a focused step activates
+ * it (manual activation). Name the tab list with `ariaLabel` or `ariaLabelledBy` on `wj-step-list`.
  */
 @Component({
   selector: 'wj-stepper',
@@ -68,8 +83,15 @@ export class WjStepper {
     );
   });
 
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;
+
   constructor() {
     _checkWeeljackSetup('wj-stepper');
     _checkAriaOnHost('wj-stepper', 'Remove it: the steps and panels name themselves');
+    // The enabled step buttons are one Tab stop, led by the active step.
+    _rovingFocus(
+      () => [...this.host.querySelectorAll<HTMLElement>('p-step-list [role="tab"]:not(:disabled)')],
+      () => this.host.querySelector<HTMLElement>('p-step-list [aria-selected="true"]') ?? undefined,
+    );
   }
 }

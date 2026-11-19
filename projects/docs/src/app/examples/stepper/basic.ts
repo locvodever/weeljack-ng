@@ -22,7 +22,7 @@ import {
   imports: [WjStepper, WjStepList, WjStep, WjStepPanels, WjStepPanel, WjButton],
   template: `
     <wj-stepper [(value)]="value">
-      <wj-step-list>
+      <wj-step-list ariaLabel="Order steps">
         <wj-step [value]="1">Details</wj-step>
         <wj-step [value]="2">Preferences</wj-step>
         <wj-step [value]="3">Confirm</wj-step>

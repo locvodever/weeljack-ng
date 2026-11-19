@@ -404,8 +404,12 @@ function expectRouted(element: HTMLElement, disabled: readonly string[] = []): v
   for (const button of buttonsOf(element)) {
     const off = disabled.includes(button.textContent.trim());
     expect(button.getAttribute('aria-disabled')).toBe(off ? 'true' : null);
-    expect(button.getAttribute('tabindex')).toBe(off ? '-1' : '0');
+    // A disabled button is never the stop; the enabled ones share one.
+    expect(off ? ['-1'] : ['0', '-1']).toContain(button.getAttribute('tabindex'));
   }
+  expect(
+    buttonsOf(element).filter((button) => button.getAttribute('tabindex') === '0'),
+  ).toHaveLength(buttonsOf(element).length > disabled.length ? 1 : 0);
 }
 
 const STATES: [string, (host: Host) => void][] = [
@@ -625,8 +629,13 @@ describe('WjSelectButton', () => {
       expect(groupOf(element).hasAttribute('aria-disabled')).toBe(false);
       for (const button of buttonsOf(element)) {
         expect(button.hasAttribute('aria-disabled')).toBe(false);
-        expect(button.getAttribute('tabindex')).toBe('0');
       }
+      // The kept pick, `week`, is the one Tab stop.
+      expect(buttonsOf(element).map((button) => button.getAttribute('tabindex'))).toEqual([
+        '-1',
+        '0',
+        '-1',
+      ]);
     });
 
     it('required does not reach the group: a group cannot carry aria-required', async () => {
@@ -991,15 +1000,27 @@ describe('WjSelectButton', () => {
       expect(buttonOf(element, 'Week').getAttribute('tabindex')).toBe('-1');
     });
 
-    it('lets the routed aria-disabled and tabindex win over the consumer’s on the same toggle button', async () => {
+    it('lets the routed aria-disabled win over the consumer’s, keeps the consumer’s other keys, and leaves tabindex to the roving focus', async () => {
       const { element } = await render((host) => {
         host.options.set(VIEWS_WITH_GAP);
-        host.pt.set({ pcToggleButton: { root: { 'aria-disabled': 'false', tabindex: '5' } } });
+        host.pt.set({
+          pcToggleButton: {
+            root: { 'aria-disabled': 'false', 'data-toggle': 'x', tabindex: '5' },
+          },
+        });
       });
 
       expect(buttonOf(element, 'Week').getAttribute('aria-disabled')).toBe('true');
-      expect(buttonOf(element, 'Week').getAttribute('tabindex')).toBe('-1');
-      expect(buttonOf(element, 'Day').getAttribute('tabindex')).toBe('0');
+      expect(buttonsOf(element).map((button) => button.getAttribute('data-toggle'))).toEqual([
+        'x',
+        'x',
+        'x',
+      ]);
+      expect(buttonsOf(element).map((button) => button.getAttribute('tabindex'))).toEqual([
+        '0',
+        '-1',
+        '-1',
+      ]);
     });
 
     it('lets the routed group attributes win over the consumer’s', async () => {
@@ -1071,10 +1092,10 @@ describe('WjSelectButton', () => {
         const { component, element } = await renderAs(NgModelHost);
 
         await tabFrom(element, 'before');
-        expect(document.activeElement).toBe(buttonOf(element, 'Day'));
-        await userEvent.tab();
         expect(document.activeElement).toBe(buttonOf(element, 'Week'));
-        await userEvent.click(buttonOf(element, 'Month'));
+        await userEvent.keyboard('{ArrowRight}');
+        expect(document.activeElement).toBe(buttonOf(element, 'Month'));
+        await userEvent.click(buttonOf(element, 'Day'));
         expect(component.model().touched).toBe(false);
 
         await userEvent.tab();
@@ -1118,12 +1139,10 @@ describe('WjSelectButton', () => {
 
         await tabFrom(element, 'before');
         await userEvent.keyboard('{Enter}');
-        await userEvent.tab();
+        await userEvent.keyboard('{ArrowRight}');
         await userEvent.click(buttonOf(element, 'Month'));
         expect(component.control.touched).toBe(false);
 
-        await userEvent.tab({ shift: true });
-        await userEvent.tab({ shift: true });
         await userEvent.tab({ shift: true });
         expect(document.activeElement).toBe(byId(element, 'before'));
         expect(component.control.touched).toBe(true);
@@ -1179,7 +1198,7 @@ describe('WjSelectButton', () => {
         const { component, element } = await renderAs(SignalHost);
 
         await tabFrom(element, 'before');
-        await userEvent.tab();
+        await userEvent.keyboard('{ArrowRight}');
         await userEvent.click(buttonOf(element, 'Month'));
         expect(component.model.view().touched()).toBe(false);
 
@@ -1493,7 +1512,7 @@ describe('WjSelectButton', () => {
         await expect.poll(() => document.activeElement).toBe(buttonOf(element, 'Day'));
         await expectNoAxeViolations(hostOf(element));
 
-        await userEvent.tab();
+        await userEvent.keyboard('{ArrowRight}');
         await expect.poll(() => document.activeElement).toBe(buttonOf(element, 'Month'));
         await expectNoAxeViolations(hostOf(element));
       });
@@ -1514,20 +1533,33 @@ describe('WjSelectButton', () => {
       return rendered;
     }
 
-    it('Tab visits each enabled button in turn, skips a disabled option, and leaves the group', async () => {
+    it('Tab enters on the first enabled button with none picked, and the next Tab leaves the group', async () => {
       const { element } = await focusFirst();
-
-      await userEvent.tab();
-      expect(document.activeElement).toBe(buttonOf(element, 'Month'));
+      expect(
+        ['Day', 'Month'].map((label) => buttonOf(element, label).getAttribute('tabindex')),
+      ).toEqual(['0', '-1']);
 
       await userEvent.tab();
       expect(document.activeElement).toBe(byId(element, 'after'));
     });
 
-    it('Shift+Tab walks back through the enabled buttons, and leaves the group', async () => {
-      const { element } = await focusFirst();
+    it('Tab enters on the picked button, and Shift+Tab leaves the group by the same stop', async () => {
+      const { element } = await renderAs(KeyboardHost, (host) => {
+        host.value.set('month');
+      });
+      await tabFrom(element, 'before');
+      expect(document.activeElement).toBe(buttonOf(element, 'Month'));
+      expect(buttonOf(element, 'Day').getAttribute('tabindex')).toBe('-1');
+
+      await userEvent.tab({ shift: true });
+      expect(document.activeElement).toBe(byId(element, 'before'));
       await userEvent.tab();
       expect(document.activeElement).toBe(buttonOf(element, 'Month'));
+    });
+
+    it('Shift+Tab walks back into the group on its stop, and leaves it', async () => {
+      const { element } = await renderAs(KeyboardHost);
+      byId(element, 'after').focus();
 
       await userEvent.tab({ shift: true });
       expect(document.activeElement).toBe(buttonOf(element, 'Day'));
@@ -1537,16 +1569,46 @@ describe('WjSelectButton', () => {
     });
 
     it('skips a disabled group on Tab and on Shift+Tab', async () => {
-      const { element } = await renderAs(KeyboardHost);
-      byId(element, 'after').focus();
-
-      await userEvent.tab({ shift: true });
-      expect(document.activeElement).toBe(buttonOf(element, 'Month'));
-
+      const { element } = await focusFirst();
       const second = element.querySelectorAll('wj-selectbutton')[1];
+
+      await userEvent.tab();
+      expect(document.activeElement).toBe(byId(element, 'after'));
+      await userEvent.tab({ shift: true });
+      expect(document.activeElement).toBe(buttonOf(element, 'Day'));
+
       for (const button of buttonsOf(second ?? element)) {
         expect(button.getAttribute('tabindex')).toBe('-1');
       }
+    });
+
+    it('Arrow Right and Arrow Left, Home and End move focus, wrap, skip a disabled option and leave the value alone', async () => {
+      const { component, element } = await focusFirst();
+
+      await userEvent.keyboard('{ArrowRight}');
+      expect(document.activeElement).toBe(buttonOf(element, 'Month'));
+      await userEvent.keyboard('{ArrowRight}');
+      expect(document.activeElement).toBe(buttonOf(element, 'Day'));
+      await userEvent.keyboard('{ArrowLeft}');
+      expect(document.activeElement).toBe(buttonOf(element, 'Month'));
+      await userEvent.keyboard('{Home}');
+      expect(document.activeElement).toBe(buttonOf(element, 'Day'));
+      await userEvent.keyboard('{End}');
+      expect(document.activeElement).toBe(buttonOf(element, 'Month'));
+
+      expect(component.value()).toBeNull();
+      expect(buttonOf(element, 'Week').getAttribute('aria-pressed')).toBe('false');
+      expect(buttonOf(element, 'Month').getAttribute('tabindex')).toBe('0');
+      expect(buttonOf(element, 'Day').getAttribute('tabindex')).toBe('-1');
+    });
+
+    it('Up, Down and Escape do nothing', async () => {
+      const { component, element } = await focusFirst();
+
+      await userEvent.keyboard('{ArrowDown}{ArrowUp}{Escape}');
+
+      expect(document.activeElement).toBe(buttonOf(element, 'Day'));
+      expect(component.value()).toBeNull();
     });
 
     it('Enter picks the focused button, Enter again unpicks it, and focus stays on it', async () => {
@@ -1564,17 +1626,29 @@ describe('WjSelectButton', () => {
       expect(document.activeElement).toBe(buttonOf(element, 'Day'));
     });
 
-    it('Space picks the focused button and does not scroll the page', async () => {
+    it('Space picks the button an arrow moved to and does not scroll the page', async () => {
       const { fixture, component, element } = await focusFirst();
       const scrolled = window.scrollY;
 
-      await userEvent.tab();
+      await userEvent.keyboard('{ArrowRight}');
       await userEvent.keyboard(' ');
       await fixture.whenStable();
 
       expect(component.value()).toBe('month');
       expect(document.activeElement).toBe(buttonOf(element, 'Month'));
       expect(window.scrollY).toBe(scrolled);
+    });
+
+    it('moves the stop to the picked button, so re-entering lands on it', async () => {
+      const { fixture, element } = await focusFirst();
+      await userEvent.keyboard('{ArrowRight}');
+      await userEvent.keyboard('{Enter}');
+      await fixture.whenStable();
+
+      byId(element, 'after').focus();
+      await userEvent.tab({ shift: true });
+
+      expect(document.activeElement).toBe(buttonOf(element, 'Month'));
     });
 
     it('Enter on the picked button keeps the pick while allowEmpty is off', async () => {
@@ -1589,15 +1663,6 @@ describe('WjSelectButton', () => {
 
       expect(component.value()).toBe('day');
       expect(buttonOf(element, 'Day').getAttribute('aria-pressed')).toBe('true');
-    });
-
-    it('Gap: the arrow keys, Home, End and Escape do nothing', async () => {
-      const { component, element } = await focusFirst();
-
-      await userEvent.keyboard('{ArrowRight}{ArrowDown}{ArrowLeft}{ArrowUp}{Home}{End}{Escape}');
-
-      expect(document.activeElement).toBe(buttonOf(element, 'Day'));
-      expect(component.value()).toBeNull();
     });
 
     it('does nothing on a disabled group, and a disabled button takes no Enter or Space', async () => {

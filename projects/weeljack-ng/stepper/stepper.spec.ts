@@ -49,7 +49,7 @@ const STEPS: StepData[] = [
     <button type="button" id="before">Before</button>
     <div [style.width]="width()">
       <wj-stepper [value]="value()" (valueChange)="changed($event)" [linear]="linear()" [pt]="pt()">
-        <wj-step-list [pt]="listPt()">
+        <wj-step-list [pt]="listPt()" [ariaLabel]="listLabel()" [ariaLabelledBy]="listLabelledBy()">
           @for (step of steps(); track step.value) {
             <wj-step [value]="step.value" [disabled]="step.disabled ?? false" [pt]="step.pt">{{
               step.title
@@ -99,6 +99,8 @@ class Host {
   readonly nav = signal(false);
   readonly pt = signal<WjStepperPt>(undefined);
   readonly listPt = signal<WjStepListPt>(undefined);
+  readonly listLabel = signal<string | undefined>(undefined);
+  readonly listLabelledBy = signal<string | undefined>(undefined);
   readonly panelsPt = signal<WjStepPanelsPt>(undefined);
   readonly bonus = signal(false);
   readonly width = signal<string | undefined>(undefined);
@@ -684,14 +686,16 @@ describe('WjStepper', () => {
       expect(host.reported()).toEqual([]);
     });
 
-    it('is skipped by the Tab key', async () => {
+    it('is skipped by the Tab key and by the arrows', async () => {
       const { element } = await render('light', withDisabled);
       find(element, '#before', HTMLElement).focus();
 
       await userEvent.tab();
       expect(document.activeElement).toBe(buttonOf(stepEls(element)[0]));
-      await userEvent.tab();
+      await userEvent.keyboard('{ArrowRight}');
       expect(document.activeElement).toBe(buttonOf(stepEls(element)[2]));
+      await userEvent.tab();
+      expect(document.activeElement).toBe(find(element, '#after', HTMLElement));
     });
   });
 
@@ -770,6 +774,25 @@ describe('WjStepper', () => {
           find(element, 'p-step-panels', HTMLElement),
         ),
       ).toBe(false);
+    });
+
+    it('names the tab list from ariaLabel or ariaLabelledBy, and leaves it unnamed without them', async () => {
+      const { element, fixture, host } = await render();
+      const list = find(element, '[role="tablist"]', HTMLElement);
+      expect(list.hasAttribute('aria-label')).toBe(false);
+      expect(list.hasAttribute('aria-labelledby')).toBe(false);
+
+      host.listLabel.set('Checkout steps');
+      host.listLabelledBy.set('before');
+      await fixture.whenStable();
+      expect(list.getAttribute('aria-label')).toBe('Checkout steps');
+      expect(list.getAttribute('aria-labelledby')).toBe('before');
+
+      host.listLabel.set(undefined);
+      host.listLabelledBy.set(undefined);
+      await fixture.whenStable();
+      expect(list.hasAttribute('aria-label')).toBe(false);
+      expect(list.hasAttribute('aria-labelledby')).toBe(false);
     });
 
     it('puts aria-selected on every step button, true only on the active one', async () => {
@@ -867,7 +890,7 @@ describe('WjStepper', () => {
   describe('host attributes and setup', () => {
     it.each([
       ['wj-stepper', AriaOnMainHost, 'Remove it: the steps and panels name themselves'],
-      ['wj-step-list', AriaOnListHost, 'Remove it: each step is named by its own text'],
+      ['wj-step-list', AriaOnListHost, 'Use the ariaLabel or ariaLabelledBy input instead'],
       ['wj-step', AriaOnStepHost, 'Remove it: the step is named by its own text'],
       ['wj-step-panels', AriaOnPanelsHost, 'Remove it: each panel is tied to its step'],
       ['wj-step-panel', AriaOnPanelHost, 'Remove it: the panel is tied to its step'],
@@ -1026,16 +1049,25 @@ describe('WjStepper', () => {
   });
 
   describe('keyboard', () => {
-    it('makes every enabled step button its own Tab stop, then the panel’s controls, then the page', async () => {
+    /** The tab buttons of the step list, in order. */
+    const tabsOf = (element: HTMLElement): HTMLElement[] => stepEls(element).map(buttonOf);
+
+    /** Tabs into the step list from the button before it. */
+    async function enter(element: HTMLElement): Promise<void> {
+      find(element, '#before', HTMLElement).focus();
+      await userEvent.tab();
+    }
+
+    it('Tab enters on the active step, then goes on to the active panel’s controls, then the page', async () => {
       const { element } = await render('light', (host) => {
         host.nav.set(true);
+        host.value.set(2);
       });
-      find(element, '#before', HTMLElement).focus();
+      const tabs = tabsOf(element);
 
-      for (const step of stepEls(element)) {
-        await userEvent.tab();
-        expect(document.activeElement).toBe(buttonOf(step));
-      }
+      await enter(element);
+      expect(document.activeElement).toBe(tabs[1]);
+      expect(tabs.map((tab) => tab.getAttribute('tabindex'))).toEqual(['-1', '0', '-1']);
       await userEvent.tab();
       expect(document.activeElement).toBe(inActivePanel(element, '.back'));
       await userEvent.tab();
@@ -1046,23 +1078,82 @@ describe('WjStepper', () => {
       await userEvent.tab({ shift: true });
       await userEvent.tab({ shift: true });
       await userEvent.tab({ shift: true });
-      expect(document.activeElement).toBe(buttonOf(stepEls(element)[2]));
+      expect(document.activeElement).toBe(tabs[1]);
+      await userEvent.tab({ shift: true });
+      expect(document.activeElement).toBe(find(element, '#before', HTMLElement));
     });
 
-    it('under linear, lands only on the active step', async () => {
-      const { element } = await render('light', (host) => {
-        host.linear.set(true);
-        host.value.set(2);
+    it('under linear, lands only on the active step, and the arrows stay put', async () => {
+      const { element, host } = await render('light', (instance) => {
+        instance.linear.set(true);
+        instance.value.set(2);
       });
-      find(element, '#before', HTMLElement).focus();
 
-      await userEvent.tab();
+      await enter(element);
       expect(document.activeElement).toBe(buttonOf(stepEls(element)[1]));
+      await userEvent.keyboard('{ArrowRight}{ArrowLeft}{Home}{End}');
+      expect(document.activeElement).toBe(buttonOf(stepEls(element)[1]));
+      expect(host.reported()).toEqual([]);
       await userEvent.tab();
       expect(document.activeElement).toBe(find(element, '#after', HTMLElement));
     });
 
-    it('Enter and Space activate the focused step, once per press', async () => {
+    it('Arrow Right and Arrow Left, Home and End move focus and wrap, and activate nothing', async () => {
+      const { element, host, stepper } = await render();
+      const tabs = tabsOf(element);
+      await enter(element);
+
+      await userEvent.keyboard('{ArrowRight}');
+      expect(document.activeElement).toBe(tabs[1]);
+      await userEvent.keyboard('{ArrowRight}{ArrowRight}');
+      expect(document.activeElement).toBe(tabs[0]);
+      await userEvent.keyboard('{ArrowLeft}');
+      expect(document.activeElement).toBe(tabs[2]);
+      await userEvent.keyboard('{Home}');
+      expect(document.activeElement).toBe(tabs[0]);
+      await userEvent.keyboard('{End}');
+      expect(document.activeElement).toBe(tabs[2]);
+      await userEvent.keyboard('{ArrowDown}{ArrowUp}');
+      expect(document.activeElement).toBe(tabs[2]);
+
+      expect(host.reported()).toEqual([]);
+      expect(await (await stepper.getActiveStep())?.getTitle()).toBe('Details');
+      expect(tabs.map((tab) => tab.getAttribute('tabindex'))).toEqual(['-1', '-1', '0']);
+    });
+
+    it('skips a disabled step with the arrows', async () => {
+      const { element } = await render('light', (host) => {
+        host.steps.set(STEPS.map((step) => ({ ...step, disabled: step.value === 2 })));
+      });
+      const tabs = tabsOf(element);
+      await enter(element);
+
+      await userEvent.keyboard('{ArrowRight}');
+      expect(document.activeElement).toBe(tabs[2]);
+      await userEvent.keyboard('{ArrowLeft}');
+      expect(document.activeElement).toBe(tabs[0]);
+    });
+
+    it('Enter on a focused step activates it, and the Tab stop follows', async () => {
+      const { element, host, stepper } = await render();
+      const tabs = tabsOf(element);
+      await enter(element);
+
+      await userEvent.keyboard('{ArrowRight}{ArrowRight}');
+      expect(await (await stepper.getActiveStep())?.getTitle()).toBe('Details');
+      await userEvent.keyboard('{Enter}');
+      await expect.poll(async () => (await stepper.getActiveStep())?.getTitle()).toBe('Confirm');
+      expect(host.reported()).toEqual([3]);
+      expect(document.activeElement).toBe(tabs[2]);
+      expect(tabs.map((tab) => tab.getAttribute('tabindex'))).toEqual(['-1', '-1', '0']);
+
+      await userEvent.keyboard('{Home}');
+      find(element, '#after', HTMLElement).focus();
+      await userEvent.tab({ shift: true });
+      expect(document.activeElement).toBe(tabs[0]);
+    });
+
+    it('Space activates the focused step, once per press', async () => {
       const { stepper, host } = await render();
       const [, second, third] = await stepper.getSteps();
 
@@ -1077,26 +1168,18 @@ describe('WjStepper', () => {
       expect(host.reported()).toEqual([2, 3]);
     });
 
-    it('does nothing for the arrow keys, Home and End: focus stays and no step is activated (the listed gap)', async () => {
-      const { stepper, host } = await render();
-      const [first, second] = await stepper.getSteps();
-      await first?.focus();
+    it.each<Scheme>(['light', 'dark'])(
+      'has no axe violations with a step focused by keyboard: %s',
+      async (scheme) => {
+        const { element } = await render(scheme);
+        await userEvent.hover(find(element, '#before', HTMLElement));
+        await enter(element);
+        await userEvent.keyboard('{ArrowRight}');
+        expect(document.activeElement).toBe(tabsOf(element)[1]);
 
-      for (const key of [
-        '{ArrowRight}',
-        '{ArrowLeft}',
-        '{ArrowDown}',
-        '{ArrowUp}',
-        '{End}',
-        '{Home}',
-      ]) {
-        await userEvent.keyboard(key);
-        expect(await first?.isFocused()).toBe(true);
-      }
-      expect(await second?.isFocused()).toBe(false);
-      expect(await first?.isActive()).toBe(true);
-      expect(host.reported()).toEqual([]);
-    });
+        await expectNoAxeViolations(find(element, 'wj-stepper', HTMLElement));
+      },
+    );
   });
 
   describe('harness', () => {

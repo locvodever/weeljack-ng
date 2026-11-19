@@ -42,18 +42,18 @@ export const DOC: ComponentDoc = {
     {
       key: 'Tab, Shift+Tab',
       effect:
-        'Moves through the controls in order, default content first, then the start, center and end sections. Every control is its own Tab stop: the toolbar is not one Tab stop (a listed gap).',
+        'The buttons and links of the toolbar are one Tab stop: Tab enters on the first, or on the one that had focus last, and the next Tab leaves the toolbar. A text input, a select or a nested `wj-selectbutton` keeps its own Tab stop.',
     },
     {
       key: 'Left Arrow, Right Arrow, Home, End',
       effect:
-        'Do nothing. The APG Toolbar pattern moves focus between controls with them; neither Optimus nor `wj-toolbar` does (a listed gap).',
+        'Move focus between the buttons and links, in order (default content first, then the start, center and end sections). The arrows wrap at the ends, Home goes to the first and End to the last, and a disabled button is skipped. Inside a text input the arrows move the caret, not focus.',
     },
   ],
   aria: [
     'The toolbar element has `role="toolbar"` (Optimus) and is named by `ariaLabel` or `ariaLabelledBy`, which are written on that same element. Name it whenever a page has more than one, as the APG Toolbar pattern says. Either input is optional, so a toolbar that is the only one on its page needs neither.',
     'Gap, fixed: Optimus has no `aria-label` input, only `ariaLabelledBy`. `wj-toolbar` adds `ariaLabel` and routes it onto the toolbar element through `pt`: it lands there, goes again when you unset it, and wins over an `aria-label` in your own `pt.root`.',
-    'Gap, listed: the toolbar has no roving tabindex and no arrow-key movement, so a toolbar is not one Tab stop and the arrow keys, Home and End do nothing. Every control keeps its own Tab stop, so the toolbar stays keyboard-operable (WCAG 2.1.1). Keep a toolbar to about seven controls, because a reader tabs through every one.',
+    'Gap, fixed: the toolbar is one Tab stop with Arrow Left, Arrow Right, Home and End, as the APG Toolbar pattern has it (`wj-toolbar` adds it; Optimus does not). Only the buttons and links join the row: a text input, a select and a nested `wj-selectbutton` keep their own Tab stop and arrow keys, so a toolbar that holds one is not a pure roving row. Keep a toolbar to about seven controls, and keep inputs to a minimum.',
     'Setting an `aria-*` attribute on the `wj-toolbar` host logs the dev-mode warning `WJ0003` and is not forwarded: use `ariaLabel` or `ariaLabelledBy`.',
     'Name an icon-only button you put in a section yourself.',
     'Render a toolbar only when it has controls: with no content and no slot it draws an empty bar about 26 px tall.',
