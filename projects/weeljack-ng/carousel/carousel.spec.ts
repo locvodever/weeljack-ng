@@ -293,6 +293,10 @@ const tabStops = (host: HTMLElement): HTMLElement[] =>
       candidate.closest('[inert]') === null,
   );
 
+/** The one slide button a reader can reach: the button of the slide that is not `inert`. */
+const liveBuy = (element: HTMLElement): HTMLButtonElement =>
+  find(element, '[data-pc-section="item"]:not([inert]) .buy', HTMLButtonElement);
+
 /** The buttons a reader can reach inside the slides: one per live slide, none in a hidden one. */
 const slideButtons = (element: HTMLElement): string[] =>
   tabStops(hostOf(element))
@@ -1069,45 +1073,102 @@ describe('WjCarousel', () => {
 
   describe('keyboard', () => {
     it('Tab goes previous button, the slide on screen, next button, the current indicator, then on', async () => {
-      const { element } = await render();
+      const { element } = await render((host) => {
+        host.page.set(1);
+      });
       buttonOf(element, 'before').focus();
 
       await userEvent.tab();
       expect(document.activeElement).toBe(prevOf(element));
       await userEvent.tab();
-      expect(document.activeElement).toBe(find(element, '.buy', HTMLButtonElement));
-      expect(document.activeElement?.textContent.trim()).toBe('Buy Kettle');
+      expect(document.activeElement).toBe(liveBuy(element));
+      expect(document.activeElement?.textContent.trim()).toBe('Buy Teapot');
       await userEvent.tab();
       expect(document.activeElement).toBe(nextOf(element));
       await userEvent.tab();
-      expect(document.activeElement).toBe(indicatorAt(element, 0));
+      expect(document.activeElement).toBe(indicatorAt(element, 1));
       await userEvent.tab();
       expect(document.activeElement).toBe(buttonOf(element, 'after'));
     });
 
-    it('has one slide button, one indicator and both navigators in the Tab order on every page', async () => {
+    it('has one slide button, one indicator and the live navigators in the Tab order on every page', async () => {
       const { fixture, element } = await render();
       const harness = await harnessOf(fixture);
 
       for (let page = 0; page < 6; page += 1) {
         await harness.goToPage(page);
+        await expect.poll(() => tabStops(hostOf(element))).toHaveLength(page % 5 === 0 ? 3 : 4);
         const stops = tabStops(hostOf(element));
-        expect(stops).toHaveLength(4);
-        expect(stops).toContain(prevOf(element));
-        expect(stops).toContain(nextOf(element));
+        expect(stops.includes(prevOf(element))).toBe(page !== 0);
+        expect(stops.includes(nextOf(element))).toBe(page !== 5);
         expect(stops).toContain(indicatorAt(element, page));
       }
     });
 
-    it('keeps the end navigators in the Tab order, dimmed but not disabled, on the first and last page', async () => {
-      const { fixture, element } = await render();
-      const harness = await harnessOf(fixture);
+    describe('a navigator Optimus dims at an end', () => {
+      const dimmed = (button: HTMLElement): boolean =>
+        button.getAttribute('aria-disabled') === 'true' && button.getAttribute('tabindex') === '-1';
+      const live = (button: HTMLElement): boolean =>
+        !button.hasAttribute('aria-disabled') && !button.hasAttribute('tabindex');
 
-      expect(prevOf(element).disabled).toBe(false);
-      expect(tabStops(hostOf(element))).toContain(prevOf(element));
-      await harness.goToPage(5);
-      expect(nextOf(element).disabled).toBe(false);
-      expect(tabStops(hostOf(element))).toContain(nextOf(element));
+      it('leaves the Tab order and is announced as disabled: previous on the first page', async () => {
+        const { element } = await render();
+
+        expect(dimmed(prevOf(element))).toBe(true);
+        expect(live(nextOf(element))).toBe(true);
+        expect(tabStops(hostOf(element))).not.toContain(prevOf(element));
+        expect(prevOf(element).disabled).toBe(false);
+        buttonOf(element, 'before').focus();
+        await userEvent.tab();
+        expect(document.activeElement).toBe(liveBuy(element));
+      });
+
+      it('leaves the Tab order and is announced as disabled: next on the last page', async () => {
+        const { fixture, element } = await render();
+        const harness = await harnessOf(fixture);
+        await harness.goToPage(5);
+
+        await expect.poll(() => dimmed(nextOf(element))).toBe(true);
+        expect(live(prevOf(element))).toBe(true);
+        expect(tabStops(hostOf(element))).not.toContain(nextOf(element));
+        liveBuy(element).focus();
+        await userEvent.tab();
+        expect(document.activeElement).toBe(indicatorAt(element, 5));
+      });
+
+      it('dims neither navigator when circular, on any page', async () => {
+        const { fixture, element } = await render((host) => {
+          host.circular.set(true);
+        });
+        const harness = await harnessOf(fixture);
+
+        for (const page of [0, 5, 2]) {
+          await harness.goToPage(page);
+          await fixture.whenStable();
+          expect(live(prevOf(element))).toBe(true);
+          expect(live(nextOf(element))).toBe(true);
+        }
+      });
+
+      it('follows the page: the attributes move with the end, and from the app too', async () => {
+        const { component, fixture, element } = await render();
+        const harness = await harnessOf(fixture);
+
+        await harness.next();
+        await expect.poll(() => live(prevOf(element))).toBe(true);
+        expect(live(nextOf(element))).toBe(true);
+        await harness.previous();
+        await expect.poll(() => dimmed(prevOf(element))).toBe(true);
+
+        component.page.set(5);
+        await fixture.whenStable();
+        await expect.poll(() => dimmed(nextOf(element))).toBe(true);
+        expect(live(prevOf(element))).toBe(true);
+
+        component.circular.set(true);
+        await fixture.whenStable();
+        await expect.poll(() => live(nextOf(element))).toBe(true);
+      });
     });
 
     it('Enter and Space on the navigators change the page', async () => {
@@ -1150,14 +1211,33 @@ describe('WjCarousel', () => {
       expect(await onScreen(harness)).toEqual(['Mug']);
     });
 
-    it('does not wire Home and End on the indicators: focus stays where it is (the listed gap)', async () => {
-      const { element } = await render();
+    it('Home and End on the indicators move focus to the first and last indicator', async () => {
+      const { fixture, element } = await render();
+      const harness = await harnessOf(fixture);
       indicatorAt(element, 2).focus();
 
       await userEvent.keyboard('{End}');
-      expect(document.activeElement).toBe(indicatorAt(element, 2));
+      expect(document.activeElement).toBe(indicatorAt(element, 5));
       await userEvent.keyboard('{Home}');
-      expect(document.activeElement).toBe(indicatorAt(element, 2));
+      expect(document.activeElement).toBe(indicatorAt(element, 0));
+      await userEvent.keyboard('{End}{Enter}');
+      await expect.poll(() => harness.getPage()).toBe(5);
+    });
+
+    it('leaves Home and End alone anywhere but on an indicator', async () => {
+      const { element } = await render();
+      const prevented: boolean[] = [];
+      const record = (event: KeyboardEvent): void => {
+        prevented.push(event.defaultPrevented);
+      };
+      document.addEventListener('keydown', record);
+      nextOf(element).focus();
+
+      await userEvent.keyboard('{End}');
+      document.removeEventListener('keydown', record);
+
+      expect(prevented).toEqual([false]);
+      expect(document.activeElement).toBe(nextOf(element));
     });
 
     it('reaches a button in a slide that arrives on screen, and not the one that left', async () => {
@@ -1378,6 +1458,17 @@ describe('WjCarousel', () => {
         await harness.goToPage(5);
         await expect.poll(() => liveSlides(element)).toEqual(['Bowl']);
 
+        await expectNoAxeViolations(hostOf(element));
+      });
+
+      it('has no axe violations: the dimmed navigator at each end', async () => {
+        const { fixture, element } = await render(undefined, scheme);
+        const harness = await harnessOf(fixture);
+        expect(prevOf(element).getAttribute('aria-disabled')).toBe('true');
+        await expectNoAxeViolations(hostOf(element));
+
+        await harness.goToPage(5);
+        await expect.poll(() => nextOf(element).getAttribute('aria-disabled')).toBe('true');
         await expectNoAxeViolations(hostOf(element));
       });
 

@@ -48,13 +48,27 @@ function toArray<N>(picked: N | N[] | null): N[] {
  * from assistive tech (the treeitem already says expanded and checked), and the treeitem has no
  * `aria-label`: an open treeitem contains its children, so a label of its own text is not part of
  * its visible text (axe `label-content-name-mismatch`), and it is named from its content. A node
- * that can open says `aria-expanded="false"` while closed: Optimus leaves it off.
+ * that can open says `aria-expanded="false"` while closed: Optimus leaves it off. Its set size is
+ * the number of siblings (Optimus gives its own child count), and a node whose own checkbox is
+ * partly checked says `aria-checked="mixed"` (a stale `"mixed"` goes back to `"false"`: Optimus
+ * writes nothing when a partly checked node is unchecked).
  */
 function fixNodes(host: HTMLElement): void {
   for (const node of host.querySelectorAll('[role="treeitem"]')) {
     node.removeAttribute('aria-label');
+    node.setAttribute(
+      'aria-setsize',
+      String(node.parentElement?.parentElement?.childElementCount ?? 0),
+    );
     if (!node.hasAttribute('aria-expanded') && !node.classList.contains('p-tree-node-leaf')) {
       node.setAttribute('aria-expanded', 'false');
+    }
+    const mixed =
+      node.querySelector(
+        ':scope > [data-pc-section="nodecontent"] > [data-p-partialchecked="true"]',
+      ) !== null;
+    if (mixed || node.getAttribute('aria-checked') === 'mixed') {
+      node.setAttribute('aria-checked', mixed ? 'mixed' : 'false');
     }
   }
   const hidden =
@@ -81,6 +95,7 @@ function fixNodes(host: HTMLElement): void {
   providers: [{ provide: NG_VALUE_ACCESSOR, useExisting: WjTreeSelect, multi: true }],
   templateUrl: './treeselect.html',
   styleUrl: './treeselect.css',
+  host: { '(keydown)': 'jump($event)' },
 })
 export class WjTreeSelect<T = unknown> implements ControlValueAccessor {
   /** The picked nodes, always an array of your own nodes: at most one in `single` mode. Two-way. */
@@ -122,6 +137,7 @@ export class WjTreeSelect<T = unknown> implements ControlValueAccessor {
 
   protected readonly motion = _OVERLAY_MOTION;
   private readonly inner = viewChild(TreeSelect);
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;
   private readonly valueId = _wjId('treeselect-value');
   private reported: WjTreeNode<T>[] | undefined;
 
@@ -199,10 +215,27 @@ export class WjTreeSelect<T = unknown> implements ControlValueAccessor {
   );
 
   constructor() {
-    const host = inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;
     afterEveryRender(() => {
-      fixNodes(host);
+      fixNodes(this.host);
     });
+  }
+
+  /**
+   * Home and End move focus to the first and the last node on screen in the panel, and hand the one
+   * Tab stop over as Optimus does. Nothing is picked. Optimus ignores these keys, so they reach the
+   * host; only a treeitem target counts, so the combobox keeps its keys.
+   */
+  protected jump(event: KeyboardEvent): void {
+    const { key } = event;
+    const items = [...this.host.querySelectorAll<HTMLElement>('[role="treeitem"]')];
+    const from = items.find((item) => item === event.target);
+    const next = key === 'Home' ? items[0] : key === 'End' ? items.at(-1) : undefined;
+    if (from && next) {
+      event.preventDefault();
+      from.tabIndex = -1;
+      next.tabIndex = 0;
+      next.focus();
+    }
   }
 
   declare registerOnChange: _AccessorHost<WjTreeNode<T>[]>['registerOnChange'];

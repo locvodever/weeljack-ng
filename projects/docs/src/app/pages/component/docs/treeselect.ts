@@ -95,6 +95,11 @@ export const DOC: ComponentDoc = {
       effect: 'In the panel, moves to the next or the previous visible node.',
     },
     {
+      key: 'Home, End',
+      effect:
+        'In the panel, moves focus to the first or the last node on screen: the children of a collapsed node are not there, so focus never lands in one. Nothing is picked or checked.',
+    },
+    {
       key: 'ArrowRight',
       effect:
         'Expands a collapsed node, then moves focus to its first child. Optimus moves the focus a moment after the expansion.',
@@ -124,8 +129,10 @@ export const DOC: ComponentDoc = {
     'Fixed in the component, through `pt` and on the panel’s tree: the chevron, a second, English-only “treeselect trigger” button next to the combobox, is hidden from assistive tech; the toggle and the checkbox of every node in the panel are hidden too, since the treeitem already says what they do; the value text is marked disabled with the control, so its muted colour is not read as a contrast failure; and a node that can open says `aria-expanded="false"` while it is closed, where Optimus leaves the attribute off.',
     'A node in the panel is named from what it shows, not from its `label`. Optimus sets `aria-label` to the label, but an open node contains its children, so a name of only its own label does not contain the text on screen (WCAG 2.5.3, axe `label-content-name-mismatch`), and the component removes it. The cost is that a screen reader may read an open branch with its children.',
     'The panel’s tree fixes are written on the DOM after each render, for every level, because Optimus hands the nodes below the first level no `pt`. It runs in the browser only; a closed control prerenders no panel.',
-    'Gap: inside the panel, a node’s set size is Optimus’s own child count rather than the number of its siblings, so a leaf reads “1 of 0”. Fixing it costs bytes the entry does not have.',
-    'Gap: Home, End, type-ahead and `*` are not handled in the panel, and a partly checked node is announced as not checked: Optimus draws the minus but leaves `aria-checked="false"`.',
+    'Gap, fixed: inside the panel, a node’s set size was Optimus’s own child count rather than the number of its siblings, so a leaf read “1 of 0”. `wj-treeselect` now writes the number of siblings at every level, as `wj-tree` does.',
+    'Gap, fixed: a partly checked node was announced as not checked, because Optimus draws the minus on the checkbox but leaves `aria-checked="false"` on the treeitem. `wj-treeselect` now writes `aria-checked="mixed"` on a node whose own checkbox is partly checked, and puts `"false"` back when the mark goes: Optimus writes nothing when a partly checked node is unchecked, and writes `"true"` itself when it becomes checked.',
+    'Gap, fixed: Optimus ignores Home and End in the panel. `wj-treeselect` now moves focus to the first or the last node on screen, and hands the one Tab stop over as Optimus does (see the keyboard table). Nothing is picked.',
+    'Gap: `*` and type-ahead are not handled in the panel. Type-ahead (one character, the next node that starts with it) did not fit the entry’s size cap, so the keys that cost less shipped first.',
     'Gap: in `checkbox` mode, a value written from code (a form, `[(value)]`) checks the nodes but does not redraw the partial marks of their parents: Optimus resets them on every write. Marks drawn by a click stay until the next write.',
     'Gap: Tab inside the open panel cycles between the tree and the combobox, so Tab alone does not leave it. Escape does, and a single pick does. Focus is never lost.',
     'Gap: the English empty message reads “No available options”; set `translation: { emptyMessage }` in `provideWeeljack` to change it. Filtering, chips, a clear button, header and footer templates and a node template are not in this version.',

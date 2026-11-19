@@ -31,6 +31,42 @@
       "entry": "weeljack-ng/locale",
       "optimus": "own",
       "note": "Complete UI translations: vi's data, and en re-exported from private."
+    },
+    {
+      "entry": "weeljack-ng/carousel",
+      "optimus": "carousel",
+      "kb": 2.75,
+      "note": "Raised under CLAUDE.md § 5's rule (Loc, 2026-11-19): a dimmed navigator leaves the Tab order and reads as disabled (FR-9), and Home and End move focus on the indicators (FR-10)."
+    },
+    {
+      "entry": "weeljack-ng/galleria",
+      "optimus": "galleria",
+      "kb": 3.45,
+      "note": "Raised under CLAUDE.md § 5's rule (Loc, 2026-11-19): S1, the thumbnail strip (five inputs and the wjGalleriaThumbnail slot), plus the dimmed navigators (FR-9)."
+    },
+    {
+      "entry": "weeljack-ng/tree",
+      "optimus": "tree",
+      "kb": 3.3,
+      "note": "Raised under CLAUDE.md § 5's rule (Loc, 2026-11-19): S4, a partly checked node reads aria-checked=\"mixed\" (FR-16), and Home, End and one-character type-ahead move focus (FR-18)."
+    },
+    {
+      "entry": "weeljack-ng/treeselect",
+      "optimus": "treeselect",
+      "kb": 2.75,
+      "note": "Raised under CLAUDE.md § 5's rule (Loc, 2026-11-19): S4, the set size counts siblings (FR-17), a partly checked node reads aria-checked=\"mixed\" (FR-16), and Home and End move focus in the panel (FR-18). Type-ahead did not fit the 2.75 KB cap."
+    },
+    {
+      "entry": "weeljack-ng/speeddial",
+      "optimus": "speeddial",
+      "kb": 2.75,
+      "note": "Raised under CLAUDE.md § 5's rule (Loc, 2026-11-19): S3, Enter or Space on an action reached with Tab runs it, Enter on the list no longer reopens the dial, and the arrow keys skip a disabled action (FR-20)."
+    },
+    {
+      "entry": "weeljack-ng/picklist",
+      "optimus": "picklist",
+      "kb": 2.6,
+      "note": "Raised under CLAUDE.md § 5's rule (Loc, 2026-11-19): S2, showSourceControls and showTargetControls hide a list's four reorder buttons. The filters did not fit the 2.75 KB cap (the lean variant measured 2846 B)."
     }
   ]
 }

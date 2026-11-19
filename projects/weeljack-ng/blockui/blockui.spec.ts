@@ -255,6 +255,57 @@ describe('WjBlockUI', () => {
       expect(await harness.isBlocked()).toBe(false);
     });
 
+    it('gives the target its own inline position back once the mask has left', async () => {
+      const rendered = await render();
+      card(rendered).style.position = 'sticky';
+      await block(rendered);
+      expect(card(rendered).style.position).toBe('relative');
+
+      await unblock(rendered);
+
+      await expect.poll(() => card(rendered).style.position).toBe('sticky');
+    });
+
+    it('leaves no inline position on a target that had none', async () => {
+      const rendered = await render();
+      expect(card(rendered).style.position).toBe('');
+      await block(rendered);
+      expect(card(rendered).style.position).toBe('relative');
+
+      await unblock(rendered);
+
+      await expect.poll(() => card(rendered).style.position).toBe('');
+    });
+
+    it('keeps the first recorded position when a block starts again before the restore', async () => {
+      const rendered = await render();
+      card(rendered).style.position = 'sticky';
+      await block(rendered);
+
+      rendered.component.blocked.set(false);
+      await rendered.fixture.whenStable();
+      rendered.component.blocked.set(true);
+      await rendered.fixture.whenStable();
+      await covered();
+      expect(card(rendered).style.position).toBe('relative');
+
+      await unblock(rendered);
+
+      await expect.poll(() => card(rendered).style.position).toBe('sticky');
+    });
+
+    it('puts the position back when destroyed while blocked', async () => {
+      const rendered = await render();
+      card(rendered).style.position = 'sticky';
+      await block(rendered);
+      const target = card(rendered);
+
+      rendered.fixture.destroy();
+      current = undefined;
+
+      expect(target.style.position).toBe('sticky');
+    });
+
     it('removes aria-busy it added when the app had none', async () => {
       const rendered = await render();
       await block(rendered);
@@ -321,6 +372,20 @@ describe('WjBlockUI', () => {
       expect(await harness.isBlocked()).toBe(true);
       expect(await harness.isBusy()).toBe(true);
       expect(await harness.isInert()).toBe(true);
+    });
+
+    it('masks the viewport corners: the page mask has no radius, the rule reaching it in the body', async () => {
+      const rendered = await render((host) => {
+        host.page.set(true);
+      });
+      await block(rendered);
+      const style = getComputedStyle(maskEl());
+
+      expect(maskEl().parentElement).toBe(document.body);
+      expect(style.borderTopLeftRadius).toBe('0px');
+      expect(style.borderTopRightRadius).toBe('0px');
+      expect(style.borderBottomLeftRadius).toBe('0px');
+      expect(style.borderBottomRightRadius).toBe('0px');
     });
 
     it('releases the scroll lock and every attribute on unblock', async () => {

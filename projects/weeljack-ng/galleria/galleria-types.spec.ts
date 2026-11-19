@@ -1,12 +1,21 @@
-import type { InputSignal, ModelSignal, TemplateRef } from '@angular/core';
+import type {
+  InputSignal,
+  InputSignalWithTransform,
+  ModelSignal,
+  TemplateRef,
+} from '@angular/core';
 import type { GalleriaPassThrough } from '@openng/optimus-ui/types/galleria';
 import {
   WjGalleria,
   WjGalleriaCaptionSlot,
   WjGalleriaItemSlot,
+  WjGalleriaThumbnailSlot,
   type WjGalleriaCaptionContext,
   type WjGalleriaItemContext,
   type WjGalleriaPt,
+  type WjGalleriaResponsiveOption,
+  type WjGalleriaThumbnailContext,
+  type WjGalleriaThumbnailsPosition,
 } from 'weeljack-ng/galleria';
 
 interface Photo {
@@ -39,16 +48,34 @@ describe('WjGalleria types', () => {
     expect(typeof WjGalleria).toBe('function');
   });
 
-  it('has no autoplay, indicator, thumbnail or motion input: nothing moves on its own', () => {
+  it('has the five thumbnail strip inputs, typed as the API says (off by default)', () => {
+    expectTypeOf<WjGalleria['numVisible']>().toEqualTypeOf<InputSignal<number>>();
+    expectTypeOf<WjGalleria['responsiveOptions']>().toEqualTypeOf<
+      InputSignal<WjGalleriaResponsiveOption[] | undefined>
+    >();
+    expectTypeOf<WjGalleria['showThumbnails']>().toEqualTypeOf<
+      InputSignalWithTransform<boolean, unknown>
+    >();
+    expectTypeOf<WjGalleria['showThumbnailNavigators']>().toEqualTypeOf<
+      InputSignalWithTransform<boolean, unknown>
+    >();
+    expectTypeOf<WjGalleria['thumbnailsPosition']>().toEqualTypeOf<
+      InputSignal<WjGalleriaThumbnailsPosition>
+    >();
+    expectTypeOf<WjGalleriaThumbnailsPosition>().toEqualTypeOf<'bottom' | 'top'>();
+    expectTypeOf<WjGalleriaResponsiveOption>().toEqualTypeOf<{
+      breakpoint: string;
+      numVisible: number;
+    }>();
+    expect(typeof WjGalleria).toBe('function');
+  });
+
+  it('has no autoplay, indicator or motion input: nothing moves on its own', () => {
     for (const dropped of [
       'autoPlay',
       'transitionInterval',
       'showIndicators',
-      'showThumbnails',
-      'showThumbnailNavigators',
-      'thumbnailsPosition',
-      'numVisible',
-      'responsiveOptions',
+      'verticalThumbnailViewPortHeight',
       'motionOptions',
       'maskMotionOptions',
     ] as const) {
@@ -63,6 +90,14 @@ describe('WjGalleria types', () => {
   it('types each slot by its items: the context is { $implicit: T } and the template follows it', () => {
     expectTypeOf<WjGalleriaItemContext<Photo>>().toEqualTypeOf<{ $implicit: Photo }>();
     expectTypeOf<WjGalleriaCaptionContext<Photo>>().toEqualTypeOf<{ $implicit: Photo }>();
+    expectTypeOf<WjGalleriaThumbnailContext<Photo>>().toEqualTypeOf<{ $implicit: Photo }>();
+    expectTypeOf<WjGalleriaThumbnailSlot<Photo>['template']>().toEqualTypeOf<
+      TemplateRef<WjGalleriaThumbnailContext<Photo>>
+    >();
+    expectTypeOf<WjGalleriaThumbnailSlot<Photo>['wjGalleriaThumbnailOf']>().toEqualTypeOf<
+      InputSignal<readonly Photo[] | null | undefined>
+    >();
+    expect(WjGalleriaThumbnailSlot).toHaveProperty('ngTemplateContextGuard');
     expectTypeOf<WjGalleriaItemContext>().toEqualTypeOf<{ $implicit: unknown }>();
     expectTypeOf<WjGalleriaItemSlot<Photo>['template']>().toEqualTypeOf<
       TemplateRef<WjGalleriaItemContext<Photo>>

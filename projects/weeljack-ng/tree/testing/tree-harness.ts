@@ -98,8 +98,8 @@ export class WjTreeNodeHarness extends ComponentHarness {
 
   /**
    * Whether the node is partly checked, in `checkbox` mode: some of its children are checked.
-   * Optimus draws the mark but gives the treeitem no `aria-checked="mixed"`, so this reads the
-   * checkbox.
+   * Reads the mark on the node's own checkbox, which the treeitem also announces as
+   * `aria-checked="mixed"`.
    */
   async isPartiallyChecked(): Promise<boolean> {
     return (await this.partial()) !== null;

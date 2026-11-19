@@ -42,7 +42,7 @@ export const DOC: ComponentDoc = {
     {
       title: 'Sorting',
       description:
-        'Mark a column `sortable`, and a click or Enter on its header sorts the table by its `field`, ascending first. `[(sortField)]` and `[(sortOrder)]` are two-way, so they start the sort and follow a click; `aria-sort` and the icon show it. Optimus sorts at every level, so children stay under their parent. The sorted header takes the highlight fill. Space on a header does nothing: Optimus listens to Enter only.',
+        'Mark a column `sortable`, and a click, Enter or Space on its header sorts the table by its `field`, ascending first. `[(sortField)]` and `[(sortOrder)]` are two-way, so they start the sort and follow a click; `aria-sort` and the icon show it. Optimus sorts at every level, so children stay under their parent. The sorted header takes the highlight fill.',
       sourceKey: 'treetable/sorting',
       component: TreeTableSortingExample,
     },
@@ -96,9 +96,13 @@ export const DOC: ComponentDoc = {
         'Reaches each sortable header, then the rows, then the page buttons; with `selectionMode="checkbox"` the header checkbox comes first. The row toggles and the row checkboxes are not Tab stops. Until the first Tab inside the table every row is a Tab stop (Optimus sets `tabindex="0"` on all of them); after it only one is.',
     },
     {
-      key: 'Enter',
+      key: 'Enter, Space on a sortable header',
       effect:
-        'On a sortable header, sorts by that column and flips the order on the next press. On a row in `single` or `multiple` mode, selects it or drops it.',
+        'Sorts by that column and flips the order on the next press. Space does not scroll the page.',
+    },
+    {
+      key: 'Enter',
+      effect: 'On a row in `single` or `multiple` mode, selects it or drops it.',
     },
     { key: 'ArrowDown, ArrowUp', effect: 'Moves to the next or the previous visible row.' },
     {
@@ -118,7 +122,7 @@ export const DOC: ComponentDoc = {
     {
       key: 'Space',
       effect:
-        'On a row in `single` or `multiple` mode, selects it or drops it. In `checkbox` mode, checks or unchecks the focused row with its descendants. Does nothing on a row that is `selectable: false`. On a header it does nothing.',
+        'On a row in `single` or `multiple` mode, selects it or drops it. In `checkbox` mode, checks or unchecks the focused row with its descendants. Does nothing on a row that is `selectable: false`.',
     },
     {
       key: 'Enter, Space on a page button',
@@ -132,7 +136,7 @@ export const DOC: ComponentDoc = {
     'Optimus’s own rows get no `pt` from the table, so `wj-treetable` hands its `pt` to every row, toggle, checkbox, header and sort icon itself. That is why `row`, `rowToggleButton`, `sortableColumn` and the checkboxes’ parts reach the rows of every level, unlike the nodes of `wj-tree`.',
     'Gap, fixed: the checkboxes are named "Select row" and "Select all" (vi "Chọn hàng", "Chọn tất cả"); the checkbox’s own state says whether it is checked. An app overrides them with `translation: { aria: { selectRow, selectAll } }` in `provideWeeljack`.',
     'Gap: every row is a Tab stop until the first Tab inside the table, as the keyboard table says.',
-    'Gap: Space on a sortable header does nothing; use Enter.',
+    'Gap, fixed: Space on a sortable header did nothing, because Optimus’s header listens to click and Enter only. It now sorts as Enter does, through the header’s own click path, so `sortField`, `sortOrder` and `aria-sort` follow, and it does not scroll the page.',
     'Gap: a row is selected when its `data` deep-equals a selected node’s `data`, which is how Optimus compares rows, so two rows with equal `data` select together, and a node with no `data` matches every other one. Give each row distinct `data`.',
     'Gap: a row marked `selectable: false` cannot be picked or checked directly, but checking all its children checks it, and checking a parent checks it, since Optimus propagates a check without asking.',
     'Gap: a selection set from code checks and selects the rows, but a parent’s partial mark is drawn only while Optimus propagates a click, so it is not redrawn for a selection you set. A new `value` keeps the marks it already drew.',

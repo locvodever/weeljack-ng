@@ -838,7 +838,9 @@ describe('WjGalleria', () => {
 
   describe('keyboard', () => {
     it('Tab goes previous, then next, then on: the item holds nothing to focus', async () => {
-      const { element } = await render();
+      const { element } = await render((host) => {
+        host.activeIndex.set(2);
+      });
       buttonOf(element, 'before').focus();
 
       const seen: string[] = [];
@@ -850,18 +852,81 @@ describe('WjGalleria', () => {
       expect(seen).toEqual(['Previous', 'Next', 'View photos']);
     });
 
-    it('keeps both navigators in the Tab order at the ends, dimmed but not disabled', async () => {
-      const { component, fixture, element } = await render();
-      const tabStops = (): string[] =>
-        all(element, '[data-pc-group-section="itemnavigator"]')
+    describe('a navigator Optimus dims at an end', () => {
+      const navigators = (element: ParentNode): HTMLElement[] =>
+        all(element, '[data-pc-group-section="itemnavigator"]');
+      const tabStops = (element: ParentNode): string[] =>
+        navigators(element)
           .filter((button) => button.tabIndex >= 0)
           .map((button) => button.getAttribute('aria-label') ?? '');
+      const dimmed = (button: HTMLElement): boolean =>
+        button.getAttribute('aria-disabled') === 'true' && button.getAttribute('tabindex') === '-1';
+      const live = (button: HTMLElement): boolean =>
+        !button.hasAttribute('aria-disabled') && !button.hasAttribute('tabindex');
 
-      expect(tabStops()).toEqual(['Previous', 'Next']);
-      component.activeIndex.set(5);
-      await fixture.whenStable();
-      expect(tabStops()).toEqual(['Previous', 'Next']);
-      expect(part(element, 'nextbutton').hasAttribute('disabled')).toBe(false);
+      it('leaves the Tab order and is announced as disabled: previous on the first item', async () => {
+        const { element } = await render();
+
+        expect(dimmed(part(element, 'prevbutton'))).toBe(true);
+        expect(live(part(element, 'nextbutton'))).toBe(true);
+        expect(tabStops(element)).toEqual(['Next']);
+        expect(part(element, 'prevbutton').hasAttribute('disabled')).toBe(false);
+        buttonOf(element, 'before').focus();
+        await userEvent.tab();
+        expect(focusedName()).toBe('Next');
+      });
+
+      it('leaves the Tab order and is announced as disabled: next on the last item', async () => {
+        const { component, fixture, element } = await render();
+        component.activeIndex.set(5);
+        await fixture.whenStable();
+
+        await expect.poll(() => dimmed(part(element, 'nextbutton'))).toBe(true);
+        expect(live(part(element, 'prevbutton'))).toBe(true);
+        expect(tabStops(element)).toEqual(['Previous']);
+        buttonOf(element, 'before').focus();
+        await userEvent.tab();
+        await userEvent.tab();
+        expect(focusedName()).toBe('View photos');
+      });
+
+      it('dims neither navigator when circular, at either end', async () => {
+        const { component, fixture, element } = await render((host) => {
+          host.circular.set(true);
+        });
+
+        for (const index of [0, 5, 2]) {
+          component.activeIndex.set(index);
+          await fixture.whenStable();
+          await expect.poll(() => tabStops(element)).toEqual(['Previous', 'Next']);
+          expect(navigators(element).every(live)).toBe(true);
+        }
+      });
+
+      it('follows the item: the attributes move with the end', async () => {
+        const { fixture, element } = await render();
+        const harness = await harnessOf(fixture);
+
+        await harness.next();
+        await expect.poll(() => live(part(element, 'prevbutton'))).toBe(true);
+        await harness.previous();
+        await expect.poll(() => dimmed(part(element, 'prevbutton'))).toBe(true);
+      });
+
+      it('holds in the full screen, opened at an end', async () => {
+        const rendered = await render((host) => {
+          host.fullScreen.set(true);
+          host.activeIndex.set(5);
+        });
+        await open(rendered);
+        const { element } = rendered;
+
+        await expect.poll(() => dimmed(part(element, 'nextbutton'))).toBe(true);
+        expect(live(part(element, 'prevbutton'))).toBe(true);
+        expect(tabStops(element)).toEqual(['Previous']);
+
+        await closeWithEscape();
+      });
     });
 
     it('Enter and Space on the navigators change the item', async () => {
@@ -932,7 +997,8 @@ describe('WjGalleria', () => {
         seen.push(focusedName());
         expect(inside()).toBe(true);
       }
-      expect(new Set(seen)).toEqual(new Set(['Close', 'Previous', 'Next']));
+      // Previous is dimmed on the first item, so it is not a stop.
+      expect(new Set(seen)).toEqual(new Set(['Close', 'Next']));
 
       await userEvent.tab({ shift: true });
       expect(inside()).toBe(true);
@@ -1256,6 +1322,24 @@ describe('WjGalleria', () => {
         await (await harnessOf(rendered.fixture)).next();
         await rendered.fixture.whenStable();
         await expectNoAxeViolations(hostOf(rendered.element));
+      });
+
+      it('has no axe violations: the dimmed navigator at each end, inline and in full screen', async () => {
+        const { component, fixture, element } = await render((host) => {
+          host.fullScreen.set(true);
+        }, scheme);
+        await open({ component, fixture, element });
+        expect(part(element, 'prevbutton').getAttribute('aria-disabled')).toBe('true');
+        await expectNoAxeViolations(hostOf(element));
+
+        component.activeIndex.set(5);
+        await fixture.whenStable();
+        await expect
+          .poll(() => part(element, 'nextbutton').getAttribute('aria-disabled'))
+          .toBe('true');
+        await expectNoAxeViolations(hostOf(element));
+
+        await closeWithEscape();
       });
 
       it('has no axe violations: at both ends, circular, named by ariaLabelledBy, a focused navigator', async () => {

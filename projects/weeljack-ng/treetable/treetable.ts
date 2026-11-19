@@ -316,6 +316,17 @@ export class WjTreeTable<T = unknown> {
   }
 
   /**
+   * Space on a sortable header sorts it as Enter does, through the header's own click path, so the
+   * sort state and `aria-sort` follow. Optimus's header listens to Enter and click only.
+   */
+  protected sortWithSpace(event: Event): void {
+    event.preventDefault();
+    if (event.currentTarget instanceof HTMLElement) {
+      event.currentTarget.click();
+    }
+  }
+
+  /**
    * Space on a focused row, in `checkbox` mode: checks or unchecks it, as its checkbox does.
    * Optimus's own row has no key for it, and the checkbox is out of the Tab order.
    */

@@ -27,7 +27,11 @@
       @for (column of columns(); track column; let first = $first) {
         @let sortKey = column.sortKey();
         @if (sortKey) {
-          <th [ttSortableColumn]="sortKey" [pt]="partAttributes()">
+          <th
+            [ttSortableColumn]="sortKey"
+            [pt]="partAttributes()"
+            (keydown.space)="sortWithSpace($event)"
+          >
             <ng-container
               *ngTemplateOutlet="
                 head;

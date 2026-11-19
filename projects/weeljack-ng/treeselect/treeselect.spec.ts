@@ -1115,16 +1115,49 @@ describe('WjTreeSelect', () => {
       await closePanel(select, element);
     });
 
-    it('lists the set size, which Optimus still gets wrong inside the panel’s tree', async () => {
+    it('writes the number of siblings as the set size, at every depth, so a leaf is not "1 of 0"', async () => {
       const { fixture, element } = await render((host) => {
         host.value.set([dept('infra')]);
       });
       const select = await harnessOf(fixture);
       await openPanel(select, element);
 
-      // The set size is Optimus's own child count of the node, not the number of siblings.
-      expect(itemOf(element, 'infra').getAttribute('aria-setsize')).not.toBe('2');
+      const size = (key: string): string | null =>
+        itemOf(element, key).getAttribute('aria-setsize');
       expect(itemOf(element, 'infra').hasAttribute('aria-expanded')).toBe(false);
+      expect([size('eng'), size('design'), size('ops')]).toEqual(['3', '3', '3']);
+      expect([size('platform'), size('mobile'), size('data')]).toEqual(['3', '3', '3']);
+      expect([size('infra'), size('tooling')]).toEqual(['2', '2']);
+      await select.expandNode('Design');
+      expect([size('research'), size('visual')]).toEqual(['2', '2']);
+
+      await closePanel(select, element);
+    });
+
+    it('reads a partly checked node as mixed, a checked one as true, and an unchecked one as false', async () => {
+      const { fixture, element } = await render((host) => {
+        host.mode.set('checkbox');
+      });
+      const select = await harnessOf(fixture);
+      await openPanel(select, element);
+      await select.expandNode('Design');
+      const state = (key: string): string | null =>
+        itemOf(element, key).getAttribute('aria-checked');
+      expect(state('design')).toBe('false');
+
+      await select.checkNode('Visual');
+      await expect.poll(() => state('design')).toBe('mixed');
+      expect([state('visual'), state('research')]).toEqual(['true', 'false']);
+      expect(state('eng')).toBe('false');
+
+      await select.checkNode('Research');
+      await expect.poll(() => state('design')).toBe('true');
+
+      await select.selectNode('Visual');
+      await expect.poll(() => state('design')).toBe('mixed');
+      await select.selectNode('Research');
+      await expect.poll(() => state('design')).toBe('false');
+      expect(element.querySelectorAll('[aria-checked="mixed"]')).toHaveLength(0);
 
       await closePanel(select, element);
     });
@@ -1640,6 +1673,22 @@ describe('WjTreeSelect', () => {
         await closePanel(select, element);
       });
 
+      it('has no axe violations open in checkbox mode with a node announced as mixed', async () => {
+        const { fixture, element } = await render((host) => {
+          host.mode.set('checkbox');
+        }, scheme);
+        const select = await harnessOf(fixture);
+        await openPanel(select, element);
+        await select.expandNode('Design');
+        await select.checkNode('Visual');
+        await expect
+          .poll(() => itemOf(element, 'design').getAttribute('aria-checked'))
+          .toBe('mixed');
+
+        await expectNoAxeViolations(find(element, 'wj-treeselect', HTMLElement));
+        await closePanel(select, element);
+      });
+
       it('has no axe violations open and empty, and open inside a field with an error', async () => {
         const { fixture, element } = await render((host) => {
           host.inField.set(true);
@@ -1768,6 +1817,64 @@ describe('WjTreeSelect', () => {
       await expect.poll(() => select.isFocused()).toBe(true);
       expect(fixture.componentInstance.value()).toEqual([]);
       await expect.poll(() => element.querySelector('[role="tree"]')).toBeNull();
+    });
+
+    it('Home and End move focus to the first and the last node on screen, and hand over the Tab stop', async () => {
+      const { fixture, element, select } = await focusFirst();
+      await userEvent.keyboard('{Enter}');
+      await overlayOpen(element);
+      await expect.poll(focusedKey).toBe('eng');
+
+      await userEvent.keyboard('{End}');
+      expect(focusedKey()).toBe('ops');
+      expect([itemOf(element, 'ops').tabIndex, itemOf(element, 'eng').tabIndex]).toEqual([0, -1]);
+      await userEvent.keyboard('{Home}');
+      expect(focusedKey()).toBe('eng');
+      expect([itemOf(element, 'eng').tabIndex, itemOf(element, 'ops').tabIndex]).toEqual([0, -1]);
+
+      // Optimus opens a branch after a 1 ms timer: poll for it. Its children then count.
+      await userEvent.keyboard('{ArrowRight}');
+      await expect.poll(focusedKey).toBe('platform');
+      await userEvent.keyboard('{Home}');
+      expect(focusedKey()).toBe('eng');
+      await userEvent.keyboard('{End}');
+      expect(focusedKey()).toBe('ops');
+      expect(await select.isOpen()).toBe(true);
+      expect(fixture.componentInstance.value()).toEqual([]);
+
+      await closePanel(select, element);
+    });
+
+    it('leaves a typed character unhandled in the panel: type-ahead did not fit the size cap', async () => {
+      const { fixture, element, select } = await focusFirst((host) => {
+        host.mode.set('multiple');
+      });
+      await userEvent.keyboard('{Enter}');
+      await overlayOpen(element);
+      await expect.poll(focusedKey).toBe('eng');
+
+      await userEvent.keyboard('o');
+      await userEvent.keyboard('D');
+      await userEvent.keyboard('*');
+
+      // The gap, listed on the docs page: Optimus moves nothing for a character, and neither do we.
+      expect(focusedKey()).toBe('eng');
+      expect(await select.isOpen()).toBe(true);
+      expect(fixture.componentInstance.value()).toEqual([]);
+
+      await closePanel(select, element);
+    });
+
+    it('leaves the combobox’s own keys alone: Home, End and a letter do nothing on it', async () => {
+      const { fixture, select } = await focusFirst();
+
+      await userEvent.keyboard('{Home}');
+      await userEvent.keyboard('{End}');
+      await userEvent.keyboard('o');
+
+      expect(await select.isFocused()).toBe(true);
+      expect(await select.isOpen()).toBe(false);
+      expect(fixture.componentInstance.value()).toEqual([]);
     });
 
     it('Tab inside the open panel cycles between the tree and the combobox, and never loses focus', async () => {

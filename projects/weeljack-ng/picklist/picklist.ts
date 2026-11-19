@@ -29,7 +29,8 @@ import type { WjPickListPt } from './picklist-types';
  *   text, because Optimus renders an empty list blank. With no filters there is no "filtered" case.
  * - With an item template the option's own `aria-label` (the item's name field) is cleared, so the
  *   option is named by its content, as axe's label-content-name-mismatch requires.
- * - Dropped for size (21): the filters and the show-controls switches, so Optimus renders no filter.
+ * - Dropped for size (21): the filters, so Optimus renders no filter. The show-controls switches hide a
+ *   list's four reorder buttons and never the transfer buttons.
  */
 
 /** The translation's text for `key`, or an empty string when it has none. */
@@ -56,7 +57,7 @@ function ariaName(optimus: Optimus, key: string): string | undefined {
   selector: 'wj-picklist',
   imports: [PickList, NgTemplateOutlet],
   // prettier-ignore
-  template: `<p-picklist #pl [source]="from()" [target]="to()" [sourceHeader]="sourceHeader()" [targetHeader]="targetHeader()" [dataKey]="dataKey()" [sourceAriaLabel]="sourceAriaLabel()" [targetAriaLabel]="targetAriaLabel()" [dragdrop]="dragdrop()" [stripedRows]="stripedRows()" [disabled]="disabled()" [scrollHeight]="scrollHeight()" [responsive]="true" [pt]="partAttributes()" (onMoveToTarget)="both(pl)" (onMoveAllToTarget)="both(pl)" (onMoveToSource)="both(pl)" (onMoveAllToSource)="both(pl)" (onSourceReorder)="source.set(pl.source().slice())" (onTargetReorder)="target.set(pl.target().slice())">@if (itemSlot(); as s) {<ng-template #item let-item let-selected="selected" let-index="index" let-disabled="disabled"><ng-container *ngTemplateOutlet="s.template; context: { $implicit: item, index, selected, disabled }" /></ng-template>}<ng-template #none let-list="list">@if (emptySlot(); as s) {<ng-container *ngTemplateOutlet="s.template; context: { list }" />} @else { {{ empty }} }</ng-template><ng-template #emptymessagesource><ng-container *ngTemplateOutlet="none; context: { list: 'source' }" /></ng-template><ng-template #emptymessagetarget><ng-container *ngTemplateOutlet="none; context: { list: 'target' }" /></ng-template></p-picklist>`,
+  template: `<p-picklist #pl [source]="from()" [target]="to()" [sourceHeader]="sourceHeader()" [targetHeader]="targetHeader()" [dataKey]="dataKey()" [sourceAriaLabel]="sourceAriaLabel()" [targetAriaLabel]="targetAriaLabel()" [dragdrop]="dragdrop()" [stripedRows]="stripedRows()" [showSourceControls]="showSourceControls()" [showTargetControls]="showTargetControls()" [disabled]="disabled()" [scrollHeight]="scrollHeight()" [responsive]="true" [pt]="partAttributes()" (onMoveToTarget)="both(pl)" (onMoveAllToTarget)="both(pl)" (onMoveToSource)="both(pl)" (onMoveAllToSource)="both(pl)" (onSourceReorder)="source.set(pl.source().slice())" (onTargetReorder)="target.set(pl.target().slice())">@if (itemSlot(); as s) {<ng-template #item let-item let-selected="selected" let-index="index" let-disabled="disabled"><ng-container *ngTemplateOutlet="s.template; context: { $implicit: item, index, selected, disabled }" /></ng-template>}<ng-template #none let-list="list">@if (emptySlot(); as s) {<ng-container *ngTemplateOutlet="s.template; context: { list }" />} @else { {{ empty }} }</ng-template><ng-template #emptymessagesource><ng-container *ngTemplateOutlet="none; context: { list: 'source' }" /></ng-template><ng-template #emptymessagetarget><ng-container *ngTemplateOutlet="none; context: { list: 'target' }" /></ng-template></p-picklist>`,
   styleUrl: './picklist.css',
 })
 export class WjPickList<T = unknown> {
@@ -78,6 +79,10 @@ export class WjPickList<T = unknown> {
   readonly dragdrop = input(false, { transform: booleanAttribute });
   /** Alternating row fills. */
   readonly stripedRows = input(false, { transform: booleanAttribute });
+  /** Shows the four reorder buttons beside the source list. The transfer buttons always show. */
+  readonly showSourceControls = input(true, { transform: booleanAttribute });
+  /** Shows the four reorder buttons beside the target list. The transfer buttons always show. */
+  readonly showTargetControls = input(true, { transform: booleanAttribute });
   /** Disables both lists and every button. */
   readonly disabled = input(false, { transform: booleanAttribute });
   /** Height of each list, past which it scrolls. A CSS length. */

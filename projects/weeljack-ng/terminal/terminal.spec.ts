@@ -527,6 +527,21 @@ describe('WjTerminal', () => {
       expect(rect.width).toBeGreaterThan(100);
     });
 
+    it('sets the host and the prompt input in a monospace stack', async () => {
+      await render();
+
+      expect(getComputedStyle(find('wj-terminal')).fontFamily).toMatch(/^ui-monospace, /);
+      expect(getComputedStyle(input()).fontFamily).toMatch(/^ui-monospace, /);
+    });
+
+    it('lets an app set its own font on the host', async () => {
+      await render();
+      const host = find('wj-terminal');
+      host.style.fontFamily = 'Georgia, serif';
+
+      expect(getComputedStyle(input()).fontFamily).toBe('Georgia, serif');
+    });
+
     it('wraps a long unbroken word instead of scrolling sideways', async () => {
       const { terminal, component, service } = await render();
       component.entered.mockImplementation((command) => {

@@ -284,7 +284,6 @@ describe('WjOverlay', () => {
 
       expect(host.contains(panelEl())).toBe(true);
       expect(host.getBoundingClientRect().height).toBe(0);
-      // Optimus adds its anchor gutter only when the theme defines one; Aura's 2px is not emitted.
       expect(panel?.top).toBeGreaterThanOrEqual(box.bottom - 0.5);
       expect(panel?.top).toBeLessThanOrEqual(box.bottom + 2.5);
       expect(panel?.left).toBeCloseTo(box.left, 0);
@@ -315,6 +314,33 @@ describe('WjOverlay', () => {
       expect(panelEl()?.getBoundingClientRect().bottom).toBeLessThanOrEqual(
         button.getBoundingClientRect().top,
       );
+    });
+
+    it('sits 2px under the trigger, on the anchor gutter', async () => {
+      const rendered = await render();
+      await open(rendered);
+
+      const gap =
+        (panelEl()?.getBoundingClientRect().top ?? 0) -
+        trigger(rendered).getBoundingClientRect().bottom;
+
+      expect(Math.abs(gap - 2)).toBeLessThanOrEqual(0.5);
+    });
+
+    it('sits 2px over the trigger when it opens above', async () => {
+      const rendered = await render();
+      const button = trigger(rendered);
+      button.style.position = 'fixed';
+      button.style.insetBlockEnd = '0';
+      await open(rendered);
+
+      const gap =
+        button.getBoundingClientRect().top - (panelEl()?.getBoundingClientRect().bottom ?? 0);
+
+      expect(panelEl()?.closest<HTMLElement>('.p-overlay')?.style.transformOrigin).toBe(
+        'center bottom',
+      );
+      expect(Math.abs(gap - 2)).toBeLessThanOrEqual(0.5);
     });
 
     it('paints the anchored surface with a 4px inset, from the --wj-* tokens', async () => {

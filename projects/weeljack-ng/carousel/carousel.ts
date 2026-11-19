@@ -1,7 +1,9 @@
 import { NgTemplateOutlet } from '@angular/common';
 import {
   Component,
+  ElementRef,
   ViewEncapsulation,
+  afterEveryRender,
   afterRenderEffect,
   booleanAttribute,
   computed,
@@ -33,6 +35,9 @@ import type { WjCarouselPt, WjCarouselResponsiveOption } from './carousel-types'
  *   `off`, written once). `item` is re-evaluated by Optimus for every slide on each of its checks,
  *   with `context.active`, so `inert` follows the page.
  * - Clones are never on screen at rest, so every one is `inert`.
+ * - A navigator Optimus dims (`p-disabled`) is still a focusable button: `dim` after every render
+ *   takes it out of the Tab order and says it is disabled. Home and End on an indicator call
+ *   Optimus's own `onHomeKey` and `onEndKey`, which it never wires.
 - Optimus's slide states lag its own layout by one check at creation and after an input change:
   see the `afterRenderEffect` in the constructor.
  */
@@ -52,6 +57,7 @@ import type { WjCarouselPt, WjCarouselResponsiveOption } from './carousel-types'
   styleUrl: './carousel.css',
   // The stylesheet styles Optimus's own elements, which an emulated scope cannot reach.
   encapsulation: ViewEncapsulation.None,
+  host: { '(keydown)': 'jump($event)' },
 })
 export class WjCarousel<T = unknown> {
   /** The items, one per slide. Never changed: the carousel only reads it. */
@@ -83,6 +89,7 @@ export class WjCarousel<T = unknown> {
 
   protected readonly itemSlot = contentChild(WjCarouselItemSlot);
   private readonly inner = viewChild(Carousel);
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;
   protected readonly options = computed(() => this.responsiveOptions()?.slice());
 
   private readonly previousLabel = label('prevPageLabel');
@@ -117,9 +124,25 @@ export class WjCarousel<T = unknown> {
     };
   });
 
+  /** Home and End on an indicator move focus to the first and last one. */
+  protected jump(event: KeyboardEvent): void {
+    const home = event.key === 'Home';
+    if (
+      (home || event.key === 'End') &&
+      event.target instanceof Element &&
+      event.target.matches('[data-pc-section="indicatorbutton"]')
+    ) {
+      event.preventDefault();
+      this.inner()?.[home ? 'onHomeKey' : 'onEndKey']();
+    }
+  }
+
   constructor() {
     _checkWeeljackSetup('wj-carousel');
     _checkAriaOnHost('wj-carousel', 'Use ariaLabel or ariaLabelledBy instead');
+    afterEveryRender(() => {
+      dim(this.host);
+    });
 
     // Optimus works out which slides are on screen after its first check (a circular carousel
     // starts one `numVisible` in) and again after each of these inputs, but its OnPush view
@@ -133,6 +156,31 @@ export class WjCarousel<T = unknown> {
       this.itemSlot();
       this.inner()?.cd.markForCheck();
     });
+  }
+}
+
+/**
+ * Takes the button inside each navigator Optimus dims out of the Tab order and says it is disabled.
+ * The navigators are found by class: Optimus 2.0.2 writes their group marker as an attribute
+ * literally named `attr.data-pc-group-section`. Writes only when the state changed.
+ */
+function dim(host: HTMLElement): void {
+  for (const button of host.querySelectorAll(
+    '.p-carousel-prev-button > button, .p-carousel-next-button > button',
+  )) {
+    const dimmed = button.matches('.p-disabled > button');
+    if (button.hasAttribute('aria-disabled') !== dimmed) {
+      for (const [name, value] of [
+        ['aria-disabled', 'true'],
+        ['tabindex', '-1'],
+      ] as const) {
+        if (dimmed) {
+          button.setAttribute(name, value);
+        } else {
+          button.removeAttribute(name);
+        }
+      }
+    }
   }
 }
 

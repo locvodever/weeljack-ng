@@ -49,6 +49,7 @@ function isHidden(options: unknown): boolean {
   selector: 'wj-speeddial',
   imports: [SpeedDial, NgTemplateOutlet],
   templateUrl: './speeddial.html',
+  host: { '(keydown.enter)': 'enter($event)' },
   styleUrl: './speeddial.css',
 })
 export class WjSpeedDial {
@@ -93,6 +94,14 @@ export class WjSpeedDial {
   );
 
   /**
+   * Whether Optimus's arrow keys have an enabled action to land on. It skips an item whose `a` is
+   * `p-disabled`, and throws when it skips them all, so the marker is drawn only while one is left.
+   */
+  protected readonly skipsDisabled = computed(() =>
+    this.mapped().items.some((item) => item.disabled !== true),
+  );
+
+  /**
    * `pt` forwarded as given, plus the description routed to the toggle, and what Optimus 2.0.2
    * does not do itself: closed actions are only scaled to zero, so each is made `inert` while
    * Optimus reports it hidden.
@@ -118,6 +127,32 @@ export class WjSpeedDial {
       };
     };
   });
+
+  /**
+   * Enter or Space on an action reached with Tab: runs it as a click does (Optimus's own
+   * `onItemClick`, which closes the dial), keeps Optimus's list from taking the key, and moves focus
+   * to the toggle, since the closed actions are `inert`.
+   */
+  protected act(event: Event, toggle: (event: Event, item: unknown) => void, item: unknown): void {
+    event.stopPropagation();
+    event.preventDefault();
+    toggle(event, item);
+    const target = event.currentTarget;
+    if (target instanceof Element) {
+      target.closest('p-speeddial')?.querySelector<HTMLElement>('button[aria-haspopup]')?.focus();
+    }
+  }
+
+  /**
+   * Enter on the list: Optimus runs the active action and focuses the toggle during the key press,
+   * so the browser's Enter would click the toggle and open the dial again. The event's default is
+   * cancelled after Optimus's handler ran, which is before the browser acts on it.
+   */
+  protected enter(event: Event): void {
+    if (event.target instanceof Element && event.target.matches('[role="menu"]')) {
+      event.preventDefault();
+    }
+  }
 
   constructor() {
     _checkWeeljackSetup('wj-speeddial');

@@ -24,6 +24,12 @@ describe('WjPickList types', () => {
     expectTypeOf<ReturnType<WjPickList['sourceAriaLabel']>>().toExtend<
       PickList['sourceAriaLabel']
     >();
+    expectTypeOf<ReturnType<WjPickList['showSourceControls']>>().toExtend<
+      PickList['showSourceControls']
+    >();
+    expectTypeOf<ReturnType<WjPickList['showTargetControls']>>().toExtend<
+      PickList['showTargetControls']
+    >();
 
     const list: WjPickListName = 'target' satisfies WjPickListName;
     expect(list).toBe('target');

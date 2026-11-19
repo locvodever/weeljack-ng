@@ -53,7 +53,7 @@ export const DOC: ComponentDoc = {
     'Long text wraps, so an unbroken word never scrolls the terminal sideways.',
     'Render one `wj-terminal` at a time: every `wj-terminal` shares `WjTerminalService`, so a second one would show every response and fail in the one with no command. In development it raises `WJ0181`. A response sent when no command is waiting is dropped, with `WJ0180`.',
     'The command history is not a list: a screen reader reads it as text, in order.',
-    'The terminal uses the page’s font, not a monospace one. Set `font-family` on `wj-terminal` to change it.',
+    'The terminal is set in a monospace stack (`ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace`), which its prompt and input inherit. Set `font-family` on `wj-terminal` to change it: your unlayered CSS beats the library’s.',
     'A response is one block of text: line breaks in it collapse to spaces. Write one sentence per answer.',
     'The log scrolls to the newest response at once, with no motion.',
     'The screen-reader pass (NVDA with Chrome) is recorded here before W5d’s release.',
