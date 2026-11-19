@@ -768,6 +768,20 @@ describe('WjImage', () => {
       expect(motionClasses(read()).length).toBeGreaterThan(0);
     });
 
+    it('removes the mask when its leave ends before the enlarged image’s, which Optimus does not', async () => {
+      reduceMotion(false);
+      const rendered = await render((host) => {
+        // A mask leave shorter than the image's 300 ms puts the two leaves in the order Optimus
+        // misses. It orders them; nothing waits on it.
+        host.pt.set({ maskMotion: { duration: 30 } } as WjImagePt);
+      });
+
+      await open(rendered);
+      await close(rendered);
+
+      expect(maskEl()).toBeNull();
+    });
+
     it('turns Optimus’s 300 ms rotate and zoom transition off under prefers-reduced-motion only', async () => {
       const rendered = await render();
       await open(rendered);
