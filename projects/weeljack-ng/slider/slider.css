@@ -1,0 +1,22 @@
+/* The host is the Optimus track plus the room its handle overhangs, as padding derived from
+   Optimus's own variables so a token change follows it. Optimus centres the handle on the 3 px
+   track, so at rest it overhangs by half the handle less half the track above and below, and by
+   half its width past either end at min and max. Without the room it would cover a field's hint and
+   error. The host's height is the app's when vertical: the track fills the host's content box. */
+@layer wj {
+  :host {
+    display: block;
+    box-sizing: border-box;
+    padding-block: calc((var(--wj-slider-handle-height) - var(--wj-slider-track-size)) / 2);
+    padding-inline: calc(var(--wj-slider-handle-width) / 2);
+  }
+
+  :host(:has(.p-slider-vertical)) {
+    padding-block: calc(var(--wj-slider-handle-height) / 2);
+    padding-inline: calc((var(--wj-slider-handle-width) - var(--wj-slider-track-size)) / 2);
+  }
+
+  :host ::ng-deep .p-slider-vertical {
+    block-size: 100%;
+  }
+}

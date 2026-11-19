@@ -143,6 +143,46 @@ export const wjAlwaysOn = definePreset(aura, {
       root: { width: '1.5rem', height: '1.5rem' },
       icon: { size: '1rem' },
     },
+    // Aura's own `lg` box and dot, so the radio's hit box reaches 24 px (22 Q3), as `checkbox` does.
+    radiobutton: {
+      root: { width: '1.5rem', height: '1.5rem' },
+      icon: { size: '1rem' },
+    },
+    // Aura's star is 1rem; 1.5rem makes each option a 24 px hit box (22 Q3).
+    rating: { icon: { size: '1.5rem' } },
+    /*
+     * The slider (w2-forms-choice FR-8). Aura draws the track and the handle's ring in
+     * `{content.border.color}`, 1.27:1 on white and 1.70:1 on a zinc.900 card, so a slider that is
+     * only a thin line fails WCAG 1.4.11. `{surface.500}` is the smallest step that clears 3:1 in
+     * both schemes, the step the control boundaries use (4.83 on cards and 4.63 on the page in
+     * light, 3.67 and 4.12 in dark); the range stays the primary (4.12 / 4.63 on the track). The
+     * ring's hover colour is `{content.border.color}` too, so without its own token the ring would
+     * fall back to 1.27:1 under the pointer: it takes the form-field hover step (`{surface.600}`
+     * light, `{surface.400}` dark). The handle is 24 px with a 20 px face (Aura's 20 and 16), so it
+     * is a 24 px hit box (22 Q3). Aura leaves the face's own tokens alone, and so does this.
+     * The light steps sit in the base because Optimus emits `colorScheme.light` before the base
+     * tokens (Aura's `slider` has no light-only track or ring to lose to); `dark` overrides the hover.
+     * The knob's range arc reads `{surface.500}` too, but these component tokens never reach it.
+     */
+    slider: {
+      track: { background: '{surface.500}' },
+      handle: {
+        width: '24px',
+        height: '24px',
+        background: '{surface.500}',
+        hoverBackground: '{surface.600}',
+        content: { width: '20px', height: '20px' },
+      },
+      colorScheme: { dark: { handle: { hoverBackground: '{surface.400}' } } },
+    },
+    /*
+     * The knob's range arc (w2-forms-choice FR-8). Aura draws it in `{content.border.color}`, 1.27:1
+     * on white and 1.70:1 on a zinc.900 card, which fails WCAG 1.4.11 for the dial's only boundary.
+     * It takes `{surface.500}`, as the slider track does (4.83 on cards in light, 3.67 in dark); the
+     * value arc stays the primary (4.12 on the range arc in light, 4.63 in dark). The slider's tokens
+     * never reach the knob, so it has its own. One value for both schemes, so it sits in the base.
+     */
+    knob: { range: { background: '{surface.500}' } },
     toggleswitch: {
       colorScheme: {
         light: {

@@ -34,6 +34,10 @@ export interface WjOwnStrings {
   invalidFileLimitDetail?: string;
   /** The name of `wj-terminal`'s command input, when the app sets no `ariaLabel` or `ariaLabelledBy`. */
   terminalCommand?: string;
+  /** `wj-togglebutton`'s label while it is on, when the app sets no `onLabel`. */
+  toggleOn?: string;
+  /** `wj-togglebutton`'s label while it is off, when the app sets no `offLabel`. */
+  toggleOff?: string;
 }
 
 /**

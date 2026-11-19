@@ -1,0 +1,9 @@
+<p-togglebutton
+  [onLabel]="onLabel() ?? text('toggleOn')"
+  [offLabel]="offLabel() ?? text('toggleOff')"
+  [disabled]="isDisabled()"
+  [invalid]="field.invalid()"
+  [size]="optimusSize()"
+  [tabindex]="isDisabled() ? -1 : 0"
+  [pt]="partAttributes()"
+/>

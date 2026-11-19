@@ -18,6 +18,8 @@ const OWN_KEYS = [
   'invalidFileLimitSummary',
   'invalidFileLimitDetail',
   'terminalCommand',
+  'toggleOn',
+  'toggleOff',
 ] as const satisfies readonly (keyof WjOwnStrings)[];
 
 function keys(value: object | undefined): string[] {
@@ -58,6 +60,8 @@ describe('weeljack-ng/locale', () => {
       invalidFileLimitSummary: 'Đã vượt quá số lượng tập tin tối đa,',
       invalidFileLimitDetail: 'giới hạn tối đa là {0}.',
       terminalCommand: 'Lệnh',
+      toggleOn: 'Có',
+      toggleOff: 'Không',
     });
   });
 
