@@ -240,6 +240,8 @@ parser for `*.html`. All Markdown is ignored. `.gitattributes` pins `eol=lf`.
     `!` or `BREAKING CHANGE:` marks a break).
 - **release-please** owns `CHANGELOG.md` and the version; never hand-edit either.
   - A release is the merge of its release PR.
+  - Release tags are `weeljack-ng-vX.Y.Z`: release-please puts the component in the tag. Nothing
+    may assume a bare `vX.Y.Z` (the tag ruleset, `release.yml`, `docs.yml`'s input).
   - Each wave closes with `Release-As: 0.N.0` (wave 1 = `0.1.0`), and a breaking `wj-*` change
     ships only at a wave close.
   - `1.0.0` closes the overlays wave. After it, an input or output is removed only after one
@@ -310,7 +312,7 @@ Copied from the roadmap's engineering baseline (one line per area that applies).
   - public `locvodever/weeljack-ng`, trunk on `main`;
   - squash only, with the PR title as a Conventional Commit, branches deleted on merge;
   - a `main` ruleset (PR, `check` and `pr-title` required, no force-push or deletion, no approval)
-    and a `v*` tag ruleset;
+    and a `weeljack-ng-v*` tag ruleset;
   - WeeljackNg's own semver, with a WeeljackNg → Angular → Optimus table;
   - a release is the merge of release-please's PR (`release-type: node`, both pre-major flags,
     `CHANGELOG.md` at the root);
