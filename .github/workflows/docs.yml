@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: Release tag whose docs to deploy, for example v0.0.1
+        description: Release tag whose docs to deploy, for example weeljack-ng-v0.0.1
         required: true
         type: string
 
@@ -22,10 +22,11 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - name: The input is a v<major>.<minor>.<patch> tag
+      # release-please names the tag weeljack-ng-vX.Y.Z (component in the tag), never vX.Y.Z.
+      - name: The input is a weeljack-ng-v<major>.<minor>.<patch> tag
         run: |
-          if ! printf '%s' "$TAG" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$'; then
-            echo "tag must look like v1.2.3, got: $TAG" >&2
+          if ! printf '%s' "$TAG" | grep -Eq '^weeljack-ng-v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$'; then
+            echo "tag must look like weeljack-ng-v1.2.3, got: $TAG" >&2
             exit 1
           fi
         env:

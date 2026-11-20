@@ -55,10 +55,15 @@ jobs:
         run: npm audit --audit-level=high
       - name: npm audit signatures (blocking)
         run: npm audit signatures
+      # release-please names the tag weeljack-ng-vX.Y.Z (component in the tag), never vX.Y.Z.
       - name: The built version equals the tag
         run: |
           built="$(node -p "require('./dist/weeljack-ng/package.json').version")"
-          expected="${TAG_NAME#v}"
+          expected="${TAG_NAME#weeljack-ng-v}"
+          if [ "$expected" = "$TAG_NAME" ]; then
+            echo "the tag $TAG_NAME does not start with weeljack-ng-v" >&2
+            exit 1
+          fi
           if [ "$built" != "$expected" ]; then
             echo "dist/weeljack-ng is $built but the tag is $TAG_NAME" >&2
             exit 1
