@@ -242,6 +242,25 @@ async function activateFirstItem(role: 'menu' | 'menubar'): Promise<void> {
   await userEvent.keyboard('{ArrowDown}');
 }
 
+/**
+ * Waits until the rows-per-page overlay has finished opening: its `p-motion` is shown with no motion
+ * class left. Optimus's `p-motion` loses a hide that lands before its first frame (its initial mount
+ * skips the leave, then the pending enter shows the overlay for good), so an Escape sent while the
+ * enter is still pending leaves the overlay open.
+ */
+async function overlayEntered(): Promise<void> {
+  const entered = (): boolean => {
+    const motion = document.querySelector('.p-select-overlay')?.closest<HTMLElement>('p-motion');
+    return (
+      motion !== null &&
+      motion !== undefined &&
+      motion.style.display !== 'none' &&
+      motion.className === 'p-motion'
+    );
+  };
+  await expect.poll(entered).toBe(true);
+}
+
 describe('layer styles', () => {
   afterEach(async () => {
     await userEvent.unhover(document.body);
@@ -578,6 +597,15 @@ describe('menus, motion and text buttons', () => {
     probe.className = 'p-anchored-overlay-enter-active';
     document.body.append(probe);
     const restore = widenReducedMotion('p-anchored-overlay-enter-active');
+    // The enter and leave run on the overlay's `p-motion` ancestor, so an animation on the overlay
+    // itself can't show them; a capture-phase `animationstart` sees them wherever they run.
+    const started: string[] = [];
+    const onAnimationStart = (event: AnimationEvent): void => {
+      if (event.animationName.startsWith('p-animate-anchored-overlay')) {
+        started.push(event.animationName);
+      }
+    };
+    document.addEventListener('animationstart', onAnimationStart, true);
     try {
       expect(getComputedStyle(probe).animationName).toBe('none');
       probe.className = 'p-anchored-overlay-leave-active';
@@ -585,11 +613,14 @@ describe('menus, motion and text buttons', () => {
 
       await userEvent.click(query(fixture, 'p-select'));
       await expect.poll(() => document.querySelector('.p-select-overlay')).not.toBeNull();
-      expect(document.querySelector('.p-select-overlay')?.getAnimations()).toEqual([]);
+      await overlayEntered();
+      expect(started).toEqual([]);
 
       await userEvent.keyboard('{Escape}');
       await expect.poll(() => document.querySelector('.p-select-overlay')).toBeNull();
+      expect(started).toEqual([]);
     } finally {
+      document.removeEventListener('animationstart', onAnimationStart, true);
       restore();
     }
     probe.className = 'p-anchored-overlay-enter-active';
