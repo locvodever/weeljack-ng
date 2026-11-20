@@ -46,6 +46,9 @@ function makeColumns(names: readonly string[]): Column[] {
         [dataKey]="dataKey()"
         [sourceAriaLabel]="sourceAriaLabel()"
         [targetAriaLabel]="targetAriaLabel()"
+        [filterBy]="filterBy()"
+        [ariaSourceFilterLabel]="ariaSourceFilterLabel()"
+        [ariaTargetFilterLabel]="ariaTargetFilterLabel()"
         [dragdrop]="dragdrop()"
         [stripedRows]="stripedRows()"
         [showSourceControls]="showSourceControls()"
@@ -106,6 +109,9 @@ class Host {
   readonly dataKey = signal<string | undefined>(undefined);
   readonly sourceAriaLabel = signal<string | undefined>('Available columns');
   readonly targetAriaLabel = signal<string | undefined>('Visible columns');
+  readonly filterBy = signal<string | undefined>(undefined);
+  readonly ariaSourceFilterLabel = signal<string | undefined>(undefined);
+  readonly ariaTargetFilterLabel = signal<string | undefined>(undefined);
   readonly dragdrop = signal(false);
   readonly stripedRows = signal(false);
   readonly showSourceControls = signal(true);
@@ -244,6 +250,21 @@ function seen(element: ParentNode, selector: string): Record<string, string | un
   return parts(element, selector).map((item) => Object.fromEntries(Object.entries(item.dataset)));
 }
 
+const SOURCE_FILTER = 'Filter available columns';
+const TARGET_FILTER = 'Filter visible columns';
+
+/** Shows a filter above each list and names both. */
+function withFilters(host: Host): void {
+  host.filterBy.set('name');
+  host.ariaSourceFilterLabel.set(SOURCE_FILTER);
+  host.ariaTargetFilterLabel.set(TARGET_FILTER);
+}
+
+/** The two filter inputs: the source's, then the target's. */
+function filters(element: ParentNode): HTMLElement[] {
+  return parts(element, '[role="searchbox"]');
+}
+
 /** The documented states, each rendered and checked in both schemes. */
 const STATES: [string, (host: Host) => void][] = [
   ['default', () => undefined],
@@ -290,6 +311,36 @@ const STATES: [string, (host: Host) => void][] = [
     (host) => {
       host.showSourceControls.set(false);
       host.showTargetControls.set(false);
+    },
+  ],
+  [
+    'with filters',
+    (host) => {
+      withFilters(host);
+    },
+  ],
+  [
+    'with filters and headers',
+    (host) => {
+      withFilters(host);
+      host.sourceHeader.set('Available columns');
+      host.targetHeader.set('Visible columns');
+    },
+  ],
+  [
+    'with filters, the target list empty',
+    (host) => {
+      withFilters(host);
+      host.target.set([]);
+    },
+  ],
+  [
+    'with filters, both lists empty, with the empty slot',
+    (host) => {
+      withFilters(host);
+      host.source.set([]);
+      host.target.set([]);
+      host.withEmpty.set(true);
     },
   ],
   [
@@ -488,11 +539,197 @@ describe('WjPickList', () => {
       expect(names(host.target())).toEqual([...TARGET_NAMES, 'Email']);
     });
 
-    it('renders no filter input, as it has no filter inputs', async () => {
+    it('renders no filter input without filterBy', async () => {
       const { element } = await render();
 
       expect(element.querySelector('input')).toBeNull();
       expect(element.querySelector('[role="searchbox"]')).toBeNull();
+    });
+  });
+
+  describe('filter', () => {
+    it('shows one searchbox above each list when filterBy is set, and none without it', async () => {
+      const { element, fixture, host } = await render('light', (h) => {
+        h.filterBy.set('name');
+      });
+      expect(filters(element)).toHaveLength(2);
+      expect(
+        parts(element, '.p-listbox-header').every((header) => header.querySelector('input')),
+      ).toBe(true);
+
+      host.filterBy.set(undefined);
+      await fixture.whenStable();
+      expect(filters(element)).toHaveLength(0);
+    });
+
+    it('narrows only the list it sits on, and the harness types into each', async () => {
+      const { list } = await render('light', withFilters);
+
+      await list.filterSource('ph');
+      expect(await list.getSourceItemTexts()).toEqual(['Phone']);
+      expect(await list.getTargetItemTexts()).toEqual(TARGET_NAMES);
+
+      await list.filterTarget('st');
+      expect(await list.getSourceItemTexts()).toEqual(['Phone']);
+      expect(await list.getTargetItemTexts()).toEqual(['Status']);
+
+      await list.filterSource('');
+      expect(await list.getSourceItemTexts()).toEqual(SOURCE_NAMES);
+      expect(await list.getTargetItemTexts()).toEqual(['Status']);
+    });
+
+    it('searches the field filterBy names', async () => {
+      const { list } = await render('light', (host) => {
+        host.filterBy.set('field');
+        host.dataKey.set('name');
+      });
+
+      await list.filterSource('mail');
+      expect(await list.getSourceItemTexts()).toEqual(['Email']);
+    });
+
+    it('moves the items a narrowed source shows, with “all”, and writes new arrays', async () => {
+      const { host, list } = await render('light', withFilters);
+      const [source, target] = [host.source(), host.target()];
+
+      await list.filterSource('ph');
+      await list.moveAllToTarget();
+
+      expect(names(host.source())).toEqual(['Name', 'Email', 'City']);
+      expect(names(host.target())).toEqual([...TARGET_NAMES, 'Phone']);
+      expect(host.source()).not.toBe(source);
+      expect(host.target()).not.toBe(target);
+      expect(names(source)).toEqual(SOURCE_NAMES);
+    });
+
+    it('moves the items a narrowed target shows, with “all”, back to the source', async () => {
+      const { host, list } = await render('light', withFilters);
+
+      await list.filterTarget('st');
+      await list.moveAllToSource();
+
+      expect(names(host.source())).toEqual([...SOURCE_NAMES, 'Status']);
+      expect(names(host.target())).toEqual(['Country']);
+    });
+
+    it('shows the list’s empty text for a filter that matches nothing, in that list only (gap)', async () => {
+      const { element, list } = await render('light', withFilters);
+
+      await list.filterSource('zzz');
+
+      expect(parts(element, '.p-listbox-empty-message').map((m) => m.textContent.trim())).toEqual([
+        'No available options',
+      ]);
+      expect(await list.getTargetItemTexts()).toEqual(TARGET_NAMES);
+    });
+
+    it('shows the wjPickListEmpty slot for a filter that matches nothing, with its list (gap)', async () => {
+      const { element, list } = await render('light', (host) => {
+        withFilters(host);
+        host.withEmpty.set(true);
+      });
+
+      await list.filterTarget('zzz');
+
+      expect(parts(element, '.empty-text').map((m) => m.textContent.trim())).toEqual([
+        'Nothing in target.',
+      ]);
+    });
+
+    it('shows the empty text, then the slot, for an empty list with nothing typed', async () => {
+      const { element, fixture, host } = await render('light', (h) => {
+        withFilters(h);
+        h.source.set([]);
+      });
+      expect(part(element, '.p-listbox-empty-message').textContent.trim()).toBe(
+        'No available options',
+      );
+
+      host.withEmpty.set(true);
+      await fixture.whenStable();
+      expect(part(element, '.empty-text').textContent.trim()).toBe('Nothing in source.');
+    });
+
+    it('names each filter input by its own list’s label, with no aria-owns', async () => {
+      const { element } = await render('light', withFilters);
+
+      expect(filters(element).map((input) => input.getAttribute('aria-label'))).toEqual([
+        SOURCE_FILTER,
+        TARGET_FILTER,
+      ]);
+      expect(filters(element).map((input) => input.hasAttribute('aria-owns'))).toEqual([
+        false,
+        false,
+      ]);
+    });
+
+    it('follows a changed label on its own input only, and drops it when unset', async () => {
+      const { element, fixture, host } = await render('light', withFilters);
+
+      host.ariaSourceFilterLabel.set('Find a column');
+      await fixture.whenStable();
+      expect(filters(element).map((input) => input.getAttribute('aria-label'))).toEqual([
+        'Find a column',
+        TARGET_FILTER,
+      ]);
+
+      host.ariaTargetFilterLabel.set(undefined);
+      await fixture.whenStable();
+      const [source, target] = filters(element);
+      expect(source?.getAttribute('aria-label')).toBe('Find a column');
+      expect(target?.hasAttribute('aria-label')).toBe(false);
+    });
+
+    it('has no aria-owns while a list is empty, which names a list that is not rendered', async () => {
+      const { element } = await render('light', (host) => {
+        withFilters(host);
+        host.source.set([]);
+        host.target.set([]);
+      });
+
+      expect(listboxes(element)).toHaveLength(0);
+      expect(filters(element)).toHaveLength(2);
+      expect(filters(element).map((input) => input.hasAttribute('aria-owns'))).toEqual([
+        false,
+        false,
+      ]);
+      expect(filters(element).map((input) => input.getAttribute('aria-label'))).toEqual([
+        SOURCE_FILTER,
+        TARGET_FILTER,
+      ]);
+    });
+
+    it('names the filters beside the lists’ own names', async () => {
+      const { element } = await render('light', withFilters);
+
+      expect(listboxes(element).map((box) => box.getAttribute('aria-label'))).toEqual([
+        'Available columns',
+        'Visible columns',
+      ]);
+    });
+
+    it('leaves a filter unnamed when neither label is set', async () => {
+      const { element } = await render('light', (host) => {
+        host.filterBy.set('name');
+      });
+
+      expect(filters(element)).toHaveLength(2);
+      expect(filters(element).some((input) => input.hasAttribute('aria-label'))).toBe(false);
+    });
+
+    it('renders the filter names as text, never as HTML', async () => {
+      const { element } = await render('light', (host) => {
+        host.filterBy.set('name');
+        host.ariaSourceFilterLabel.set(PAYLOAD);
+        host.ariaTargetFilterLabel.set(PAYLOAD);
+      });
+
+      expect(element.querySelector('img')).toBeNull();
+      expect(Reflect.get(window, 'wjInjected')).toBeUndefined();
+      expect(filters(element).map((input) => input.getAttribute('aria-label'))).toEqual([
+        PAYLOAD,
+        PAYLOAD,
+      ]);
     });
   });
 
@@ -603,7 +840,7 @@ describe('WjPickList', () => {
       expect(buttons(element, 'target-controls').every((b) => b.disabled)).toBe(true);
     });
 
-    it('has no filter to type into: the harness says so', async () => {
+    it('the harness throws without filterBy: there is no filter to type into', async () => {
       const { list } = await render();
 
       await expect(list.filterSource('a')).rejects.toThrow('no source filter input');
@@ -932,6 +1169,45 @@ describe('WjPickList', () => {
       expect(bottom?.getAttribute('aria-label')).toBe('Move Bottom');
       expect(listboxes(element).every((box) => box.dataset['list'] === 'yes')).toBe(true);
     });
+
+    it('keeps a pcFilter part of the pt object on both filter inputs, beside the routed names', async () => {
+      const { element } = await render('light', (host) => {
+        withFilters(host);
+        host.pt.set({ pcListbox: { pcFilter: { root: { class: 'x' } } } });
+      });
+
+      expect(filters(element).map((input) => input.classList.contains('x'))).toEqual([true, true]);
+      expect(filters(element).map((input) => input.getAttribute('aria-label'))).toEqual([
+        SOURCE_FILTER,
+        TARGET_FILTER,
+      ]);
+    });
+
+    it('keeps a pcFilter part of the pt function on both filter inputs, beside the routed names', async () => {
+      const { element } = await render('light', (host) => {
+        withFilters(host);
+        host.pt.set(() => ({ pcListbox: { pcFilter: () => ({ root: { class: 'x' } }) } }));
+      });
+
+      expect(filters(element).map((input) => input.classList.contains('x'))).toEqual([true, true]);
+      expect(filters(element).map((input) => input.getAttribute('aria-label'))).toEqual([
+        SOURCE_FILTER,
+        TARGET_FILTER,
+      ]);
+    });
+
+    it('keeps the rest of a pcListbox part beside the routed filter names', async () => {
+      const { element } = await render('light', (host) => {
+        withFilters(host);
+        host.pt.set({ pcListbox: { list: { 'data-list': 'yes' } } });
+      });
+
+      expect(listboxes(element).every((box) => box.dataset['list'] === 'yes')).toBe(true);
+      expect(filters(element).map((input) => input.getAttribute('aria-label'))).toEqual([
+        SOURCE_FILTER,
+        TARGET_FILTER,
+      ]);
+    });
   });
 
   describe('ARIA', () => {
@@ -1217,6 +1493,35 @@ describe('WjPickList', () => {
         '',
       ]);
     });
+
+    it('has filter inputs that take focus but are no Tab stop, and a hidden stop after each list (Optimus gap)', async () => {
+      const { element } = await render('light', withFilters);
+      const inputs = filters(element);
+      part(element, '#before').focus();
+
+      const stops: string[] = [];
+      for (let i = 0; i < 7; i++) {
+        await userEvent.keyboard('{Tab}');
+        const active = document.activeElement;
+        stops.push(
+          active instanceof HTMLElement && inputs.includes(active) ? 'filter' : focusedName(),
+        );
+      }
+      expect(stops).toEqual([
+        'Available columns',
+        'presentation',
+        'Move All to Target',
+        'Move All to Source',
+        'Visible columns',
+        'presentation',
+        'after',
+      ]);
+
+      for (const input of inputs) {
+        input.focus();
+        expect(document.activeElement).toBe(input);
+      }
+    });
   });
 
   describe('accessibility', () => {
@@ -1245,6 +1550,32 @@ describe('WjPickList', () => {
         const violations = await runAxe(element);
 
         expect(violations.filter((violation) => violation.id !== 'color-contrast')).toEqual([]);
+      });
+
+      it('has no axe violations with a filter typed in each list', async () => {
+        const { element, list } = await render(scheme, withFilters);
+        await list.filterSource('ph');
+        await list.filterTarget('st');
+
+        await expectNoAxeViolations(element);
+      });
+
+      it('has no axe violations with a filter that matches nothing', async () => {
+        const { element, list } = await render(scheme, withFilters);
+        await list.filterSource('zzz');
+        await list.filterTarget('zzz');
+
+        await expectNoAxeViolations(element);
+      });
+
+      it('has no axe violations with a filter that matches nothing, with the empty slot', async () => {
+        const { element, list } = await render(scheme, (host) => {
+          withFilters(host);
+          host.withEmpty.set(true);
+        });
+        await list.filterSource('zzz');
+
+        await expectNoAxeViolations(element);
       });
 
       it('has no axe violations after a transfer', async () => {

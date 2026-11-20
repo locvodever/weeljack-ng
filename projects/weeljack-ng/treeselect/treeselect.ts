@@ -38,11 +38,6 @@ import type { WjTreeSelectPt, WjTreeSelectSize } from './treeselect-types';
  *   for the panel's tree, at any depth (see `fixNodes`).
  */
 
-/** Optimus's value, one node or an array, `null` when empty, as an array. */
-function toArray<N>(picked: N | N[] | null): N[] {
-  return Array.isArray(picked) ? picked : picked ? [picked] : [];
-}
-
 /**
  * What every node of the panel's tree needs, at any depth: the toggle and the checkbox are hidden
  * from assistive tech (the treeitem already says expanded and checked), and the treeitem has no
@@ -54,27 +49,22 @@ function toArray<N>(picked: N | N[] | null): N[] {
  * writes nothing when a partly checked node is unchecked).
  */
 function fixNodes(host: HTMLElement): void {
-  for (const node of host.querySelectorAll('[role="treeitem"]')) {
-    node.removeAttribute('aria-label');
-    node.setAttribute(
-      'aria-setsize',
-      String(node.parentElement?.parentElement?.childElementCount ?? 0),
-    );
-    if (!node.hasAttribute('aria-expanded') && !node.classList.contains('p-tree-node-leaf')) {
-      node.setAttribute('aria-expanded', 'false');
+  for (const node of host.querySelectorAll<HTMLElement>('[role="treeitem"]')) {
+    node.ariaLabel = null;
+    node.ariaSetSize = String(node.parentElement?.parentElement?.childElementCount);
+    if (!node.ariaExpanded && !node.matches('.p-tree-node-leaf')) {
+      node.ariaExpanded = 'false';
     }
-    const mixed =
-      node.querySelector(
-        ':scope > [data-pc-section="nodecontent"] > [data-p-partialchecked="true"]',
-      ) !== null;
-    if (mixed || node.getAttribute('aria-checked') === 'mixed') {
-      node.setAttribute('aria-checked', mixed ? 'mixed' : 'false');
+    const mixed = node.querySelector(
+      ':scope>[data-pc-section="nodecontent"]>[data-p-partialchecked="true"]',
+    );
+    if (mixed || node.ariaChecked === 'mixed') {
+      node.ariaChecked = mixed ? 'mixed' : 'false';
     }
   }
-  const hidden =
-    '[data-pc-section="nodetogglebutton"], [data-pc-section="nodecontent"] > p-checkbox';
-  for (const part of host.querySelectorAll(hidden)) {
-    part.setAttribute('aria-hidden', 'true');
+  const hidden = '[data-pc-section="nodetogglebutton"],[data-pc-section="nodecontent"]>p-checkbox';
+  for (const part of host.querySelectorAll<HTMLElement>(hidden)) {
+    part.ariaHidden = 'true';
   }
 }
 
@@ -93,7 +83,8 @@ function fixNodes(host: HTMLElement): void {
   selector: 'wj-treeselect',
   imports: [TreeSelect],
   providers: [{ provide: NG_VALUE_ACCESSOR, useExisting: WjTreeSelect, multi: true }],
-  templateUrl: './treeselect.html',
+  // prettier-ignore
+  template: `<p-treeselect [options]="copy().nodes" [selectionMode]="selectionMode()" [inputId]="field.id()" [ariaLabel]="ariaLabel()" [ariaLabelledBy]="field.labelledBy() ? field.labelledBy() + ' ' + valueId : undefined" [disabled]="isDisabled()" [required]="required()" [invalid]="field.invalid()" [placeholder]="placeholder()" [size]="size()" [motionOptions]="motion" [pt]="partAttributes()" />`,
   styleUrl: './treeselect.css',
   host: { '(keydown)': 'jump($event)' },
 })
@@ -138,7 +129,7 @@ export class WjTreeSelect<T = unknown> implements ControlValueAccessor {
   protected readonly motion = _OVERLAY_MOTION;
   private readonly inner = viewChild(TreeSelect);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;
-  private readonly valueId = _wjId('treeselect-value');
+  protected readonly valueId = _wjId('treeselect-value');
   private reported: WjTreeNode<T>[] | undefined;
 
   /** The copies Optimus renders, rebuilt for each new `options` array. */
@@ -159,8 +150,7 @@ export class WjTreeSelect<T = unknown> implements ControlValueAccessor {
         },
         registerOnChange: (fn: (nodes: WjTreeNode<T>[]) => void) => {
           control.registerOnChange((picked: WjTreeNode<T> | WjTreeNode<T>[] | null) => {
-            this.reported = toArray(picked).map(original);
-            fn(this.reported);
+            fn((this.reported = [picked ?? []].flat().map(original)));
           });
         },
         registerOnTouched: (fn: () => void) => {
@@ -186,12 +176,6 @@ export class WjTreeSelect<T = unknown> implements ControlValueAccessor {
     labelable: false,
   });
 
-  /** The name's ids followed by the shown value's, so the combobox reads "label, value". */
-  protected readonly labelledBy = computed(() => {
-    const names = this.field.labelledBy();
-    return names ? `${names} ${this.valueId}` : undefined;
-  });
-
   /**
    * `pt` forwarded as given, plus what this wrapper routes into Optimus's parts: the ARIA
    * attributes on the combobox (Optimus sets no `aria-required`), the shown value's id, marked
@@ -203,11 +187,11 @@ export class WjTreeSelect<T = unknown> implements ControlValueAccessor {
       _mergePartAttributes(
         _mergePartAttributes(this.pt(), 'hiddenInput', {
           'aria-describedby': this.field.describedBy(),
-          'aria-invalid': this.field.invalid() ? 'true' : undefined,
-          'aria-required': this.required() ? 'true' : undefined,
+          'aria-invalid': this.field.invalid() || undefined,
+          'aria-required': this.required() || undefined,
         }),
         'label',
-        { id: this.valueId, 'aria-disabled': this.isDisabled() ? 'true' : undefined },
+        { id: this.valueId, 'aria-disabled': this.isDisabled() || undefined },
       ),
       'dropdown',
       { 'aria-hidden': 'true' },
@@ -221,15 +205,26 @@ export class WjTreeSelect<T = unknown> implements ControlValueAccessor {
   }
 
   /**
-   * Home and End move focus to the first and the last node on screen in the panel, and hand the one
-   * Tab stop over as Optimus does. Nothing is picked. Optimus ignores these keys, so they reach the
-   * host; only a treeitem target counts, so the combobox keeps its keys.
+   * Home, End and a typed character move focus between the nodes on screen in the panel, and hand
+   * the one Tab stop over as Optimus does. Nothing is picked. Optimus ignores these keys, so they
+   * reach the host; only a treeitem target counts, so the combobox keeps its keys. A space matches
+   * no label (labels are trimmed), so it stays Optimus's.
    */
   protected jump(event: KeyboardEvent): void {
-    const { key } = event;
     const items = [...this.host.querySelectorAll<HTMLElement>('[role="treeitem"]')];
-    const from = items.find((item) => item === event.target);
-    const next = key === 'Home' ? items[0] : key === 'End' ? items.at(-1) : undefined;
+    const at = items.indexOf(event.target as HTMLElement);
+    const from = items[at];
+    let next: HTMLElement | undefined;
+    if (event.key === 'Home') {
+      next = items[0];
+    } else if (event.key === 'End') {
+      next = items.at(-1);
+    } else if (event.key.length === 1 && !event.ctrlKey && !event.altKey && !event.metaKey) {
+      next = items
+        .slice(at + 1)
+        .concat(items)
+        .find((item) => item.textContent.trim()[0]?.toLowerCase() === event.key.toLowerCase());
+    }
     if (from && next) {
       event.preventDefault();
       from.tabIndex = -1;

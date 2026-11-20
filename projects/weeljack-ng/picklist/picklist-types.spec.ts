@@ -24,6 +24,13 @@ describe('WjPickList types', () => {
     expectTypeOf<ReturnType<WjPickList['sourceAriaLabel']>>().toExtend<
       PickList['sourceAriaLabel']
     >();
+    expectTypeOf<ReturnType<WjPickList['filterBy']>>().toExtend<PickList['filterBy']>();
+    expectTypeOf<ReturnType<WjPickList['ariaSourceFilterLabel']>>().toExtend<
+      PickList['ariaSourceFilterLabel']
+    >();
+    expectTypeOf<ReturnType<WjPickList['ariaTargetFilterLabel']>>().toExtend<
+      PickList['ariaTargetFilterLabel']
+    >();
     expectTypeOf<ReturnType<WjPickList['showSourceControls']>>().toExtend<
       PickList['showSourceControls']
     >();
@@ -33,6 +40,16 @@ describe('WjPickList types', () => {
 
     const list: WjPickListName = 'target' satisfies WjPickListName;
     expect(list).toBe('target');
+  });
+
+  it('types the filter inputs as optional strings', () => {
+    expectTypeOf<ReturnType<WjPickList['filterBy']>>().toEqualTypeOf<string | undefined>();
+    expectTypeOf<ReturnType<WjPickList['ariaSourceFilterLabel']>>().toEqualTypeOf<
+      string | undefined
+    >();
+    expectTypeOf<ReturnType<WjPickList['ariaTargetFilterLabel']>>().toEqualTypeOf<
+      string | undefined
+    >();
   });
 
   it('names the two lists', () => {
