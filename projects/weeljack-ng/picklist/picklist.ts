@@ -26,26 +26,16 @@ import type { WjPickListPt } from './picklist-types';
  * - Optimus stacks the buttons between the lists below 960 px only when `responsive` is on, so it is.
  * - The item template is declared only for a slot the app gave, and serves both lists. The empty
  *   template is always declared, for both lists: the app's slot, else the translation's
- *   text, because Optimus renders an empty list blank. With no filters there is no "filtered" case.
+ *   text, because Optimus renders an empty list blank. Optimus uses it for a filter that matches
+ *   nothing too: the filter-empty text (a template of its own) did not fit the size cap (21).
  * - With an item template the option's own `aria-label` (the item's name field) is cleared, so the
  *   option is named by its content, as axe's label-content-name-mismatch requires.
- * - Dropped for size (21): the filters, so Optimus renders no filter. The show-controls switches hide a
- *   list's four reorder buttons and never the transfer buttons.
+ * - The filters are back: `filterBy` shows one above each list, and each input is named from its own
+ *   list's label, routed through `pt` (see `partAttributes`). Dropped by need: `showSourceFilter` /
+ *   `showTargetFilter`, the filter placeholders, `filterMatchMode`, `filterLocale` and the filter
+ *   templates. The show-controls switches hide a list's four reorder buttons and never the transfer
+ *   buttons.
  */
-
-/** The translation's text for `key`, or an empty string when it has none. */
-function message(optimus: Optimus, key: string): string {
-  const text: unknown = optimus.getTranslation(key);
-  return typeof text === 'string' ? text : '';
-}
-
-/** The translation's `aria` name for `key`, or `undefined` when it has none. */
-function ariaName(optimus: Optimus, key: string): string | undefined {
-  const aria: unknown = optimus.getTranslation('aria');
-  const name: unknown =
-    typeof aria === 'object' && aria !== null ? Reflect.get(aria, key) : undefined;
-  return typeof name === 'string' ? name : undefined;
-}
 
 /**
  * Two lists, with buttons that move items from one to the other, over Optimus's `p-picklist`. Give
@@ -57,7 +47,7 @@ function ariaName(optimus: Optimus, key: string): string | undefined {
   selector: 'wj-picklist',
   imports: [PickList, NgTemplateOutlet],
   // prettier-ignore
-  template: `<p-picklist #pl [source]="from()" [target]="to()" [sourceHeader]="sourceHeader()" [targetHeader]="targetHeader()" [dataKey]="dataKey()" [sourceAriaLabel]="sourceAriaLabel()" [targetAriaLabel]="targetAriaLabel()" [dragdrop]="dragdrop()" [stripedRows]="stripedRows()" [showSourceControls]="showSourceControls()" [showTargetControls]="showTargetControls()" [disabled]="disabled()" [scrollHeight]="scrollHeight()" [responsive]="true" [pt]="partAttributes()" (onMoveToTarget)="both(pl)" (onMoveAllToTarget)="both(pl)" (onMoveToSource)="both(pl)" (onMoveAllToSource)="both(pl)" (onSourceReorder)="source.set(pl.source().slice())" (onTargetReorder)="target.set(pl.target().slice())">@if (itemSlot(); as s) {<ng-template #item let-item let-selected="selected" let-index="index" let-disabled="disabled"><ng-container *ngTemplateOutlet="s.template; context: { $implicit: item, index, selected, disabled }" /></ng-template>}<ng-template #none let-list="list">@if (emptySlot(); as s) {<ng-container *ngTemplateOutlet="s.template; context: { list }" />} @else { {{ empty }} }</ng-template><ng-template #emptymessagesource><ng-container *ngTemplateOutlet="none; context: { list: 'source' }" /></ng-template><ng-template #emptymessagetarget><ng-container *ngTemplateOutlet="none; context: { list: 'target' }" /></ng-template></p-picklist>`,
+  template: `<p-picklist #pl [source]="from()" [target]="to()" [sourceHeader]="sourceHeader()" [targetHeader]="targetHeader()" [dataKey]="dataKey()" [sourceAriaLabel]="sourceAriaLabel()" [targetAriaLabel]="targetAriaLabel()" [filterBy]="filterBy()" [dragdrop]="dragdrop()" [stripedRows]="stripedRows()" [showSourceControls]="showSourceControls()" [showTargetControls]="showTargetControls()" [disabled]="disabled()" [scrollHeight]="scrollHeight()" [responsive]="true" [pt]="partAttributes()" (onMoveToTarget)="both(pl)" (onMoveAllToTarget)="both(pl)" (onMoveToSource)="both(pl)" (onMoveAllToSource)="both(pl)" (onSourceReorder)="source.set(pl.source().slice())" (onTargetReorder)="target.set(pl.target().slice())">@if (itemSlot(); as s) {<ng-template #item let-item let-selected="selected" let-index="index" let-disabled="disabled"><ng-container *ngTemplateOutlet="s.template; context: { $implicit: item, index, selected, disabled }" /></ng-template>}<ng-template #none let-list="list">@if (emptySlot(); as s) {<ng-container *ngTemplateOutlet="s.template; context: { list }" />} @else { {{ empty }} }</ng-template><ng-template #emptymessagesource><ng-container *ngTemplateOutlet="none; context: { list: 'source' }" /></ng-template><ng-template #emptymessagetarget><ng-container *ngTemplateOutlet="none; context: { list: 'target' }" /></ng-template></p-picklist>`,
   styleUrl: './picklist.css',
 })
 export class WjPickList<T = unknown> {
@@ -77,6 +67,12 @@ export class WjPickList<T = unknown> {
   readonly targetAriaLabel = input<string>();
   /** Lets the user drag items to reorder them and between the lists. The buttons stay the keyboard path. */
   readonly dragdrop = input(false, { transform: booleanAttribute });
+  /** The field the filters search. Setting it shows a filter input above each list. */
+  readonly filterBy = input<string>();
+  /** Accessible name of the source list's filter input. */
+  readonly ariaSourceFilterLabel = input<string>();
+  /** Accessible name of the target list's filter input. */
+  readonly ariaTargetFilterLabel = input<string>();
   /** Alternating row fills. */
   readonly stripedRows = input(false, { transform: booleanAttribute });
   /** Shows the four reorder buttons beside the source list. The transfer buttons always show. */
@@ -100,21 +96,49 @@ export class WjPickList<T = unknown> {
   /** The copies Optimus works on. */
   protected readonly from = computed(() => this.source().slice());
   protected readonly to = computed(() => this.target().slice());
+  /** The translation's "Move Bottom" name, which Optimus replaces with "Move Down". */
+  private readonly bottom = inject(Optimus).translation.aria?.moveBottom;
   /** The translation's text for an empty list, which Optimus would render blank. */
-  private readonly bottom = ariaName(inject(Optimus), 'moveBottom');
-  protected readonly empty = message(inject(Optimus), 'emptyMessage');
+  protected readonly empty = inject(Optimus).translation.emptyMessage ?? '';
   /**
    * `pt` forwarded as given, plus what this wrapper routes: the translation's "Move Bottom" name,
-   * which Optimus replaces with "Move Down", and, with an item template, a cleared option name.
+   * which Optimus replaces with "Move Down", with an item template, a cleared option name, and the
+   * name of each list's filter input. Optimus hands both lists one `pcListbox` part and never passes
+   * the filter labels on, so `pcFilter` is a function part: each listbox resolves it as its own
+   * `instance`, and the one whose id ends in `_target_list` is the target's (a spec pins the suffix).
+   * `aria-owns` is cleared: it names a list that is not rendered while the list is empty.
    */
   protected readonly partAttributes = computed<WjPickListPt>(() => {
     const named = ['pcSourceMoveBottomButton.root', 'pcTargetMoveBottomButton.root'].reduce(
       (pt, part) => _mergePartAttributes(pt, part, { 'aria-label': this.bottom }),
       this.pt(),
     );
-    return this.itemSlot()
-      ? _mergePartAttributes(named, 'pcListbox.option', { 'aria-label': undefined })
-      : named;
+    const own = _mergePartAttributes(
+      this.itemSlot()
+        ? _mergePartAttributes(named, 'pcListbox.option', { 'aria-label': undefined })
+        : named,
+      'pcListbox',
+      {},
+    );
+    const source = this.ariaSourceFilterLabel();
+    const target = this.ariaTargetFilterLabel();
+    return (context) => {
+      const pt = own(context);
+      const box = typeof pt.pcListbox === 'object' ? pt.pcListbox : null;
+      const mine: unknown = box?.pcFilter;
+      const filter = typeof mine === 'object' || typeof mine === 'function' ? mine : undefined;
+      return {
+        ...pt,
+        pcListbox: {
+          ...box,
+          pcFilter: (list: { instance: { id?: string } }) =>
+            _mergePartAttributes(filter, 'root', {
+              'aria-label': list.instance.id?.endsWith('_target_list') ? target : source,
+              'aria-owns': undefined,
+            })(list),
+        },
+      };
+    };
   });
 
   /** A transfer moved items out of one list and into the other. */

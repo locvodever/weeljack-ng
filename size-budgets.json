@@ -71,8 +71,8 @@
     {
       "entry": "weeljack-ng/picklist",
       "optimus": "picklist",
-      "kb": 2.6,
-      "note": "Raised under CLAUDE.md § 5's rule (Loc, 2026-11-19): S2, showSourceControls and showTargetControls hide a list's four reorder buttons. The filters did not fit the 2.75 KB cap (the lean variant measured 2846 B)."
+      "kb": 2.75,
+      "note": "Raised under CLAUDE.md § 5's rule (Loc, 2026-11-19): S2, showSourceControls and showTargetControls (GF4), then the filters: filterBy and a name per filter input (Q2), funded by reading the translation through Optimus's typed object. The filter-empty text did not fit the 2.75 KB cap (2856 B)."
     }
   ]
 }
