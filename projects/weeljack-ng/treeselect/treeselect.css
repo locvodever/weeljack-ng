@@ -9,7 +9,8 @@
 @layer wj {
   :host {
     display: inline-flex;
-    --wj-treeselect-dropdown-color: var(--wj-text-muted-color);
+    /* prettier-ignore */
+    --wj-treeselect-dropdown-color:var(--wj-text-muted-color);
   }
 
   p-treeselect {

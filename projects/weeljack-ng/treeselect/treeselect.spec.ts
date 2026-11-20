@@ -1701,6 +1701,18 @@ describe('WjTreeSelect', () => {
         await expectNoAxeViolations(find(element, 'wj-field', HTMLElement));
         await closePanel(select, element);
       });
+
+      it('has no axe violations open after a type-ahead move', async () => {
+        const { fixture, element } = await render(undefined, scheme);
+        const select = await harnessOf(fixture);
+        await openPanel(select, element);
+
+        await userEvent.keyboard('o');
+        await expect.poll(() => document.activeElement?.getAttribute('data-id')).toBe('ops');
+
+        await expectNoAxeViolations(find(element, 'wj-treeselect', HTMLElement));
+        await closePanel(select, element);
+      });
     });
   });
 
@@ -1845,7 +1857,7 @@ describe('WjTreeSelect', () => {
       await closePanel(select, element);
     });
 
-    it('leaves a typed character unhandled in the panel: type-ahead did not fit the size cap', async () => {
+    it('moves focus to the next node that starts with a typed character, wrapping', async () => {
       const { fixture, element, select } = await focusFirst((host) => {
         host.mode.set('multiple');
       });
@@ -1854,12 +1866,43 @@ describe('WjTreeSelect', () => {
       await expect.poll(focusedKey).toBe('eng');
 
       await userEvent.keyboard('o');
+      expect(focusedKey()).toBe('ops');
+      expect([itemOf(element, 'ops').tabIndex, itemOf(element, 'eng').tabIndex]).toEqual([0, -1]);
+      // Case is ignored, and the search wraps past the end.
       await userEvent.keyboard('D');
+      expect(focusedKey()).toBe('design');
+      expect([itemOf(element, 'design').tabIndex, itemOf(element, 'ops').tabIndex]).toEqual([
+        0, -1,
+      ]);
+      // A character no visible node starts with, `*` and a modified letter leave focus alone.
+      await userEvent.keyboard('z');
       await userEvent.keyboard('*');
-
-      // The gap, listed on the docs page: Optimus moves nothing for a character, and neither do we.
-      expect(focusedKey()).toBe('eng');
+      await userEvent.keyboard('{Control>}o{/Control}');
+      await userEvent.keyboard('{Alt>}o{/Alt}');
+      await userEvent.keyboard('{Meta>}o{/Meta}');
+      expect(focusedKey()).toBe('design');
       expect(await select.isOpen()).toBe(true);
+      expect(fixture.componentInstance.value()).toEqual([]);
+
+      await closePanel(select, element);
+    });
+
+    it('matches a node on its own label, not on the labels of the nodes below it', async () => {
+      const { fixture, element, select } = await focusFirst();
+      await userEvent.keyboard('{Enter}');
+      await overlayOpen(element);
+      await expect.poll(focusedKey).toBe('eng');
+
+      // Optimus opens a branch after a 1 ms timer: poll for it. Its children then count.
+      await userEvent.keyboard('{ArrowRight}');
+      await expect.poll(focusedKey).toBe('platform');
+      await userEvent.keyboard('o');
+      expect(focusedKey()).toBe('ops');
+      // Wrapping reaches Mobile, not Engineering, which holds Mobile in its text.
+      await userEvent.keyboard('m');
+      expect(focusedKey()).toBe('mobile');
+      await userEvent.keyboard('e');
+      expect(focusedKey()).toBe('eng');
       expect(fixture.componentInstance.value()).toEqual([]);
 
       await closePanel(select, element);
