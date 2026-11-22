@@ -13,7 +13,10 @@
     </button>
     <div class="group">
       <a class="wordmark" routerLink="">WeeljackNg</a>
-      <span class="version">v{{ version }}</span>
+      @let v = version();
+      @if (v) {
+        <span class="version">v{{ v }}</span>
+      }
     </div>
     <div class="group utilities">
       <a class="action github" href="https://github.com/locvodever/weeljack-ng" rel="noopener"

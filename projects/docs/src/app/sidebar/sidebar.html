@@ -28,7 +28,7 @@
             </li>
           }
           @if (group.id === 'components') {
-            @for (sub of components; track sub.id) {
+            @for (sub of components(); track sub.id) {
               @let subOpen = state.isOpen(sub.id);
               <li>
                 <button
