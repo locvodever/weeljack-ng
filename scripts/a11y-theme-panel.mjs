@@ -53,7 +53,7 @@ const TOKENS = [
 ];
 
 /**
- * @typedef {{ name: string, label: string, value: string, step?: number }} Row
+ * @typedef {{ name: string, label: string, value: string, swatch: string, step?: number }} Row
  * @typedef {{ primaries: Row[], surfaces: Row[] }} Palettes
  */
 
@@ -72,7 +72,8 @@ function fail(step, message) {
 
 /**
  * The `provideWeeljack` call the panel shows for these rows (PRD D9), the expected text: one key
- * per line, a `// <name> <step>` comment above `primary`, two-space indent, trailing commas.
+ * per line, a `// <name> <step>` comment above `primary` only for a hex value, two-space indent,
+ * trailing commas.
  * @param {Row | undefined} primary
  * @param {Row | undefined} surface
  */
@@ -80,7 +81,12 @@ function expectedSnippet(primary, surface) {
   const lines = [
     ...(primary === undefined
       ? []
-      : [`  // ${primary.name} ${String(primary.step)}`, `  primary: '${primary.value}',`]),
+      : [
+          ...(primary.value.startsWith('#')
+            ? [`  // ${primary.name} ${String(primary.step)}`]
+            : []),
+          `  primary: '${primary.value}',`,
+        ]),
     ...(surface === undefined ? [] : [`  surface: '${surface.value}',`]),
   ];
   return lines.length === 0 ? 'provideWeeljack()' : `provideWeeljack({\n${lines.join('\n')}\n})`;
@@ -272,7 +278,7 @@ export async function checkThemePanel({
     await openPanel(page, 'open: Noir checked');
     // Noir is first, so ArrowRight lands on the first generated primary.
     await page.keyboard.press('ArrowRight');
-    await waitForPrimary(page, first.value, 'ArrowRight');
+    await waitForPrimary(page, first.swatch.toLowerCase(), 'ArrowRight');
     if (!(await dialog.getByRole('radio', { name: first.label, exact: true }).isChecked())) {
       fail('ArrowRight', `${first.label} is not checked.`);
     }
@@ -293,7 +299,7 @@ export async function checkThemePanel({
     // Reload keeps the choice, and the panel shows it checked.
     await page.reload({ waitUntil: 'load' });
     await settle(page, null);
-    await waitForPrimary(page, first.value, 'reload');
+    await waitForPrimary(page, first.swatch.toLowerCase(), 'reload');
     await page.locator(THEME_BUTTON).click();
     await dialog.waitFor();
     await waitForFocus(
@@ -347,7 +353,7 @@ export async function checkThemePanel({
     const page = await context.newPage();
     await page.goto(`${server.origin}${BASE}components/button`, { waitUntil: 'load' });
     await settle(page, null);
-    await waitForPrimary(page, blue.value, 'blue + slate');
+    await waitForPrimary(page, blue.swatch.toLowerCase(), 'blue + slate');
     states += 1;
     failed += await axeBothSchemes(page, 'components/button (blue + slate)');
     await context.close();

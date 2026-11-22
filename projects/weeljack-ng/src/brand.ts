@@ -1,11 +1,14 @@
 import { definePreset, palette, type ColorScale } from '@openng/optimus-ui-themes';
 import { pairRatio, tokensFor } from './contrast';
 import { wjAlwaysOn, wjNoirOnZinc } from './noir-on-zinc';
+import { _wjPaletteSteps } from './palette-steps';
 
 /**
  * A brand colour scale (05 Q3): a `#rgb` / `#rrggbb` base or a `{palette}` name such as
- * `{indigo}`, which becomes a 50-950 scale, or a full scale with every step from 50 to 950 (and
- * an optional `0`). Any other string is ignored and logs `WJ0200` in dev mode.
+ * `{indigo}`, which becomes the palette's own 50-950 scale (in light its `primary.color` takes the
+ * palette's lightest WCAG AA step, e.g. indigo 600, sky 700), or a full scale with every step from
+ * 50 to 950 (and an optional `0`). A hex base or a full scale is used exactly as given. Any other
+ * string is ignored and logs `WJ0200` in dev mode.
  */
 export type WjColorScale =
   | string
@@ -57,8 +60,29 @@ export function brandPreset(
   surface: Surface,
 ): ReturnType<typeof definePreset> {
   const brand = toScale(primary);
+  // A `{name}` primary takes its AA step in light, from the generated table (own keys only).
+  const name = typeof primary === 'string' && primary.startsWith('{') ? primary.slice(1, -1) : '';
+  const step = Object.hasOwn(_wjPaletteSteps, name) ? _wjPaletteSteps[name] : undefined;
   const base =
-    brand === undefined ? wjNoirOnZinc : definePreset(wjAlwaysOn, { semantic: { primary: brand } });
+    brand === undefined
+      ? wjNoirOnZinc
+      : definePreset(wjAlwaysOn, {
+          semantic: {
+            primary: brand,
+            // Spread, never `light: undefined`: `definePreset` would let that wipe Aura's light scheme.
+            ...(step && {
+              colorScheme: {
+                light: {
+                  primary: {
+                    color: `{primary.${String(step)}}`,
+                    hoverColor: `{primary.${String(step + 100)}}`,
+                    activeColor: `{primary.${String(step + 200)}}`,
+                  },
+                },
+              },
+            }),
+          },
+        });
   if (surface === undefined) {
     return base;
   }

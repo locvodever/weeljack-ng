@@ -30,8 +30,14 @@
   <h3><code>primary</code> and <code>surface</code></h3>
   <p>
     <code>primary</code> takes a <code>#rrggbb</code> base colour, which becomes step 500 of a
-    generated 50 to 950 scale, or a full scale (<code>WjColorScale</code>). Left out, the primary is
-    the default ink.
+    generated 50 to 950 scale, a palette name such as <code>'&#123;indigo&#125;'</code>, or a full
+    scale (<code>WjColorScale</code>). Left out, the primary is the default ink.
+  </p>
+  <p>
+    A palette name becomes that palette's own scale. In the light scheme, its primary colour takes
+    the lightest step that passes AA with white text: indigo uses step 600 and sky uses step 700,
+    with hover and active one and two steps darker. A hex base or a full scale is used exactly as
+    you give it.
   </p>
   <docs-code-block [code]="examples.primaryHex" label="primary base colour example" />
   <docs-code-block [code]="examples.primaryScale" label="primary full scale example" />
@@ -70,8 +76,8 @@
   <docs-code-block [code]="examples.runtime" label="WjTheme example" />
   <ul>
     <li>
-      A string that is not a colour logs <code>WJ0200</code> and changes nothing. A colour under AA
-      contrast applies and logs <code>WJ0010</code>, once for each different colour.
+      A string that is not a colour logs <code>WJ0200</code> and changes nothing. A hex base or
+      scale under AA contrast applies and logs <code>WJ0010</code>, once for each different colour.
     </li>
     <li>On the server the calls do nothing: the server renders the bootstrap theme.</li>
     <li>
@@ -221,7 +227,8 @@
   </ul>
   <p>
     In development mode, a pair under its ratio logs <code>WJ0010</code>, naming each failing pair
-    and scheme. It reads preset values only, so it never throws and never stops bootstrap. Fix it
+    and scheme. It reads preset values only, so it never throws and never stops bootstrap. A palette
+    name passes by construction, so the check matters for a hex base or a full scale. Fix a failure
     with a darker step of the scale, or override the named variables.
   </p>
 </section>

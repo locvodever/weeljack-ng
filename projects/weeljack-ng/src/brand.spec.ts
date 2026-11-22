@@ -3,6 +3,9 @@ import { TestBed } from '@angular/core/testing';
 import type { ColorScale } from '@openng/optimus-ui-themes';
 import type { MockInstance } from 'vitest';
 import { WjButton } from 'weeljack-ng/button';
+import { brandContrastIssues, brandPreset } from './brand';
+import { tokensFor, tokenValue } from './contrast';
+import { _wjPaletteSteps } from './palette-steps';
 import { provideWeeljack, type WjColorScale, type WjThemeOptions } from './public-api';
 
 @Component({
@@ -77,6 +80,45 @@ describe('WjColorScale', () => {
   });
 });
 
+/** One resolved token of `brandPreset(primary, undefined)`, in `scheme`. */
+function resolved(primary: WjColorScale, scheme: 'light' | 'dark', token: string): string {
+  return tokenValue(tokensFor(brandPreset(primary, undefined), scheme), token);
+}
+
+describe('a {palette} primary takes its AA step in light', () => {
+  it('maps {indigo} to indigo 600 with hover 700 and active 800, and keeps dark', () => {
+    expect(resolved('{indigo}', 'light', 'primary.color')).toBe('#4f46e5');
+    expect(resolved('{indigo}', 'light', 'primary.hover.color')).toBe('#4338ca');
+    expect(resolved('{indigo}', 'light', 'primary.active.color')).toBe('#3730a3');
+    expect(resolved('{indigo}', 'dark', 'primary.color')).toBe('#818cf8');
+  });
+
+  it('keeps a hex base as given: step 500 of its own scale', () => {
+    expect(resolved('#6366f1', 'light', 'primary.color')).toBe('#6366f1');
+  });
+
+  it('keeps a full scale as given: its own 500', () => {
+    expect(resolved(APP_BRAND.primary ?? '', 'light', 'primary.color')).toBe('#c2410c');
+  });
+
+  it('gives {constructor} and an unknown name the same preset, with no light override', () => {
+    const inherited = JSON.stringify(brandPreset('{constructor}', undefined));
+
+    expect(inherited.replaceAll('constructor', 'nope')).toBe(
+      JSON.stringify(brandPreset('{nope}', undefined)),
+    );
+  });
+
+  it.each(Object.keys(_wjPaletteSteps))(
+    'passes the brand check in both schemes for {%s}',
+    (name) => {
+      expect(brandContrastIssues(brandPreset(`{${name}}`, undefined), ['light', 'dark'])).toEqual(
+        [],
+      );
+    },
+  );
+});
+
 describe('WJ0010 brand contrast warning', () => {
   afterEach(() => {
     document.body.replaceChildren();
@@ -134,6 +176,23 @@ describe('WJ0010 brand contrast warning', () => {
     const [message = ''] = warnings(warn).filter((m) => m.startsWith('WJ0010'));
     expect(message).toContain('(light)');
     expect(message).not.toContain('(dark)');
+  });
+
+  it('stays silent for the {indigo} name in both schemes', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+
+    await bootstrap({ primary: '{indigo}', darkMode: 'system' });
+
+    expect(warnings(warn).filter((m) => m.startsWith('WJ0010'))).toEqual([]);
+  });
+
+  it('still warns for indigo 500 as a hex base, naming the light button pair', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+
+    await bootstrap({ primary: '#6366f1' });
+
+    const [message = ''] = warnings(warn).filter((m) => m.startsWith('WJ0010'));
+    expect(message).toContain('--wj-button-primary-color (light) is 4.47:1, needs 4.5:1');
   });
 
   it('stays silent when both schemes pass', async () => {
