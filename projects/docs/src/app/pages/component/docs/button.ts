@@ -56,7 +56,7 @@ export const DOC: ComponentDoc = {
     {
       title: 'With an icon',
       description:
-        'Project a `wj-icon` into the button: it renders before the label. An icon-only button sets `ariaLabel`, and the icon stays decorative. With no `label`, the button is icon-only and square: 44 × 44 px by default, 36 × 36 small and 52 × 52 large.',
+        'Project a `wj-icon` into the button: it renders before the label. Text goes in `label`; projected content is for a `wj-icon`, which stays decorative. A button without `label` is icon-only: square (44 × 44 px by default, 36 × 36 small and 52 × 52 large) and named by `ariaLabel`, which it must set.',
       sourceKey: 'button/with-icon',
       component: ButtonWithIconExample,
     },
@@ -84,7 +84,7 @@ export const DOC: ComponentDoc = {
     },
   ],
   aria: [
-    'The accessible name is the label or the projected content. An icon-only button must set `ariaLabel`.',
+    'The accessible name comes from `label`. Text goes in `label`: projected content is for a `wj-icon`, which is decorative and never names the button. A button without `label` is icon-only and square, and must set `ariaLabel`.',
     '`ariaLabel`, `ariaLabelledBy` and `ariaDescribedBy` are set on the focusable `button` element, not on the `wj-button` host.',
     'Setting an `aria-*` attribute on the `wj-button` host logs the dev-mode warning `WJ0003`: use the inputs instead.',
     'While `loading`, the button sets `aria-busy="true"`.',
@@ -104,7 +104,12 @@ export const DOC: ComponentDoc = {
     { part: 'loadingIcon', description: 'The spinner shown while `loading`.' },
   ],
   mapping: [
-    { optimus: 'label', weeljack: 'label', status: 'kept', note: 'Rendered as text.' },
+    {
+      optimus: 'label',
+      weeljack: 'label',
+      status: 'kept',
+      note: 'Rendered as text, and the only place for the button text: without it the button is icon-only and square, and needs `ariaLabel`.',
+    },
     { optimus: 'loading', weeljack: 'loading', status: 'kept', note: 'Accepts a bare attribute.' },
     {
       optimus: 'disabled',
@@ -124,7 +129,7 @@ export const DOC: ComponentDoc = {
       optimus: 'ariaLabel',
       weeljack: 'ariaLabel',
       status: 'kept',
-      note: 'Set on the focusable element.',
+      note: 'Set on the focusable element. Required on an icon-only button (one without `label`).',
     },
     {
       optimus: 'pt',
@@ -191,11 +196,14 @@ export const DOC: ComponentDoc = {
     dropped('raised, rounded, plain, link', droppedByNeed),
     dropped(
       'icon, iconPos, loadingIcon',
-      'Icons are projected content: put a `wj-icon` inside. The spinner is built in.',
+      'Put a `wj-icon` inside as projected content; text goes in `label`. The spinner is built in.',
     ),
     dropped('badge, badgeClass, badgeSeverity', droppedByNeed),
     dropped('fluid, tabindex, autofocus, buttonProps', droppedByNeed),
-    dropped('contentTemplate, iconTemplate, loadingIconTemplate', 'Content is projected.'),
+    dropped(
+      'contentTemplate, iconTemplate, loadingIconTemplate',
+      'Project a `wj-icon`; text goes in `label`.',
+    ),
     dropped('hostName, [pButton], pButtonLabel, pButtonIcon, ButtonModule', droppedByNeed),
   ],
 };

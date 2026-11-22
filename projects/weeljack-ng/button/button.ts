@@ -23,9 +23,10 @@ import type {
  * states of the default look. Put the click handler on `wj-button` itself. While `disabled` or
  * `loading`, the button emits no `click` to it.
  *
- * Content you project (an icon, say) renders beside the `label`. Without a `label` the button is
- * icon-only: as wide as it is tall (44 × 44 px by default, 36 small, 52 large), and it must set
- * `ariaLabel`. Put text in `label`, not in the content.
+ * Text goes in `label`; projected content is for a `wj-icon`, which renders beside the label and
+ * never names the button. Without a `label` the button is icon-only: as wide as it is tall
+ * (44 × 44 px by default, 36 small, 52 large), and it must set `ariaLabel`. Projected text is not
+ * a name and does not fit the square.
  */
 @Component({
   selector: 'wj-button',
@@ -34,7 +35,10 @@ import type {
   styleUrl: './button.css',
 })
 export class WjButton {
-  /** Text of the button. Rendered as text, never as HTML. */
+  /**
+   * Text of the button, and its accessible name. Rendered as text, never as HTML. Without it the
+   * button is icon-only (square) and needs `ariaLabel`.
+   */
   readonly label = input<string>();
   /** Shows a spinner beside the label and makes the button inert. */
   readonly loading = input(false, { transform: booleanAttribute });
@@ -48,7 +52,10 @@ export class WjButton {
   readonly severity = input<WjButtonSeverity>();
   /** Native `type` of the button element. */
   readonly type = input<WjButtonType>('button');
-  /** Accessible name when the button has no visible text. Set on the focusable element. */
+  /**
+   * Accessible name of an icon-only button (one without `label`), which must set it. Set on the
+   * focusable element.
+   */
   readonly ariaLabel = input<string>();
   /** Id of the element that names the button. Set on the focusable element. */
   readonly ariaLabelledBy = input<string>();

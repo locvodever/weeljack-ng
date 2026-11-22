@@ -727,6 +727,30 @@ describe('WjButton', () => {
 
       expect(parts(element).control.classList.contains('p-button-icon-only')).toBe(false);
     });
+
+    // The rule, pinned on purpose: text belongs in `label`. Projected content is for a `wj-icon`, so
+    // a button without `label` is icon-only whatever it projects, and projected text gets the square.
+    it('makes a button with projected text and no label the icon-only square', async () => {
+      @Component({
+        selector: 'wj-button-projected-text-host',
+        imports: [WjButton],
+        template: `<wj-button ariaLabel="Save">Save</wj-button>`,
+      })
+      class ProjectedTextHost {}
+      TestBed.configureTestingModule({ providers: [provideWeeljack()] });
+      const fixture = TestBed.createComponent(ProjectedTextHost);
+      await fixture.whenStable();
+      const { host, control } = parts(fixture.nativeElement as HTMLElement);
+      const sizeOf = (target: HTMLElement): number[] => {
+        const rect = target.getBoundingClientRect();
+        return [rect.width, rect.height];
+      };
+
+      expect(control.classList.contains('p-button-icon-only')).toBe(true);
+      expect(getComputedStyle(control).paddingInlineStart).toBe('0px');
+      expect(sizeOf(host)).toEqual([44, 44]);
+      expect(sizeOf(control)).toEqual([44, 44]);
+    });
   });
 
   describe('autofocus', () => {
