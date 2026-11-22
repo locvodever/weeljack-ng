@@ -7,9 +7,10 @@ import ts from 'typescript';
 /**
  * The catalog (FR-7 ... FR-9, 07 Q2, Q6). Merges `projects/docs/coverage.json` (03's decisions,
  * hand-kept) with the API index (what ships), the pages' `DOC` files (title, purpose) and the
- * generated API (selectors, services), and writes `generated/catalog.json` and `generated/site.json`.
- * The Components index, Coming from Optimus, the not-found variants and the component-page sidebar
- * read only these. Run after `extract-api.mjs`.
+ * generated API (selectors, services), and writes `generated/catalog.json`, `generated/site.json` and
+ * `generated/nav.json`. The Components index, Coming from Optimus and the not-found variants read the
+ * catalog; the shell sidebar reads `nav.json`, the lean shipped-only view, so the full catalog stays
+ * out of the initial bundle. Run after `extract-api.mjs`.
  *
  * Shipped status is never listed by hand: an entry is shipped when `generated/api/index.json` lists
  * it. A 03 target that is not shipped yet is **planned**, which is a state, not a failure: the
@@ -410,6 +411,21 @@ export function buildCatalog({
     failures.push('the catalog is empty.');
   }
 
+  // The shell sidebar's view of the same rows: shipped only, a-z by title, empty groups dropped.
+  const nav = {
+    groups: groups
+      .map((group) => ({
+        id: group.id,
+        label: group.label,
+        links: group.rows
+          .flatMap((row) =>
+            row.status === 'shipped' ? [{ entry: row.entry, title: row.title }] : [],
+          )
+          .sort((a, b) => a.title.localeCompare(b.title, 'en')),
+      }))
+      .filter((group) => group.links.length > 0),
+  };
+
   const byGroup = Object.entries(perGroup)
     .map(([id, count]) => `${id} ${String(count.shipped)}/${String(count.shipped + count.planned)}`)
     .join(', ');
@@ -427,6 +443,7 @@ export function buildCatalog({
       },
     },
     site: { version: apiIndex.version, releaseLine, peers },
+    nav,
     log: [
       `extract-catalog: shipped ${String(shippedTargets)} (+ ${String(shippedOwn)} own) / planned ${String(plannedCount)} / not wrapped ${String(cov.notWrapped.length)} (${byGroup})`,
       `extract-catalog: planned = ${String(targetCount)} targets - ${String(shippedTargets)} shipped = ${String(plannedCount)}${plannedEntries.length > 0 ? `: ${plannedEntries.join(', ')}` : ''}`,
@@ -493,7 +510,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     process.exit(1);
   }
 
-  const { failures, catalog, site, log } = buildCatalog(inputs);
+  const { failures, catalog, site, nav, log } = buildCatalog(inputs);
   if (failures.length > 0) {
     console.error(`extract-catalog: guard failed:\n  ${failures.join('\n  ')}`);
     process.exit(1);
@@ -507,6 +524,11 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   writeFileSync(
     join(generatedDir, 'site.json'),
     `${JSON.stringify(site, null, 2)}
+`,
+  );
+  writeFileSync(
+    join(generatedDir, 'nav.json'),
+    `${JSON.stringify(nav, null, 2)}
 `,
   );
   for (const line of log) console.log(line);

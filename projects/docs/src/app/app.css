@@ -6,7 +6,8 @@
 }
 
 .skip-link {
-  position: absolute;
+  position: fixed;
+  z-index: 20;
   inset-block-start: 8px;
   inset-inline-start: 8px;
   padding: 12px 16px;
@@ -21,7 +22,12 @@
 }
 
 .header {
-  padding: 12px 24px;
+  position: sticky;
+  z-index: 10;
+  inset-block-start: 0;
+  box-sizing: border-box;
+  min-block-size: 56px;
+  padding: 6px 24px;
   border-block-end: 1px solid var(--wj-content-border-color);
   background: var(--wj-content-background);
 }
@@ -42,36 +48,6 @@
 
 .utilities {
   margin-inline-start: auto;
-}
-
-.pages {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0 4px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.page-link {
-  display: inline-flex;
-  align-items: center;
-  min-block-size: 44px;
-  padding: 0 8px;
-  color: var(--wj-text-color);
-  text-decoration: none;
-}
-
-.page-link:hover {
-  text-decoration: underline;
-  text-decoration-thickness: 1px;
-  text-underline-offset: 6px;
-}
-
-.page-link[aria-current='page'] {
-  text-decoration: underline;
-  text-decoration-thickness: 2px;
-  text-underline-offset: 6px;
 }
 
 .wordmark {
@@ -111,13 +87,55 @@
   color: var(--wj-primary-contrast-color);
 }
 
+/* Sidebar | centre | on-this-page. Narrow: the centre alone (the drawer comes with the Menu button). */
+.shell {
+  display: grid;
+  flex-grow: 1;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.side {
+  display: none;
+  align-self: start;
+  border-inline-end: 1px solid var(--wj-content-border-color);
+}
+
+.aside {
+  display: none;
+}
+
+@media (min-width: 960px) {
+  .shell {
+    grid-template-columns: 15.625rem minmax(0, 1fr);
+  }
+
+  .side {
+    display: block;
+  }
+}
+
+@media (min-width: 1200px) {
+  .shell {
+    grid-template-columns: 15.625rem minmax(0, 1fr) 12.5rem;
+  }
+
+  .aside {
+    display: block;
+  }
+}
+
 main {
   box-sizing: border-box;
-  flex-grow: 1;
   inline-size: 100%;
-  max-inline-size: 960px;
+  max-inline-size: 800px;
   margin-inline: auto;
   padding: 32px 24px 48px;
+}
+
+@media (min-width: 960px) {
+  main {
+    padding-inline: 48px;
+  }
 }
 
 main:focus {
@@ -128,7 +146,7 @@ main:focus {
 .alert-slot {
   box-sizing: border-box;
   inline-size: 100%;
-  max-inline-size: 960px;
+  max-inline-size: 800px;
   margin-inline: auto;
 }
 

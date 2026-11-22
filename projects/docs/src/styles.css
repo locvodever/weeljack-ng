@@ -5,6 +5,8 @@
  */
 html {
   color-scheme: light;
+  /* A heading jumped or tabbed to clears the sticky top bar. */
+  scroll-padding-block-start: 72px;
 }
 
 html.wj-dark {

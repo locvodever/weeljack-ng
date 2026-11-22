@@ -160,7 +160,15 @@ try {
       await route.continue();
     }
   });
-  await page.locator(`nav[aria-label="Components"] a[href="${to.replace(/\/$/, '')}"]`).click();
+  const nav = page.locator('nav[aria-label="Documentation"]');
+  const href = to.replace(/\/$/, '');
+  // The target sits in a sub-group that is collapsed unless it is the current one: open it first.
+  const collapsed = nav.locator(`ul[hidden]:has(> li > a[href="${href}"])`);
+  if ((await collapsed.count()) > 0) {
+    const id = await collapsed.first().getAttribute('id');
+    await nav.locator(`button[aria-controls="${id}"]`).click();
+  }
+  await nav.locator(`a[href="${href}"]`).click();
   await page.locator('[role="alert"]').getByText("Couldn't load this page.").waitFor();
   await page.unroute('**/*.js');
   if (aborted === 0) {
