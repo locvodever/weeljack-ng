@@ -28,6 +28,12 @@
       "note": "wj-sheet: Optimus Dialog on wide screens, the bottom Drawer on narrow ones."
     },
     {
+      "entry": "weeljack-ng/icon",
+      "optimus": "own",
+      "kb": 5.44,
+      "note": "wj-icon and the generated icon set (80 Lucide icons, ADR 0008). Measured as one whole module, so every icon counts here; an app pays only for WjIcon and the icons it imports (the tree-shake check in size.mjs measures the linked, production app bundle: at most 1.15 KB for WjIcon plus one icon, measured 1127 B). Adding icons raises this row by their measured gzip (2026-11-22: 4296 B for 80). Set 2026-11-22 at measured 5.39 KB gzip (5524 B) plus 0.05 KB."
+    },
+    {
       "entry": "weeljack-ng/splitter",
       "optimus": "splitter",
       "kb": 2.75,

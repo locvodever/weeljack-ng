@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import { gzipSync } from 'node:zlib';
 import { transformSync } from 'esbuild';
 import { ROOT, libraryEntries } from './entries.mjs';
+import { ICON_IMPORT_LIMIT, measureIconImport } from './icon-import-size.mjs';
 
 /**
  * `size` (FR-31, 21 Q1-Q2). One budget per shipped entry: the entry's FESM, minified with esbuild
@@ -115,11 +116,26 @@ const lines = [
     return `| \`${row.entry}\` | ${row.optimus} | ${optimusBytes === undefined ? '-' : `${kb(optimusBytes)} KB`} | ${kb(limit)} KB | ${kb(bytes)} KB | ${ok ? 'ok' : 'OVER'} |`;
   }),
 ];
+
+// The tree-shake check (ADR 0008): an app importing `WjIcon` and one icon pays at most 1 KB, and the
+// bundle holds exactly one generated icon object, so the other icons were dropped.
+const iconImport = await measureIconImport();
+const iconImportOk = iconImport.bytes <= ICON_IMPORT_LIMIT && iconImport.icons === 1;
+lines.push(
+  `| app: \`WjIcon\` + \`wjIconPlus\` (linked, production) | - | - | ${kb(ICON_IMPORT_LIMIT)} KB | ${kb(iconImport.bytes)} KB (${String(iconImport.icons)} icon) | ${iconImportOk ? 'ok' : 'OVER'} |`,
+);
 console.log(lines.join('\n'));
 
 const summary = process.env['GITHUB_STEP_SUMMARY'];
 if (summary !== undefined && summary !== '') {
   appendFileSync(summary, `### Bundle size (esbuild minify + gzip-6)\n\n${lines.join('\n')}\n`);
+}
+
+if (!iconImportOk) {
+  console.error(
+    `size: an app importing WjIcon and one icon measures ${String(iconImport.bytes)} B with ${String(iconImport.icons)} icon object(s); the limit is ${String(ICON_IMPORT_LIMIT)} B and exactly 1 icon object (tree-shaking).`,
+  );
+  process.exitCode = 1;
 }
 
 const over = results.filter(({ bytes, limit }) => bytes > limit);
