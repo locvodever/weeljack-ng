@@ -431,6 +431,52 @@ describe('WjTheme', () => {
     });
   });
 
+  describe('a surface with an invalid side', () => {
+    const cases = [
+      ['light', { light: 'red', dark: '{stone}' }],
+      ['dark', { light: '{stone}', dark: 'red' }],
+    ] as const;
+
+    /** The bad side as the default bootstrap has it, the good side as a `{stone}` one has it. */
+    async function expected(bad: 'light' | 'dark'): Promise<Snapshot> {
+      const [zinc, stone] = [await fresh({}), await fresh({ surface: '{stone}' })];
+      return bad === 'light'
+        ? { light: zinc.light, dark: stone.dark }
+        : { light: stone.light, dark: zinc.dark };
+    }
+
+    it.each(cases)('falls back to zinc on the bad %s side at bootstrap', async (bad, surface) => {
+      const done = await fresh({ surface });
+      const messages = calls(warn, 'WJ0200').filter((message) =>
+        message.includes('provideWeeljack: not a colour: surface.'),
+      );
+      const good = bad === 'light' ? 'dark' : 'light';
+
+      expect(messages).toHaveLength(1);
+      expect(messages[0]).toContain(`surface.${bad} 'red'`);
+      expect(messages[0]).not.toContain(`surface.${good}`);
+      expectEqual(done, await expected(bad));
+    });
+
+    it.each(cases)('keeps it for setSurface() with no argument, %s bad', async (bad, surface) => {
+      const done = await switched({ surface }, (theme) => {
+        theme.setSurface('{slate}');
+        theme.setSurface();
+      });
+
+      expectEqual(done, await expected(bad));
+    });
+
+    it.each(cases)('keeps it for reset(), %s bad', async (bad, surface) => {
+      const done = await switched({ surface }, (theme) => {
+        theme.setSurface('{slate}');
+        theme.reset();
+      });
+
+      expectEqual(done, await expected(bad));
+    });
+  });
+
   describe('contrast', () => {
     it('applies a hex base under AA and logs WJ0010 once per distinct colour', async () => {
       const done = await switched({}, (theme) => {

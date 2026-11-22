@@ -69,7 +69,8 @@ export function brandPreset(
       : definePreset(wjAlwaysOn, {
           semantic: {
             primary: brand,
-            // Spread, never `light: undefined`: `definePreset` would let that wipe Aura's light scheme.
+            // Spread (here and in the surface below), never `light: undefined`: `definePreset`
+            // would let that wipe Aura's whole scheme.
             ...(step && {
               colorScheme: {
                 light: {
@@ -90,8 +91,8 @@ export function brandPreset(
   return definePreset(base, {
     semantic: {
       colorScheme: {
-        light: one && { surface: { 0: '#ffffff', ...one } },
-        dark: two && { surface: { 0: '#ffffff', ...two } },
+        ...(one && { light: { surface: { 0: '#ffffff', ...one } } }),
+        ...(two && { dark: { surface: { 0: '#ffffff', ...two } } }),
       },
     },
   });

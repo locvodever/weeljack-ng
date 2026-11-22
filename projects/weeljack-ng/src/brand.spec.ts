@@ -298,3 +298,36 @@ describe('WJ0200 brand colour validation', () => {
     expect(primaryVariable()).toBe(noir);
   });
 });
+
+describe('a surface with an invalid side falls back to the default scheme', () => {
+  const scheme =
+    (surface: WjColorScale | { light: WjColorScale; dark: WjColorScale } | undefined) =>
+    (side: 'light' | 'dark') =>
+      Object.fromEntries(tokensFor(brandPreset(undefined, surface), side));
+
+  const zinc = scheme(undefined);
+  const stone = scheme('{stone}');
+
+  it.each([
+    ['light', { light: 'red', dark: '{stone}' }],
+    ['dark', { light: '{stone}', dark: 'red' }],
+  ] as const)('keeps the default %s scheme and the valid side', (bad, surface) => {
+    const good = bad === 'light' ? 'dark' : 'light';
+    const actual = scheme(surface);
+
+    expect(actual(bad)).toEqual(zinc(bad));
+    expect(actual(good)).toEqual(stone(good));
+    // Not vacuous: the scheme is present, and the two palettes differ on the good side.
+    expect(actual(bad)['surface.500']).toBeDefined();
+    expect(actual(good)['surface.500']).not.toBe(zinc(good)['surface.500']);
+  });
+
+  it('keeps both default schemes for a single invalid string', () => {
+    const actual = scheme('red');
+
+    expect(actual('light')).toEqual(zinc('light'));
+    expect(actual('dark')).toEqual(zinc('dark'));
+    expect(actual('light')['surface.500']).toBeDefined();
+    expect(actual('dark')['surface.500']).toBeDefined();
+  });
+});
