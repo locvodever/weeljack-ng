@@ -43,7 +43,6 @@ const SEVERITIES: readonly WjOverlayBadgeSeverity[] = [
         ariaLabel="Notifications, 4 unread"
         variant="outlined"
         severity="secondary"
-        [pt]="iconOnly"
         (click)="clicks.set(clicks() + 1)"
       >
         <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
@@ -61,8 +60,6 @@ class Host {
   readonly pt = signal<WjOverlayBadgePt>(undefined);
   readonly dir = signal<string | null>(null);
   readonly clicks = signal(0);
-  /** A projected icon does not make Optimus's button "icon only": the class gives its 44 px square. */
-  protected readonly iconOnly = { root: { class: 'p-button-icon-only' } };
 }
 
 /** An overlay badge with every input at its default. */

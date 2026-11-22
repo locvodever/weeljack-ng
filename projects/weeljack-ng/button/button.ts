@@ -23,7 +23,9 @@ import type {
  * states of the default look. Put the click handler on `wj-button` itself. While `disabled` or
  * `loading`, the button emits no `click` to it.
  *
- * Content you project (an icon, say) renders beside the `label`. Icon-only buttons set `ariaLabel`.
+ * Content you project (an icon, say) renders beside the `label`. Without a `label` the button is
+ * icon-only: as wide as it is tall (44 × 44 px by default, 36 small, 52 large), and it must set
+ * `ariaLabel`. Put text in `label`, not in the content.
  */
 @Component({
   selector: 'wj-button',

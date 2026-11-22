@@ -7,6 +7,7 @@ import { userEvent } from 'vitest/browser';
 import { provideWeeljack } from 'weeljack-ng';
 import { WjField } from 'weeljack-ng/field';
 import { WjFieldHarness } from 'weeljack-ng/field/testing';
+import { WjIcon, wjIconSearch } from 'weeljack-ng/icon';
 import { WjIconField, type WjIconFieldPt } from 'weeljack-ng/iconfield';
 import { WjIconFieldHarness } from 'weeljack-ng/iconfield/testing';
 import { WjInputIcon } from 'weeljack-ng/inputicon';
@@ -119,6 +120,22 @@ class FieldHost {
   `,
 })
 class IconsHost {}
+
+/** A consumer's `wj-icon` inside the icon field, as the docs example writes it. */
+@Component({
+  selector: 'wj-iconfield-wj-icon-host',
+  imports: [WjIconField, WjInputIcon, WjInputText, WjIcon],
+  template: `
+    <wj-iconfield>
+      <wj-inputicon><wj-icon [icon]="search" /></wj-inputicon>
+      <input wjInputText [size]="size()" aria-label="Search" />
+    </wj-iconfield>
+  `,
+})
+class WjIconHost {
+  readonly size = signal<WjInputTextSize | undefined>(undefined);
+  protected readonly search = wjIconSearch;
+}
 
 /** An icon field with nothing inside it. */
 @Component({
@@ -341,6 +358,28 @@ describe('WjIconField', () => {
 
         expect(icon.top + icon.height / 2, `size ${String(size)}`).toBeCloseTo(
           input.top + input.height / 2,
+          0,
+        );
+      }
+    });
+
+    it('keeps a projected wj-icon exactly centred on the input at every size', async () => {
+      const { fixture, host, element } = await render(WjIconHost);
+
+      for (const size of ['small', undefined, 'large'] as const) {
+        host.size.set(size);
+        await fixture.whenStable();
+        const svg = box(element, 'wj-icon svg');
+        // The `wj-inputicon` host adds no box; Optimus's absolutely positioned root is the icon's slot.
+        const slot = box(element, 'p-inputicon');
+        const input = box(element, 'input');
+
+        expect(svg.top + svg.height / 2, `size ${String(size)} vertical`).toBeCloseTo(
+          input.top + input.height / 2,
+          0,
+        );
+        expect(svg.left + svg.width / 2, `size ${String(size)} horizontal`).toBeCloseTo(
+          slot.left + slot.width / 2,
           0,
         );
       }

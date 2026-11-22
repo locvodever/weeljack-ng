@@ -56,7 +56,7 @@ export const DOC: ComponentDoc = {
     {
       title: 'With an icon',
       description:
-        'Project a `wj-icon` into the button: it renders before the label. An icon-only button sets `ariaLabel`, and the icon stays decorative.',
+        'Project a `wj-icon` into the button: it renders before the label. An icon-only button sets `ariaLabel`, and the icon stays decorative. With no `label`, the button is icon-only and square: 44 × 44 px by default, 36 × 36 small and 52 × 52 large.',
       sourceKey: 'button/with-icon',
       component: ButtonWithIconExample,
     },

@@ -30,7 +30,7 @@ export const DOC: ComponentDoc = {
     {
       title: 'Icon-only button',
       description:
-        'A button with only an icon needs `ariaLabel` on the button. Leave the icon decorative, so the name is read once.',
+        'A button with only an icon needs `ariaLabel` on the button. Leave the icon decorative, so the name is read once. The button is 44 × 44 px, as tall as a labelled one.',
       sourceKey: 'icon/icon-only-button',
       component: IconOnlyButtonExample,
     },

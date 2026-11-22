@@ -1,8 +1,16 @@
 /* Host and Optimus's own element share one inline-flex box, so the host is exactly as tall as
-   the button (44 px by default) with no inline-baseline gap. Everything else is the preset. */
+   the button (44 px by default) with no inline-baseline gap. A button without a `label` is
+   icon-only: Optimus marks only its own `icon` input, and sets the theme's icon-only width on a
+   content box, so wj-button marks it and counts the width border-box, as wj-splitbutton does.
+   Optimus's own rules give the sm/lg widths and the hidden line box that makes it as tall as a
+   labelled button. Everything else is the preset. */
 @layer wj {
   :host,
   p-button {
     display: inline-flex;
+  }
+
+  :host ::ng-deep .p-button-icon-only {
+    box-sizing: border-box;
   }
 }

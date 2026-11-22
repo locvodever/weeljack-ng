@@ -11,6 +11,7 @@ import {
   type WjButtonSeverity,
 } from 'weeljack-ng/button';
 import { WjButtonHarness } from 'weeljack-ng/button/testing';
+import { WjIcon, wjIconSettings } from 'weeljack-ng/icon';
 import { expectNoAxeViolations } from '../spec-support/axe';
 
 const PAYLOAD = '<img src=x onerror="window.wjInjected = true">';
@@ -30,7 +31,7 @@ const SEVERITIES: WjButtonSeverity[] = [
 /** A consumer's template: a button inside a form, with the click handler on `wj-button`. */
 @Component({
   selector: 'wj-button-host',
-  imports: [WjButton],
+  imports: [WjButton, WjIcon],
   template: `
     <button type="button" id="before">Before</button>
     <form (submit)="onSubmit($event)">
@@ -52,9 +53,7 @@ const SEVERITIES: WjButtonSeverity[] = [
           (click)="clicks.update((count) => count + 1)"
         >
           @if (icon()) {
-            <svg aria-hidden="true" width="16" height="16" viewBox="0 0 16 16">
-              <circle cx="8" cy="8" r="6" fill="currentColor" />
-            </svg>
+            <wj-icon [icon]="settings" />
           }
         </wj-button>
       </div>
@@ -82,6 +81,7 @@ class Host {
   readonly width = signal<string | undefined>(undefined);
   readonly clicks = signal(0);
   readonly submits = signal(0);
+  protected readonly settings = wjIconSettings;
 
   protected onSubmit(event: Event): void {
     event.preventDefault();
@@ -660,6 +660,72 @@ describe('WjButton', () => {
       expect(control.scrollWidth).toBeLessThanOrEqual(control.clientWidth);
       expect(getComputedStyle(control).textOverflow).not.toBe('ellipsis');
       expect(await button.getLabel()).toContain('longer than the room');
+    });
+
+    describe.each<[string, 'small' | 'large' | undefined, number]>([
+      ['small', 'small', 36],
+      ['default', undefined, 44],
+      ['large', 'large', 52],
+    ])('with only an icon, %s', (_name, size, side) => {
+      async function renderIconOnly(): Promise<Rendered> {
+        const rendered = await render('light', (host) => {
+          host.label.set(undefined);
+          host.icon.set(true);
+          host.ariaLabel.set('Settings');
+          host.size.set(size);
+        });
+        await rendered.fixture.whenStable();
+        return rendered;
+      }
+
+      it('is square: 44 px, 36 px small, 52 px large', async () => {
+        const { element } = await renderIconOnly();
+        const { host, control } = parts(element);
+        const sizeOf = (target: HTMLElement): number[] => {
+          const rect = target.getBoundingClientRect();
+          return [rect.width, rect.height];
+        };
+
+        expect(sizeOf(host)).toEqual([side, side]);
+        expect(sizeOf(control)).toEqual([side, side]);
+      });
+
+      it('centres the icon in the button', async () => {
+        const { element } = await renderIconOnly();
+        const { control } = parts(element);
+        const svg = element.querySelector('wj-button wj-icon svg');
+        if (svg === null) {
+          throw new Error('the wj-icon rendered no svg');
+        }
+        const icon = svg.getBoundingClientRect();
+        const rect = control.getBoundingClientRect();
+
+        expect(icon.left + icon.width / 2).toBeCloseTo(rect.left + rect.width / 2, 0);
+        expect(icon.top + icon.height / 2).toBeCloseTo(rect.top + rect.height / 2, 0);
+      });
+    });
+
+    it('keeps a labelled button with an icon as it was', async () => {
+      const { element } = await render('light', (host) => {
+        host.icon.set(true);
+      });
+      const { control } = parts(element);
+      const svg = element.querySelector('wj-button wj-icon svg');
+      const label = control.querySelector('.p-button-label');
+      if (svg === null || label === null) {
+        throw new Error('the icon or the label did not render');
+      }
+
+      expect(control.classList.contains('p-button-icon-only')).toBe(false);
+      expect(control.getBoundingClientRect().height).toBe(44);
+      expect(getComputedStyle(control).paddingInlineStart).toBe('14px');
+      expect(label.getBoundingClientRect().left - svg.getBoundingClientRect().right).toBe(8);
+    });
+
+    it('does not mark a labelled button without an icon as icon-only', async () => {
+      const { element } = await render();
+
+      expect(parts(element).control.classList.contains('p-button-icon-only')).toBe(false);
     });
   });
 
