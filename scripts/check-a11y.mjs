@@ -169,6 +169,39 @@ try {
   states += 1;
   failed += await axeBothSchemes(page, 'banner (aborted chunk)');
   await page.close();
+
+  // The icon gallery (FR-22): the search with no match, then the status line after a copy. The
+  // copy runs in a context granted the clipboard, so the success text is the one checked.
+  const iconPath = prerenderedPagePaths().find((path) => path.endsWith('/components/icon/'));
+  if (iconPath === undefined) {
+    throw new Error(
+      'check:a11y: the icon gallery states need the prerendered components/icon page.',
+    );
+  }
+  const gallery = '#icon-gallery-search';
+  const status = 'docs-icon-gallery-example [role="status"]';
+  const emptyPage = await context.newPage();
+  await emptyPage.goto(`${server.origin}${iconPath}`, { waitUntil: 'load' });
+  await settle(emptyPage, null);
+  await emptyPage.locator(gallery).fill('zzzz');
+  await emptyPage.getByText('No icon matches “zzzz”.').waitFor();
+  states += 1;
+  failed += await axeBothSchemes(emptyPage, 'icon gallery (no match)');
+  await emptyPage.close();
+
+  const copyContext = await browser.newContext({
+    reducedMotion: 'reduce',
+    permissions: ['clipboard-read', 'clipboard-write'],
+  });
+  const copyPage = await copyContext.newPage();
+  await copyPage.goto(`${server.origin}${iconPath}`, { waitUntil: 'load' });
+  await settle(copyPage, null);
+  await copyPage.locator('docs-icon-gallery-example .grid button').first().click();
+  await copyPage.locator(status).getByText('Copied:').waitFor();
+  states += 1;
+  failed += await axeBothSchemes(copyPage, 'icon gallery (after a copy)');
+  await copyPage.close();
+  await copyContext.close();
 } finally {
   await browser.close();
   await server.close();

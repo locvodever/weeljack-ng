@@ -120,7 +120,8 @@
   },
   "own": {
     "field": "W1",
-    "sheet": "W1"
+    "sheet": "W1",
+    "icon": "W1"
   },
   "notWrapped": [
     {
@@ -145,7 +146,7 @@
       "entries": ["icons"],
       "label": "Icons (55 entries)",
       "why": "Cut: they are Optimus's internal glyphs, and no icon slot is exposed.",
-      "useInstead": "your own icon set"
+      "useInstead": "`wj-icon` (`weeljack-ng/icon`)"
     },
     {
       "entries": ["focustrap"],

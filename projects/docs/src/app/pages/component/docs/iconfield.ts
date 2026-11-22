@@ -28,7 +28,7 @@ export const DOC: ComponentDoc = {
     {
       title: 'Leading icon',
       description:
-        'Put a `wj-inputicon` before the input for an icon at its start. Draw the icon as an inline SVG `1em` square in `currentColor` and mark it `aria-hidden="true"`: it is decorative, and the input keeps its name from the label. The input pads its start so typed text never runs under the icon.',
+        'Put a `wj-inputicon` before the input for an icon at its start. Put a `wj-icon` (from `weeljack-ng/icon`, or your own `WjIconDef`) in the `wj-inputicon`: it is `1em`, `currentColor` and decorative by default, and the input keeps its name from the label. The input pads its start so typed text never runs under the icon.',
       sourceKey: 'iconfield/leading',
       component: IconFieldLeadingExample,
     },
