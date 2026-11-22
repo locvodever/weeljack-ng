@@ -53,7 +53,10 @@ function toScale(input: WjColorScale | undefined): ColorScale | undefined {
 /**
  * The preset for the app's brand, before the layer styles: Aura, the always-on AA layer, then
  * either the noir primary or the app's own `primary`, then the app's `surface` per scheme.
- * With neither option it is exactly the default look.
+ * With an app's own primary, the slider range and the knob value arc are ink (`{surface.950}`) in
+ * light and the primary's 200 step in dark, so they clear 3:1 on the `{surface.500}` track for
+ * every named palette; Noir keeps its ink primary there. With neither option it is exactly the
+ * default look.
  */
 export function brandPreset(
   primary: WjColorScale | undefined,
@@ -82,6 +85,24 @@ export function brandPreset(
                 },
               },
             }),
+          },
+          // Aura paints the slider range and the knob value arc `{primary.color}`, which fails 3:1
+          // on the `{surface.500}` track for every named primary. The light value sits in the
+          // component base, never in `colorScheme.light`: Optimus 2.0.2 writes `colorScheme.light`
+          // before the base in one rule, so there it would lose to Aura's base `{primary.color}` in
+          // the browser while the gate passed it (`noir-on-zinc.ts:172-173` does the same). Ink,
+          // because no primary step passes every palette in light (`{primary.950}` fails cyan, sky
+          // and teal). `{primary.200}` in dark: the most saturated step that clears 3:1 on every
+          // palette (worst 3.18); `{primary.300}` fails 100 of 220 rows.
+          components: {
+            slider: {
+              range: { background: '{surface.950}' },
+              colorScheme: { dark: { range: { background: '{primary.200}' } } },
+            },
+            knob: {
+              value: { background: '{surface.950}' },
+              colorScheme: { dark: { value: { background: '{primary.200}' } } },
+            },
           },
         });
   if (surface === undefined) {

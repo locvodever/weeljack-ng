@@ -38,6 +38,12 @@ const LOOK = {
   },
 };
 
+/** The range under an app's own `{blue}` primary, on the default surface. */
+const BLUE_RANGE = {
+  light: 'rgb(9, 9, 11)', // surface.950: ink, in the component base
+  dark: 'rgb(191, 219, 254)', // blue.200: primary.200, in colorScheme.dark
+};
+
 /** A consumer's template: one slider, bare (named by a visible text) or inside a field. */
 @Component({
   selector: 'wj-slider-host',
@@ -291,10 +297,13 @@ async function renderAs<T>(
   type: new () => T,
   setup: (component: T) => void = () => undefined,
   scheme: Scheme = 'light',
+  options: { primary?: string } = {},
 ): Promise<Rendered<T>> {
   ROOT.classList.toggle('wj-dark', scheme === 'dark');
   document.body.style.backgroundColor = 'var(--wj-content-background)';
-  TestBed.configureTestingModule({ providers: [provideWeeljack({ darkMode: 'class' })] });
+  TestBed.configureTestingModule({
+    providers: [provideWeeljack({ ...options, darkMode: 'class' })],
+  });
   const fixture = TestBed.createComponent(type);
   setup(fixture.componentInstance);
   await fixture.whenStable();
@@ -1196,6 +1205,12 @@ describe('WjSlider', () => {
           LOOK[scheme].face,
         );
         expect(getComputedStyle(rangeOf(element)).backgroundColor).toBe(LOOK[scheme].range);
+      });
+
+      it('draws the range in ink (light) or the primary’s 200 step (dark) under a named primary', async () => {
+        const { element } = await renderAs(Host, undefined, scheme, { primary: '{blue}' });
+
+        expect(getComputedStyle(rangeOf(element)).backgroundColor).toBe(BLUE_RANGE[scheme]);
       });
 
       it('darkens the ring under the pointer to the form-field hover step, and takes no pointer while disabled', async () => {
