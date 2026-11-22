@@ -3,6 +3,7 @@ import {
   Component,
   ElementRef,
   Injector,
+  ViewContainerRef,
   afterNextRender,
   afterRenderEffect,
   inject,
@@ -33,6 +34,7 @@ export class App {
   private readonly location = inject(Location);
   private readonly failure = inject(NavigationFailure);
   private readonly navState = inject(DocsNavState);
+  private readonly tocHost = viewChild.required('toc', { read: ViewContainerRef });
   private readonly reloadButton = viewChild<ElementRef<HTMLButtonElement>>('reload');
 
   protected readonly version = apiIndex.version;
@@ -63,6 +65,15 @@ export class App {
           { injector: this.injector },
         );
       });
+
+    // The "On this page" list is browser-only and lazy: a `@defer` block would add its runtime
+    // (about 3.5 kB) to the initial bundle, a dynamic import adds none. Its column is reserved by
+    // the grid, so nothing shifts when it mounts.
+    afterNextRender(() => {
+      void import('./toc/toc').then(({ DocsToc }) => {
+        this.tocHost().createComponent(DocsToc);
+      });
+    });
 
     // A failed navigation leaves the address bar on the old page, so focus goes to the one
     // control that can fix it: it is scrolled into view even from a link low on a long page.

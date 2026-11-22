@@ -1,0 +1,17 @@
+@if (entries().length > 1) {
+  <nav aria-label="On this page">
+    <p class="title">On this page</p>
+    <ul>
+      @for (entry of entries(); track entry.id) {
+        <li [class.sub]="entry.level === 3">
+          <a
+            [attr.href]="hrefFor(entry.id)"
+            [attr.aria-current]="active() === entry.id ? 'true' : null"
+            (click)="jump($event, entry.id)"
+            >{{ entry.text }}</a
+          >
+        </li>
+      }
+    </ul>
+  </nav>
+}

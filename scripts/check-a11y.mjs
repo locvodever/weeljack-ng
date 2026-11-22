@@ -85,6 +85,14 @@ async function settle(page, heading) {
       document.querySelector('h1') !== null,
     heading,
   );
+  // The "On this page" list (`docs-toc`) is built after hydration: axe must read it on every page that has one.
+  // (Some pages carry an inline nav of the same name, so the wait names the list's own element.)
+  await page.waitForFunction(
+    () =>
+      Array.from(document.querySelectorAll('main h2, main h3')).filter(
+        (h) => h.closest('.docs-live, docs-example-frame') === null,
+      ).length < 2 || document.querySelector('docs-toc nav[aria-label="On this page"]') !== null,
+  );
 }
 
 /**
