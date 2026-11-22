@@ -15,9 +15,9 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router';
 import { filter } from 'rxjs';
-import apiIndex from '../generated/api/index.json';
 import { NavigationFailure } from './navigation-failure/navigation-failure';
 import type { DocsNavDrawer } from './nav-drawer/nav-drawer';
+import { DocsShellData } from './sidebar/nav-data';
 import { DocsSidebar } from './sidebar/sidebar';
 import { DocsNavState } from './sidebar/nav-state';
 import type { DocsThemePopover } from './theme-panel/theme-popover';
@@ -48,7 +48,7 @@ export class App {
   private readonly themeHost = viewChild.required('themePopover', { read: ViewContainerRef });
   private readonly reloadButton = viewChild<ElementRef<HTMLButtonElement>>('reload');
 
-  protected readonly version = apiIndex.version;
+  protected readonly version = inject(DocsShellData).version;
   protected readonly failed = this.failure.url;
   protected readonly dark = signal(this.document.documentElement.classList.contains(DARK_CLASS));
   protected readonly menuOpen = signal(false);

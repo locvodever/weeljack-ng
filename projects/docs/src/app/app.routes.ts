@@ -1,14 +1,16 @@
 import type { CanMatchFn, ResolveFn, Routes } from '@angular/router';
-import { API_DOCUMENTS } from '../generated/api-documents';
-import { COMPONENT_DOCS } from '../generated/component-docs';
 import type { ComponentPageData } from './pages/component/component-doc';
 
 const SITE = 'WeeljackNg';
 
 /** `components/<entry>` matches only for an entry that has a page; any other URL is not-found. */
-const hasComponentPage: CanMatchFn = (_route, segments) => {
+const hasComponentPage: CanMatchFn = async (_route, segments) => {
   const entry = segments[1]?.path;
-  return entry !== undefined && COMPONENT_DOCS.has(entry);
+  if (entry === undefined) {
+    return false;
+  }
+  const { COMPONENT_DOCS } = await import('../generated/component-docs');
+  return COMPONENT_DOCS.has(entry);
 };
 
 /** `errors/<code>` matches only a code in the generated registry; any other URL is not-found. */
@@ -33,6 +35,10 @@ function load<T>(
 /** The page's content and generated API, each from its own lazy chunk. */
 const componentPage: ResolveFn<ComponentPageData> = async (route) => {
   const entry = route.paramMap.get('entry') ?? '';
+  const [{ COMPONENT_DOCS }, { API_DOCUMENTS }] = await Promise.all([
+    import('../generated/component-docs'),
+    import('../generated/api-documents'),
+  ]);
   const [doc, api] = await Promise.all([
     load(COMPONENT_DOCS, entry, 'Add pages/component/docs/<entry>.ts exporting DOC.'),
     load(API_DOCUMENTS, entry, 'Run npm run build:docs.'),
@@ -42,6 +48,7 @@ const componentPage: ResolveFn<ComponentPageData> = async (route) => {
 
 /** The title reads the same chunk the page resolver loads; the module loader dedupes the fetch. */
 const componentTitle: ResolveFn<string> = async (route) => {
+  const { COMPONENT_DOCS } = await import('../generated/component-docs');
   const doc = await COMPONENT_DOCS.get(route.paramMap.get('entry') ?? '')?.();
   return `${doc?.title ?? 'Component'} · ${SITE}`;
 };

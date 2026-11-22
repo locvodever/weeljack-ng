@@ -1,6 +1,6 @@
 import { Component, inject, input, output } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
-import nav from '../../generated/nav.json';
+import { DocsShellData } from './nav-data';
 import { DocsNavState } from './nav-state';
 
 interface NavLink {
@@ -14,7 +14,7 @@ interface NavGroup {
   links: NavLink[];
 }
 
-/** The fixed groups, in reading order. The component sub-groups come from `nav.json`. */
+/** The fixed groups, in reading order. The component sub-groups come from `DocsShellData`. */
 const GROUPS: readonly NavGroup[] = [
   {
     id: 'getting-started',
@@ -72,5 +72,5 @@ export class DocsSidebar {
   protected readonly root = inject(Router).routerState.root;
 
   protected readonly groups = GROUPS;
-  protected readonly components = nav.groups;
+  protected readonly components = inject(DocsShellData).groups;
 }
