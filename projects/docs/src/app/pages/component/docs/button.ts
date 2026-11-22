@@ -4,6 +4,7 @@ import { ButtonLoadingExample } from '../../../examples/button/loading';
 import { ButtonSeveritiesExample } from '../../../examples/button/severities';
 import { ButtonSizesExample } from '../../../examples/button/sizes';
 import { ButtonVariantsExample } from '../../../examples/button/variants';
+import { ButtonWithIconExample } from '../../../examples/button/with-icon';
 import type { ComponentDoc, MappingRow } from '../component-doc';
 
 const droppedByNeed = 'Not exposed: WeeljackNg exposes by need, never a mirror.';
@@ -51,6 +52,13 @@ export const DOC: ComponentDoc = {
       description: 'Solid by default, or `outlined` or `text`.',
       sourceKey: 'button/variants',
       component: ButtonVariantsExample,
+    },
+    {
+      title: 'With an icon',
+      description:
+        'Project a `wj-icon` into the button: it renders before the label. An icon-only button sets `ariaLabel`, and the icon stays decorative.',
+      sourceKey: 'button/with-icon',
+      component: ButtonWithIconExample,
     },
     {
       title: 'Severities',
@@ -181,7 +189,10 @@ export const DOC: ComponentDoc = {
     dropped('dt, unstyled, ptOptions', droppedAlways),
     dropped('style, styleClass', droppedAlways),
     dropped('raised, rounded, plain, link', droppedByNeed),
-    dropped('icon, iconPos, loadingIcon', 'Icons are projected content; the spinner is built in.'),
+    dropped(
+      'icon, iconPos, loadingIcon',
+      'Icons are projected content: put a `wj-icon` inside. The spinner is built in.',
+    ),
     dropped('badge, badgeClass, badgeSeverity', droppedByNeed),
     dropped('fluid, tabindex, autofocus, buttonProps', droppedByNeed),
     dropped('contentTemplate, iconTemplate, loadingIconTemplate', 'Content is projected.'),

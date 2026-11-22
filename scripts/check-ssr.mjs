@@ -3,7 +3,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { prerenderedPagePaths, startDocsServer } from './serve-docs.mjs';
-import { missingProbes, probesFor } from './ssr-probes.mjs';
+import { hasRenderedIconSvg, missingProbes, probesFor } from './ssr-probes.mjs';
 
 /** @typedef {import('./ssr-probes.mjs').ApiFile} ApiFile
  * @typedef {import('./ssr-probes.mjs').FileProbes} FileProbes */
@@ -54,6 +54,17 @@ try {
       throw new Error(`check:ssr: ${path} answered HTTP ${String(response.status)}.`);
     }
     html.push(await response.text());
+  }
+
+  const iconPath = paths.find((path) => path.endsWith('/components/icon/'));
+  const iconHtml = iconPath === undefined ? undefined : html[paths.indexOf(iconPath)];
+  if (iconPath === undefined || iconHtml === undefined || !hasRenderedIconSvg(iconHtml)) {
+    console.error(
+      `check:ssr: ${iconPath ?? 'the components/icon page'} holds no wj-icon with an svg that has a viewBox and a shape.`,
+    );
+    process.exitCode = 1;
+  } else {
+    console.log(`check:ssr: ${iconPath} holds a wj-icon with a full svg (viewBox and shapes)`);
   }
 
   const missing = missingProbes(files, html);

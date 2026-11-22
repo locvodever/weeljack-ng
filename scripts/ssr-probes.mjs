@@ -59,3 +59,18 @@ export function missingProbes(files, pages) {
     own.filter((probe) => (probe.viaComponent ? !components.some(found) : !found(probe))),
   );
 }
+
+/**
+ * Whether some `wj-icon` element in prerendered HTML holds, before its closing tag, an `svg` with a
+ * `viewBox` and at least one shape element (FR-21). An icon that only reached the server as an
+ * empty `<wj-icon>` fails.
+ * @param {string} html prerendered HTML
+ * @returns {boolean}
+ */
+export function hasRenderedIconSvg(html) {
+  return [...html.matchAll(/<wj-icon[\s>][\s\S]*?<\/wj-icon>/gi)].some(
+    ([icon]) =>
+      /<svg\b[^>]*\sviewBox=/i.test(icon) &&
+      /<(?:path|circle|rect|line|polyline|polygon|ellipse)[\s/>]/i.test(icon),
+  );
+}

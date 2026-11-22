@@ -1,11 +1,12 @@
 import { Component } from '@angular/core';
+import { WjIcon, wjIconCheck } from 'weeljack-ng/icon';
 import { WjIconField } from 'weeljack-ng/iconfield';
 import { WjInputIcon } from 'weeljack-ng/inputicon';
 import { WjInputText } from 'weeljack-ng/inputtext';
 
 @Component({
   selector: 'docs-inputicon-trailing-example',
-  imports: [WjIconField, WjInputIcon, WjInputText],
+  imports: [WjIconField, WjInputIcon, WjInputText, WjIcon],
   template: `
     <div class="item">
       <label for="inputicon-trailing-username">Username</label>
@@ -18,20 +19,7 @@ import { WjInputText } from 'weeljack-ng/inputtext';
           aria-describedby="inputicon-trailing-hint"
         />
         <wj-inputicon>
-          <svg
-            width="1em"
-            height="1em"
-            viewBox="0 0 16 16"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="1.5"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            aria-hidden="true"
-            focusable="false"
-          >
-            <path d="m3 8.5 3.5 3.5L13 4.5" />
-          </svg>
+          <wj-icon [icon]="check" />
         </wj-inputicon>
       </wj-iconfield>
       <p id="inputicon-trailing-hint">That username is available.</p>
@@ -63,4 +51,6 @@ import { WjInputText } from 'weeljack-ng/inputtext';
     }
   `,
 })
-export class InputIconTrailingExample {}
+export class InputIconTrailingExample {
+  protected readonly check = wjIconCheck;
+}

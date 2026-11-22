@@ -19,7 +19,7 @@ export const DOC: ComponentDoc = {
     {
       title: 'Search icon',
       description:
-        'A `wj-inputicon` before the input puts the icon at the input’s start. The icon is an inline SVG `1em` square in `currentColor`, `aria-hidden="true"` and `focusable="false"`. A click on the icon focuses the input under it.',
+        'A `wj-inputicon` before the input puts the icon at the input’s start. The icon is a `wj-icon` (from `weeljack-ng/icon`, or your own `WjIconDef`): `1em`, `currentColor` and decorative by default. A click on the icon focuses the input under it.',
       sourceKey: 'inputicon/leading',
       component: InputIconLeadingExample,
     },
@@ -65,7 +65,7 @@ export const DOC: ComponentDoc = {
       optimus: 'Default content',
       weeljack: 'Default content',
       status: 'kept',
-      note: 'The icon: an inline SVG, drawn `1em` square in `currentColor`.',
+      note: 'The icon: a `wj-icon` (from `weeljack-ng/icon`, or your own `WjIconDef`), `1em` and `currentColor`.',
     },
     {
       optimus: 'pt',

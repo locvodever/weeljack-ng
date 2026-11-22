@@ -1,30 +1,18 @@
 import { Component } from '@angular/core';
+import { WjIcon, wjIconSearch } from 'weeljack-ng/icon';
 import { WjIconField } from 'weeljack-ng/iconfield';
 import { WjInputIcon } from 'weeljack-ng/inputicon';
 import { WjInputText } from 'weeljack-ng/inputtext';
 
 @Component({
   selector: 'docs-inputicon-leading-example',
-  imports: [WjIconField, WjInputIcon, WjInputText],
+  imports: [WjIconField, WjInputIcon, WjInputText, WjIcon],
   template: `
     <div class="item">
       <label for="inputicon-leading-search">Search</label>
       <wj-iconfield>
         <wj-inputicon>
-          <svg
-            width="1em"
-            height="1em"
-            viewBox="0 0 16 16"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="1.5"
-            stroke-linecap="round"
-            aria-hidden="true"
-            focusable="false"
-          >
-            <circle cx="7" cy="7" r="4.5" />
-            <path d="M10.5 10.5 14 14" />
-          </svg>
+          <wj-icon [icon]="search" />
         </wj-inputicon>
         <input wjInputText id="inputicon-leading-search" type="search" autocomplete="off" />
       </wj-iconfield>
@@ -49,4 +37,6 @@ import { WjInputText } from 'weeljack-ng/inputtext';
     }
   `,
 })
-export class InputIconLeadingExample {}
+export class InputIconLeadingExample {
+  protected readonly search = wjIconSearch;
+}

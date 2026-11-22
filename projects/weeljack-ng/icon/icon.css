@@ -1,0 +1,19 @@
+/* Size follows the host's font-size and colour its color: no variable, no theme dependency. */
+@layer wj {
+  :host {
+    display: inline-flex;
+    vertical-align: -0.125em;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    :host(.wj-icon-spin) {
+      animation: wj-icon-spin 1s linear infinite; /* motion: a loading indicator; none under reduced motion */
+    }
+  }
+
+  @keyframes wj-icon-spin {
+    to {
+      transform: rotate(1turn);
+    }
+  }
+}
