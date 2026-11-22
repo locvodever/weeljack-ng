@@ -1,14 +1,26 @@
 <a class="skip-link" href="#main" (click)="skipToMain($event)">Skip to content</a>
 <header class="header">
   <div class="bar">
+    <button
+      type="button"
+      class="action menu"
+      aria-haspopup="dialog"
+      [attr.aria-expanded]="menuOpen()"
+      (click)="openMenu()"
+    >
+      <span class="glyph" aria-hidden="true"></span>
+      Menu
+    </button>
     <div class="group">
       <a class="wordmark" routerLink="">WeeljackNg</a>
       <span class="version">v{{ version }}</span>
     </div>
     <div class="group utilities">
-      <a class="action" href="https://github.com/locvodever/weeljack-ng" rel="noopener">GitHub</a>
+      <a class="action github" href="https://github.com/locvodever/weeljack-ng" rel="noopener"
+        >GitHub</a
+      >
       <button type="button" class="action" [attr.aria-pressed]="dark()" (click)="toggleDark()">
-        Dark mode <span aria-hidden="true">{{ dark() ? 'on' : 'off' }}</span>
+        Dark mode <span class="state" aria-hidden="true">{{ dark() ? 'on' : 'off' }}</span>
       </button>
     </div>
   </div>
@@ -32,6 +44,7 @@
     <ng-container #toc />
   </div>
 </div>
+<ng-container #drawer />
 <footer class="footer">
   <div class="footer-inner">
     <nav aria-label="Footer">

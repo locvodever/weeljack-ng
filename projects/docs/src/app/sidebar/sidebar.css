@@ -55,6 +55,11 @@ ul {
   color: var(--wj-text-muted-color);
 }
 
+/* The muted label on the hover fill is under 4.5:1 in the light scheme: hover takes the full colour. */
+.sub:hover {
+  color: var(--wj-text-color);
+}
+
 .chevron {
   flex: none;
   inline-size: 6px;

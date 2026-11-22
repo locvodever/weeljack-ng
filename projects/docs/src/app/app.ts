@@ -1,6 +1,8 @@
 import { DOCUMENT, Location } from '@angular/common';
 import {
   Component,
+  ComponentRef,
+  DestroyRef,
   ElementRef,
   Injector,
   ViewContainerRef,
@@ -15,31 +17,46 @@ import { NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router
 import { filter } from 'rxjs';
 import apiIndex from '../generated/api/index.json';
 import { NavigationFailure } from './navigation-failure/navigation-failure';
+import type { DocsNavDrawer } from './nav-drawer/nav-drawer';
 import { DocsSidebar } from './sidebar/sidebar';
 import { DocsNavState } from './sidebar/nav-state';
 
 /** Class on `<html>` that `provideWeeljack({ darkMode: 'class' })` reads as "dark". */
 const DARK_CLASS = 'wj-dark';
 
+/** From this width the sidebar is a column of the page; below it, a drawer opened from "Menu". */
+const WIDE = '(min-width: 960px)';
+
 @Component({
   imports: [DocsSidebar, RouterLink, RouterOutlet],
   selector: 'docs-root',
   templateUrl: './app.html',
-  styleUrl: './app.css',
+  styleUrls: ['./app.css', './app-bar.css'],
 })
 export class App {
   private readonly document = inject(DOCUMENT);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly injector = inject(Injector);
   private readonly router = inject(Router);
   private readonly location = inject(Location);
   private readonly failure = inject(NavigationFailure);
   private readonly navState = inject(DocsNavState);
   private readonly tocHost = viewChild.required('toc', { read: ViewContainerRef });
+  private readonly drawerHost = viewChild.required('drawer', { read: ViewContainerRef });
   private readonly reloadButton = viewChild<ElementRef<HTMLButtonElement>>('reload');
 
   protected readonly version = apiIndex.version;
   protected readonly failed = this.failure.url;
   protected readonly dark = signal(this.document.documentElement.classList.contains(DARK_CLASS));
+  protected readonly menuOpen = signal(false);
+
+  /** The drawer's chunk, requested at most once. */
+  private drawerChunk: Promise<typeof import('./nav-drawer/nav-drawer')> | null = null;
+  private drawer: ComponentRef<DocsNavDrawer> | null = null;
+  /** True from the moment the drawer opens until it has closed (its leave motion included). */
+  private drawerBusy = false;
+  /** A navigation ended while the drawer was open or closing: the `h1` takes focus once it is gone. */
+  private focusHeadingAfterClose = false;
 
   constructor() {
     // Every navigation, the first included (the server too), opens the sidebar groups holding the
@@ -58,12 +75,13 @@ export class App {
           return;
         }
         this.failure.url.set(null);
-        afterNextRender(
-          () => {
-            this.document.querySelector<HTMLElement>('main h1')?.focus();
-          },
-          { injector: this.injector },
-        );
+        if (this.drawerBusy) {
+          // `wj-drawer` returns focus to Menu after its leave motion: focusing the `h1` now would
+          // lose to it, so it waits for `closed`.
+          this.focusHeadingAfterClose = true;
+        } else {
+          this.focusHeading();
+        }
       });
 
     // The "On this page" list is browser-only and lazy: a `@defer` block would add its runtime
@@ -72,6 +90,27 @@ export class App {
     afterNextRender(() => {
       void import('./toc/toc').then(({ DocsToc }) => {
         this.tocHost().createComponent(DocsToc);
+      });
+    });
+
+    // Narrow screens only: request the drawer's chunk ahead of the first Menu click, and close an
+    // open drawer when the viewport grows to the sidebar's width.
+    afterNextRender(() => {
+      const wide = this.document.defaultView?.matchMedia(WIDE);
+      if (wide === undefined) {
+        return;
+      }
+      if (!wide.matches) {
+        void this.loadDrawerChunk();
+      }
+      const onChange = (event: MediaQueryListEvent): void => {
+        if (event.matches) {
+          this.setMenu(false);
+        }
+      };
+      wide.addEventListener('change', onChange);
+      this.destroyRef.onDestroy(() => {
+        wide.removeEventListener('change', onChange);
       });
     });
 
@@ -92,6 +131,58 @@ export class App {
     if (url !== null) {
       this.document.defaultView?.location.assign(this.location.prepareExternalUrl(url));
     }
+  }
+
+  /** Opens the drawer, loading it first when this is the first time. */
+  protected openMenu(): void {
+    void this.mountDrawer().then(() => {
+      this.drawerBusy = true;
+      this.setMenu(true);
+    });
+  }
+
+  private setMenu(open: boolean): void {
+    this.menuOpen.set(open);
+    // Not `setInput`: it skips a value equal to the last one it set, so a drawer the user closed
+    // inside would never reopen.
+    this.drawer?.instance.visible.set(open);
+  }
+
+  private drawerClosed(): void {
+    this.drawerBusy = false;
+    if (this.focusHeadingAfterClose) {
+      this.focusHeadingAfterClose = false;
+      this.focusHeading();
+    }
+  }
+
+  private loadDrawerChunk(): Promise<typeof import('./nav-drawer/nav-drawer')> {
+    this.drawerChunk ??= import('./nav-drawer/nav-drawer');
+    return this.drawerChunk;
+  }
+
+  private async mountDrawer(): Promise<void> {
+    const { DocsNavDrawer } = await this.loadDrawerChunk();
+    if (this.drawer !== null) {
+      return;
+    }
+    const drawer = this.drawerHost().createComponent(DocsNavDrawer);
+    drawer.instance.visible.subscribe((visible) => {
+      this.menuOpen.set(visible);
+    });
+    drawer.instance.closed.subscribe(() => {
+      this.drawerClosed();
+    });
+    this.drawer = drawer;
+  }
+
+  private focusHeading(): void {
+    afterNextRender(
+      () => {
+        this.document.querySelector<HTMLElement>('main h1')?.focus();
+      },
+      { injector: this.injector },
+    );
   }
 
   protected toggleDark(): void {

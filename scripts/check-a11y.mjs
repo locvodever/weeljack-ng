@@ -14,7 +14,9 @@ import { BASE, prerenderedPagePaths, startDocsServer } from './serve-docs.mjs';
  * The not-found page is checked too, through an unknown URL: the server answers it with the
  * client-rendered `404.html` shell and the router draws the page.
  *
- * Three states beyond the pages (FR-27), each light and dark: the "Couldn't load this page" banner
+ * States beyond the pages (FR-27, FR-33), each light and dark: a sidebar group collapsed, the
+ * drawer open at 390 x 844 (its Escape-returns-focus-to-Menu behaviour is asserted too), and the
+ * remaining three: the "Couldn't load this page" banner
  * (one lazy chunk request is aborted during one navigation to another component page, and routing
  * is restored afterwards), the first not-wrapped slug and the first planned slug of
  * `catalog.json`, each while one exists (a line says so when it is skipped).
@@ -96,39 +98,51 @@ async function settle(page, heading) {
 }
 
 /**
+ * Runs axe on the page as it is now; logs the result and returns the violation count.
+ * @param {import('playwright').Page} page
+ * @param {string} label
+ * @param {'light' | 'dark'} scheme
+ */
+async function axeReport(page, label, scheme) {
+  // The page-side `axe` global is untyped from here; the result is axe's own `Result[]`.
+  const violations = /** @type {import('axe-core').Result[]} */ (
+    await page.evaluate(
+      `axe.run(document, ${JSON.stringify(AXE_RUN_OPTIONS)}).then((results) => results.violations)`,
+    )
+  );
+  if (violations.length === 0) {
+    console.log(`check:a11y: ${label} (${scheme}): no violations`);
+    return 0;
+  }
+  console.error(`check:a11y: ${label} (${scheme}): ${String(violations.length)} violation(s)`);
+  for (const violation of violations) {
+    const targets = violation.nodes.map((node) => node.target.join(' ')).join('; ');
+    console.error(
+      `  ${violation.id} (${violation.impact ?? 'unknown'}): ${violation.help}
+    ${targets}`,
+    );
+  }
+  return violations.length;
+}
+
+/**
+ * The header's own dark-mode toggle (its name is exactly "Dark mode" at every width).
+ * @param {import('playwright').Page} page
+ */
+async function switchToDark(page) {
+  await page.getByRole('banner').getByRole('button', { name: 'Dark mode', exact: true }).click();
+  await page.waitForSelector('html.wj-dark');
+}
+
+/**
  * Runs axe light, then dark (the header's own toggle is clicked); returns the violation count.
  * @param {import('playwright').Page} page
  * @param {string} label
  */
 async function axeBothSchemes(page, label) {
-  let count = 0;
-  for (const scheme of /** @type {const} */ (['light', 'dark'])) {
-    if (scheme === 'dark') {
-      await page
-        .getByRole('banner')
-        .getByRole('button', { name: 'Dark mode', exact: true })
-        .click();
-      await page.waitForSelector('html.wj-dark');
-    }
-    // The page-side `axe` global is untyped from here; the result is axe's own `Result[]`.
-    const violations = /** @type {import('axe-core').Result[]} */ (
-      await page.evaluate(
-        `axe.run(document, ${JSON.stringify(AXE_RUN_OPTIONS)}).then((results) => results.violations)`,
-      )
-    );
-    if (violations.length === 0) {
-      console.log(`check:a11y: ${label} (${scheme}): no violations`);
-      continue;
-    }
-    count += violations.length;
-    console.error(`check:a11y: ${label} (${scheme}): ${String(violations.length)} violation(s)`);
-    for (const violation of violations) {
-      const targets = violation.nodes.map((node) => node.target.join(' ')).join('; ');
-      console.error(
-        `  ${violation.id} (${violation.impact ?? 'unknown'}): ${violation.help}\n    ${targets}`,
-      );
-    }
-  }
+  let count = await axeReport(page, label, 'light');
+  await switchToDark(page);
+  count += await axeReport(page, label, 'dark');
   return count;
 }
 
@@ -218,6 +232,77 @@ try {
   failed += await axeBothSchemes(copyPage, 'icon gallery (after a copy)');
   await copyPage.close();
   await copyContext.close();
+
+  // The sidebar with its open component group collapsed: the header's disclosure button toggles it.
+  {
+    const first = componentPaths[0];
+    if (first === undefined) {
+      throw new Error('check:a11y: the collapsed-group state needs a prerendered component page.');
+    }
+    const label = 'sidebar (group collapsed)';
+    const sidebarPage = await context.newPage();
+    await sidebarPage.goto(`${server.origin}${first}`, { waitUntil: 'load' });
+    await settle(sidebarPage, null);
+    const open = sidebarPage
+      .locator('nav[aria-label="Documentation"] button.head.sub[aria-expanded="true"]')
+      .first();
+    const id = await open.getAttribute('aria-controls');
+    if (id === null) {
+      throw new Error(`check:a11y: ${label}: no open component group to collapse.`);
+    }
+    await open.click();
+    // Pinned to the button by id: once it collapses it no longer matches the "open" filter above.
+    await sidebarPage
+      .locator(
+        `nav[aria-label="Documentation"] button[aria-controls="${id}"][aria-expanded="false"]`,
+      )
+      .waitFor({ timeout: 5000 });
+    if (!(await sidebarPage.locator(`[id="${id}"]`).isHidden())) {
+      throw new Error(`check:a11y: ${label}: the group's list is still shown.`);
+    }
+    states += 1;
+    failed += await axeBothSchemes(sidebarPage, label);
+    await sidebarPage.close();
+  }
+
+  // The drawer open at 390 x 844. Its backdrop covers the header toggle, so the scheme is switched
+  // with the drawer closed, and the drawer is opened again.
+  {
+    const label = 'drawer (390 x 844)';
+    const narrow = await browser.newContext({
+      reducedMotion: 'reduce',
+      viewport: { width: 390, height: 844 },
+    });
+    const drawerPage = await narrow.newPage();
+    await drawerPage.goto(`${server.origin}${BASE}`, { waitUntil: 'load' });
+    await settle(drawerPage, null);
+    const menu = drawerPage.getByRole('button', { name: 'Menu', exact: true });
+    const dialog = drawerPage.getByRole('dialog');
+    const open = async () => {
+      await menu.click();
+      await dialog.waitFor();
+      if (
+        !(await drawerPage.evaluate(
+          () =>
+            document.querySelector('[role="dialog"]')?.contains(document.activeElement) ?? false,
+        ))
+      ) {
+        throw new Error(`check:a11y: ${label}: focus did not move into the drawer.`);
+      }
+    };
+    await open();
+    states += 1;
+    failed += await axeReport(drawerPage, label, 'light');
+    await drawerPage.keyboard.press('Escape');
+    await dialog.waitFor({ state: 'detached' });
+    if (!(await menu.evaluate((button) => button === document.activeElement))) {
+      throw new Error(`check:a11y: ${label}: Escape did not return focus to Menu.`);
+    }
+    await switchToDark(drawerPage);
+    await open();
+    failed += await axeReport(drawerPage, label, 'dark');
+    await narrow.close();
+  }
 } finally {
   await browser.close();
   await server.close();
