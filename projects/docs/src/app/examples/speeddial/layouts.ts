@@ -1,6 +1,14 @@
 import { Component } from '@angular/core';
 import type { WjMenuItem } from 'weeljack-ng';
 import {
+  WjIcon,
+  wjIconDownload,
+  wjIconLink,
+  wjIconPencil,
+  wjIconShare2,
+  type WjIconDef,
+} from 'weeljack-ng/icon';
+import {
   WjSpeedDial,
   WjSpeedDialItemSlot,
   type WjSpeedDialDirection,
@@ -18,7 +26,7 @@ interface Layout {
 
 @Component({
   selector: 'docs-speeddial-layouts-example',
-  imports: [WjSpeedDial, WjSpeedDialItemSlot],
+  imports: [WjSpeedDial, WjSpeedDialItemSlot, WjIcon],
   template: `
     @for (layout of layouts; track layout.caption) {
       <div class="stage">
@@ -31,26 +39,20 @@ interface Layout {
           [ariaLabel]="layout.name"
         >
           <ng-template wjSpeedDialItem let-item>
-            <svg
-              aria-hidden="true"
-              focusable="false"
-              width="16"
-              height="16"
-              viewBox="0 0 16 16"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.5"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <path [attr.d]="icons.get(item)" />
-            </svg>
+            @let icon = icons.get(item);
+            @if (icon) {
+              <wj-icon class="glyph" [icon]="icon" />
+            }
           </ng-template>
         </wj-speeddial>
       </div>
     }
   `,
   styles: `
+    .glyph {
+      font-size: 1rem;
+    }
+
     :host {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
@@ -161,13 +163,10 @@ export class SpeedDialLayoutsExample {
     },
   ];
 
-  protected readonly icons = new Map<WjMenuItem, string>([
-    [this.edit, 'M2 14l1-4 8-8 3 3-8 8zM9 4l3 3'],
-    [this.share, 'M8 10V2M5 5l3-3 3 3M3 9v5h10V9'],
-    [this.download, 'M8 2v8M5 7l3 3 3-3M3 13h10'],
-    [
-      this.copy,
-      'M6.5 9.5l3-3M5 8L3.5 9.5a2.1 2.1 0 0 0 3 3L8 11M8 5l1.5-1.5a2.1 2.1 0 0 1 3 3L11 8',
-    ],
+  protected readonly icons = new Map<WjMenuItem, WjIconDef>([
+    [this.edit, wjIconPencil],
+    [this.share, wjIconShare2],
+    [this.download, wjIconDownload],
+    [this.copy, wjIconLink],
   ]);
 }

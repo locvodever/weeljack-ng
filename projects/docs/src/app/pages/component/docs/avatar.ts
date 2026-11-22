@@ -50,7 +50,7 @@ export const DOC: ComponentDoc = {
     {
       title: 'Projected icon',
       description:
-        'Content you project renders in the centre. Use a decorative icon at `1em` in `currentColor` and mark it `aria-hidden`, so it follows the avatar’s colour and size.',
+        'Content you project renders in the centre. Project a `wj-icon`: it is `1em`, in `currentColor` and decorative by default, so it follows the avatar’s colour and size.',
       sourceKey: 'avatar/projected-icon',
       component: AvatarProjectedIconExample,
     },
@@ -135,7 +135,7 @@ export const DOC: ComponentDoc = {
       optimus: 'Projected content',
       weeljack: 'Projected content',
       status: 'kept',
-      note: 'Project your own icon: it renders before the label or image.',
+      note: 'Project a `wj-icon`: it renders before the label or image.',
     },
     dropped('icon', 'An icon class string. Icon slots are not exposed: project your own icon.'),
     dropped('styleClass, dt, unstyled, ptOptions', droppedAlways),

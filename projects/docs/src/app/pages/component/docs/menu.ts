@@ -67,7 +67,7 @@ export const DOC: ComponentDoc = {
     {
       title: 'Item slot',
       description:
-        'Put an `ng-template` marked `wjMenuItem` inside the menu (import `WjMenuItemSlot`: without it the template is silently dropped) to draw each item yourself, here an icon beside the label. `let-item` is your own item object, so a `Map` keyed by the items finds per-item data. Draw the item’s `label` as visible text, because the menu names the item from it, and add no link or button of your own: the menu wraps your template in the item’s link, so it keeps the padding, the height and the Enter and Space keys of a plain item. The slot replaces the whole default rendering: give the menu the slot when it is created, and the template owns any submenu mark.',
+        'Put an `ng-template` marked `wjMenuItem` inside the menu (import `WjMenuItemSlot`: without it the template is silently dropped) to draw each item yourself, here a `wj-icon` beside the label. `let-item` is your own item object, so a `Map` keyed by the items finds per-item data. Draw the item’s `label` as visible text, because the menu names the item from it, and add no link or button of your own: the menu wraps your template in the item’s link, so it keeps the padding, the height and the Enter and Space keys of a plain item. The slot replaces the whole default rendering: give the menu the slot when it is created, and the template owns any submenu mark.',
       sourceKey: 'menu/item-slot',
       component: MenuItemSlotExample,
     },
@@ -240,7 +240,7 @@ export const DOC: ComponentDoc = {
       'icon',
       'None',
       'dropped',
-      'An icon class assumes an icon font WeeljackNg does not ship. Draw icons in the item slot.',
+      'An icon class assumes an icon font WeeljackNg does not ship. Put a `wj-icon` in the item slot.',
     ),
     itemField(
       'tooltip, tooltipPosition, tooltipOptions',

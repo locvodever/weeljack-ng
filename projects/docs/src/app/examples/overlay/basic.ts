@@ -1,11 +1,12 @@
 import { Component, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { WjButton, type WjButtonPt } from 'weeljack-ng/button';
+import { WjIcon, wjIconChevronDown } from 'weeljack-ng/icon';
 import { WjOverlay } from 'weeljack-ng/overlay';
 
 @Component({
   selector: 'docs-overlay-basic-example',
-  imports: [RouterLink, WjButton, WjOverlay],
+  imports: [RouterLink, WjButton, WjOverlay, WjIcon],
   template: `
     <div class="anchor">
       <wj-button
@@ -16,17 +17,7 @@ import { WjOverlay } from 'weeljack-ng/overlay';
         [pt]="triggerPt"
         (click)="open.set(!open())"
       >
-        <svg
-          aria-hidden="true"
-          width="16"
-          height="16"
-          viewBox="0 0 16 16"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="1.5"
-        >
-          <path d="m4 6 4 4 4-4" />
-        </svg>
+        <wj-icon [icon]="chevronDown" />
       </wj-button>
       <wj-overlay [(visible)]="open">
         <ul id="overlay-basic-links" class="links">
@@ -63,6 +54,7 @@ import { WjOverlay } from 'weeljack-ng/overlay';
   `,
 })
 export class OverlayBasicExample {
+  protected readonly chevronDown = wjIconChevronDown;
   protected readonly open = signal(false);
 
   /** `wj-button` has no `aria-controls` input, so that one goes through `pt`. */

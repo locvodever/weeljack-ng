@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import type { WjTreeNode } from 'weeljack-ng';
+import { WjIcon, wjIconFile, wjIconFolder } from 'weeljack-ng/icon';
 import { WjTree, WjTreeNodeSlot } from 'weeljack-ng/tree';
 
 interface Entry {
@@ -8,21 +9,15 @@ interface Entry {
 
 @Component({
   selector: 'docs-tree-custom-nodes-example',
-  imports: [WjTree, WjTreeNodeSlot],
+  imports: [WjTree, WjTreeNodeSlot, WjIcon],
   template: `
     <wj-tree [value]="folders" [expandedKeys]="open" ariaLabel="Files, with a glyph and a count">
       <ng-template wjTreeNode [wjTreeNodeOf]="folders" let-node>
         <span class="row">
           @if (node.children) {
-            <svg class="glyph" viewBox="0 0 16 16" aria-hidden="true">
-              <path
-                d="M1.75 4.25a1 1 0 0 1 1-1h3l1.5 1.5h6a1 1 0 0 1 1 1v6.5a1 1 0 0 1-1 1h-10.5a1 1 0 0 1-1-1z"
-              />
-            </svg>
+            <wj-icon [icon]="folder" />
           } @else {
-            <svg class="glyph" viewBox="0 0 16 16" aria-hidden="true">
-              <path d="M4 1.75h5l3.25 3.25v9.25H4zM9 1.75V5h3.25" />
-            </svg>
+            <wj-icon [icon]="file" />
           }
           <span>{{ node.label }}</span>
           @if (node.children) {
@@ -44,16 +39,6 @@ interface Entry {
       gap: 0.5rem;
     }
 
-    .glyph {
-      inline-size: 1rem;
-      block-size: 1rem;
-      flex: none;
-      fill: none;
-      stroke: currentColor;
-      stroke-width: 1.5;
-      stroke-linejoin: round;
-    }
-
     .count {
       color: var(--wj-text-muted-color);
       font-size: 0.875rem;
@@ -61,6 +46,9 @@ interface Entry {
   `,
 })
 export class TreeCustomNodesExample {
+  protected readonly folder = wjIconFolder;
+  protected readonly file = wjIconFile;
+
   protected readonly folders: WjTreeNode<Entry>[] = [
     {
       key: 'documents',

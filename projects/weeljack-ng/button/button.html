@@ -8,6 +8,7 @@
   [type]="type()"
   [ariaLabel]="ariaLabel()"
   [buttonProps]="inertProps"
+  [styleClass]="label() ? undefined : 'p-button-icon-only'"
   [pt]="partAttributes()"
 >
   <ng-content />
