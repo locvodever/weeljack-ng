@@ -1,4 +1,4 @@
-/* The top bar: Menu (narrow), wordmark, version, GitHub and the dark-mode toggle. */
+/* The top bar: Menu (narrow), wordmark, version, GitHub and the Theme button and the dark-mode toggle. */
 .header {
   position: sticky;
   z-index: 10;
@@ -81,6 +81,13 @@
 @media (max-width: 959.98px) {
   .menu {
     display: inline-flex;
+  }
+}
+
+/* Below 720 px the bar has no room for it: the same panel is in the Menu drawer. */
+@media (max-width: 719.98px) {
+  .theme {
+    display: none;
   }
 }
 

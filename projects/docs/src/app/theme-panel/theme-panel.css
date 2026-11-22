@@ -1,0 +1,131 @@
+:host {
+  display: block;
+  box-sizing: border-box;
+  inline-size: min(22rem, 100vw - 2rem);
+  max-inline-size: 100%;
+  color: var(--wj-text-color);
+}
+
+.title {
+  margin: 0 0 16px;
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.row {
+  min-inline-size: 0;
+  margin: 0 0 20px;
+  padding: 0;
+  border: 0;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 8px;
+  margin-block-end: 12px;
+  padding: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.current {
+  display: inline-flex;
+  gap: 4px;
+  font-weight: 400;
+}
+
+.step {
+  color: var(--wj-text-muted-color);
+}
+
+.swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.swatch {
+  position: relative;
+  display: block;
+  inline-size: 32px;
+  block-size: 32px;
+}
+
+/* The native radio covers its label, so the whole 32 px box is the target and carries the focus. */
+.radio {
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.chip {
+  position: relative;
+  display: block;
+  box-sizing: border-box;
+  inline-size: 32px;
+  block-size: 32px;
+  border: 1px solid var(--wj-surface-500);
+  border-radius: 50%;
+  background: var(--swatch);
+  pointer-events: none;
+  transition:
+    box-shadow 120ms,
+    outline-color 120ms;
+}
+
+/* Checked is more than colour: a ring in the text colour, set off from the chip by 2 px of panel. */
+.radio:checked + .chip {
+  box-shadow:
+    0 0 0 2px var(--wj-content-background),
+    0 0 0 4px var(--wj-text-color);
+}
+
+/* The check mark, in the colour computed for this swatch at build time. */
+.radio:checked + .chip::after {
+  content: '';
+  position: absolute;
+  inset-block-start: 6px;
+  inset-inline-start: 11px;
+  inline-size: 6px;
+  block-size: 11px;
+  border: solid var(--check);
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+/* Focus sits outside the checked ring (2 px offset + 2 px ring), so the two never look alike. */
+.radio:focus-visible + .chip {
+  outline: 2px solid var(--wj-focus-ring-color);
+  outline-offset: 5px;
+}
+
+.name {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.use {
+  margin: 0 0 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.reset {
+  margin-block-start: 16px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chip {
+    transition: none;
+  }
+}

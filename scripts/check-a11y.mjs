@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { chromium } from 'playwright';
 import { AXE_RUN_OPTIONS } from '../projects/weeljack-ng/spec-support/axe.ts';
+import { checkThemePanel } from './a11y-theme-panel.mjs';
 import { BASE, prerenderedPagePaths, startDocsServer } from './serve-docs.mjs';
 
 /**
@@ -215,6 +216,10 @@ try {
   await settle(emptyPage, null);
   await emptyPage.locator(gallery).fill('zzzz');
   await emptyPage.getByText('No icon matches “zzzz”.').waitFor();
+  // The fill scrolled a code block's Copy under the sticky header, where axe reads it as obscured.
+  await emptyPage.evaluate(() => {
+    window.scrollTo(0, 0);
+  });
   states += 1;
   failed += await axeBothSchemes(emptyPage, 'icon gallery (no match)');
   await emptyPage.close();
@@ -298,11 +303,25 @@ try {
     if (!(await menu.evaluate((button) => button === document.activeElement))) {
       throw new Error(`check:a11y: ${label}: Escape did not return focus to Menu.`);
     }
+    // The mask's leave motion can still cover the header toggle: wait for it to go.
+    await drawerPage.locator('.p-drawer-mask').waitFor({ state: 'detached' });
     await switchToDark(drawerPage);
     await open();
     failed += await axeReport(drawerPage, label, 'dark');
     await narrow.close();
   }
+
+  // The theme panel (PRD FR-25): three states and the behaviour and per-row snippet checks.
+  const themePanel = await checkThemePanel({
+    browser,
+    server,
+    settle,
+    axeReport,
+    axeBothSchemes,
+    switchToDark,
+  });
+  states += themePanel.states;
+  failed += themePanel.failed;
 } finally {
   await browser.close();
   await server.close();
