@@ -36,16 +36,19 @@ export class DocsThemeChoice {
 
   /**
    * The `provideWeeljack` call for the choice, with only the non-default keys, one per line so the
-   * short lines fit the popover: a `// <name> <step>` comment above `primary` says where the hex
-   * came from, then `primary`, then `surface`, each with a trailing comma. `provideWeeljack()` when
-   * both rows are the default.
+   * short lines fit the popover: a hex `primary` gets a `// <name> <step>` comment above it, saying
+   * where the hex came from; a `'{name}'` primary needs none. Then `primary`, then `surface`, each
+   * with a trailing comma. `provideWeeljack()` when both rows are the default.
    */
   readonly snippet = computed(() => {
     const primary = this.primaryRow();
     const surface = this.surfaceRow();
     const lines: string[] = [];
     if (primary !== undefined) {
-      lines.push(`  // ${primary.name} ${String(primary.step)}`, `  primary: '${primary.value}',`);
+      if (primary.value.startsWith('#')) {
+        lines.push(`  // ${primary.name} ${String(primary.step)}`);
+      }
+      lines.push(`  primary: '${primary.value}',`);
     }
     if (surface !== undefined) {
       lines.push(`  surface: '${surface.value}',`);

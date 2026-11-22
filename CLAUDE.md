@@ -48,6 +48,7 @@ One repo, an Angular CLI multi-project workspace on npm, with one root `package.
 ```
 projects/weeljack-ng/          library (sourceRoot)
   src/                         root entry `weeljack-ng`: provideWeeljack, theme, shared public symbols
+                               (`palette-steps.ts` is generated and checked in: `generate:palette-steps`)
   private/                     `weeljack-ng/private` — _-prefixed, @docs-private, outside semver
   <entry>/                     one per wrapped Optimus entry (button, select, toggleswitch, …)
     ng-package.json            {"lib":{"entryFile":"public-api.ts"}}
@@ -188,6 +189,7 @@ a family's own:
 | `npm run test:watch` / `test:debug` | Headless watch / headed Chromium with the Vitest UI. Focus with `-- --include=<entry>/**` |
 | `npm run generate` | Writes the gitignored `projects/docs/src/generated/` (`extract-api`, `extract-examples`, `generate-registries`); needs only library source, not `dist/`. `build:docs`, `start` and `check` run it |
 | `npm run check` | **The gate**, failing fast: generate → lint → typecheck → build → `check:contrast` → test → `build:docs` → `check:ssr` → `check:a11y` → size → `check:pack` → `check:licences` |
+| `npm run generate:palette-steps` | Writes `src/palette-steps.ts`, the AA light step of each named `{palette}` (never hand-edit); `build` runs it with `--check` and fails on drift |
 | `npm run lint` / `format` | `eslint . --max-warnings 0 && prettier --check .` / `prettier --write .` |
 | `npm run pack:local` | Build and pack a tarball for a consumer trial: `npm install --no-save <tgz>` in the app, reverted by `npm install`, never merged |
 

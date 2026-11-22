@@ -23,10 +23,12 @@ import type { WjTranslation } from './translation';
  */
 export interface WjThemeOptions {
   /**
-   * The brand colour: a `#rgb` / `#rrggbb` base or a `{palette}` name such as `{indigo}` (it
-   * becomes a generated scale) or a full 50-950 scale. Absent, the default "Noir on zinc" ink
-   * primary applies. Any other string is ignored (the default applies) and logs `WJ0200` in dev
-   * mode; a brand that fails WCAG AA contrast logs `WJ0010`.
+   * The brand colour: a `#rgb` / `#rrggbb` base, a `{palette}` name such as `{indigo}` or a full
+   * 50-950 scale. A name becomes the palette's own scale and, in light, takes its lightest WCAG AA
+   * step for `primary.color` (`{indigo}` gives indigo 600), with hover and active one and two
+   * steps darker. A hex base or a full scale is used exactly as given, and logs `WJ0010` in dev
+   * mode if it fails AA contrast. Absent, the default "Noir on zinc" ink primary applies. Any other
+   * string is ignored (the default applies) and logs `WJ0200` in dev mode.
    */
   primary?: WjColorScale;
   /**

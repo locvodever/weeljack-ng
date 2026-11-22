@@ -14,20 +14,23 @@ import { build } from 'esbuild';
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 
 /**
- * Re-exports only what the scripts read: the brand check, the token reader and Aura's primitives.
+ * Re-exports only what the scripts read: the brand check, the token reader, `definePreset` (the
+ * palette-step generator applies a step explicitly) and Aura's primitives.
  */
 const ENTRY = `
 export { brandPreset, brandContrastIssues } from './projects/weeljack-ng/src/brand.ts';
 export { tokensFor, tokenValue, pairRatio } from './projects/weeljack-ng/src/contrast.ts';
+export { definePreset } from '@openng/optimus-ui-themes';
 export { default as aura } from '@openng/optimus-ui-themes/aura';
 `;
 
 /**
  * @typedef {typeof import('../projects/weeljack-ng/src/brand.ts')} BrandModule
  * @typedef {typeof import('../projects/weeljack-ng/src/contrast.ts')} ContrastModule
+ * @typedef {{ definePreset: typeof import('@openng/optimus-ui-themes').definePreset }} PresetModule
  * @typedef {{ aura: { primitive: Record<string, Record<string, string>> } }} AuraModule
  * @typedef {Pick<BrandModule, 'brandPreset' | 'brandContrastIssues'> &
- *   Pick<ContrastModule, 'tokensFor' | 'tokenValue' | 'pairRatio'> & AuraModule} Brand
+ *   Pick<ContrastModule, 'tokensFor' | 'tokenValue' | 'pairRatio'> & PresetModule & AuraModule} Brand
  */
 
 /** @type {Promise<Brand> | undefined} */

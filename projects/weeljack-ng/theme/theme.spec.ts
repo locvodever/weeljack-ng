@@ -219,6 +219,15 @@ describe('WjTheme', () => {
       expectEqual(done, await fresh({ primary: '#0f766e' }));
     });
 
+    it('for a palette name at its AA step', async () => {
+      const done = await switched({}, (theme) => {
+        theme.setPrimary('{indigo}');
+      });
+
+      expect(done.light['--wj-primary-color']).toBe('#4f46e5');
+      expectEqual(done, await fresh({ primary: '{indigo}' }));
+    });
+
     it('for palette names', async () => {
       const done = await switched({}, (theme) => {
         theme.setPrimary('{blue}');
@@ -423,29 +432,29 @@ describe('WjTheme', () => {
   });
 
   describe('contrast', () => {
-    it('applies a palette under AA and logs WJ0010 once per distinct palette', async () => {
+    it('applies a hex base under AA and logs WJ0010 once per distinct colour', async () => {
       const done = await switched({}, (theme) => {
-        theme.setPrimary('{indigo}');
+        theme.setPrimary('#6366f1');
       });
       const first = calls(warn, 'WJ0010');
 
       expect(first).toHaveLength(1);
       expect(first[0]).toContain('WjTheme: the brand colours fail WCAG AA contrast');
       expect(first[0]).toContain('--wj-button-primary-color (light) is 4.47:1');
-      expectEqual(done, await fresh({ primary: '{indigo}' }));
+      expectEqual(done, await fresh({ primary: '#6366f1' }));
     });
 
-    it('warns again for another palette, and not for a repeat', async () => {
+    it('warns again for another colour, and not for a repeat', async () => {
       await render();
       const theme = TestBed.inject(WjTheme);
 
-      theme.setPrimary('{indigo}');
+      theme.setPrimary('#6366f1');
       expect(calls(warn, 'WJ0010')).toHaveLength(1);
 
-      theme.setPrimary('{violet}');
+      theme.setPrimary('#8b5cf6');
       expect(calls(warn, 'WJ0010')).toHaveLength(2);
 
-      theme.setPrimary('{indigo}');
+      theme.setPrimary('#6366f1');
       expect(calls(warn, 'WJ0010')).toHaveLength(2);
     });
 

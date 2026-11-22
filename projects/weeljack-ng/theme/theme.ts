@@ -69,7 +69,8 @@ export class WjTheme {
    * primary. The surface in effect is kept.
    *
    * A string that is not a colour logs `WJ0200` in dev mode, once per distinct message, and
-   * changes nothing, in production too. A colour that fails WCAG AA contrast applies and logs
+   * changes nothing, in production too. A `{palette}` name takes its AA step in light, as in
+   * `provideWeeljack`. A hex base or a full scale that fails WCAG AA contrast applies and logs
    * `WJ0010` in dev mode, once per distinct palette. Does nothing on the server.
    */
   setPrimary(primary?: WjColorScale): void {
