@@ -1,26 +1,16 @@
 import { Component, signal } from '@angular/core';
 import type { WjMenuItem } from 'weeljack-ng';
+import { WjIcon, wjIconSave } from 'weeljack-ng/icon';
 import { WjSplitButton, WjSplitButtonContentSlot } from 'weeljack-ng/splitbutton';
 
 @Component({
   selector: 'docs-splitbutton-content-slot-example',
-  imports: [WjSplitButton, WjSplitButtonContentSlot],
+  imports: [WjSplitButton, WjSplitButtonContentSlot, WjIcon],
   template: `
     <div class="column">
       <wj-splitbutton label="Save" [model]="items" (buttonClick)="status.set('Last action: Save')">
         <ng-template wjSplitButtonContent>
-          <svg
-            aria-hidden="true"
-            focusable="false"
-            width="16"
-            height="16"
-            viewBox="0 0 16 16"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="1.5"
-          >
-            <path d="M2.5 2.5h9l2 2v9h-11zM5 2.5v4h5v-4M5 13.5v-4h6v4" />
-          </svg>
+          <wj-icon [icon]="save" />
           <span>Save</span>
         </ng-template>
       </wj-splitbutton>
@@ -36,6 +26,7 @@ import { WjSplitButton, WjSplitButtonContentSlot } from 'weeljack-ng/splitbutton
   `,
 })
 export class SplitButtonContentSlotExample {
+  protected readonly save = wjIconSave;
   protected readonly status = signal('No action yet');
   protected readonly items: WjMenuItem[] = [
     { label: 'Save as draft' },

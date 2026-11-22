@@ -1,11 +1,12 @@
 import { Component, signal } from '@angular/core';
 import type { WjMenuItem } from 'weeljack-ng';
 import { WjButton } from 'weeljack-ng/button';
+import { WjIcon, wjIconChevronDown } from 'weeljack-ng/icon';
 import { WjTieredMenu } from 'weeljack-ng/tieredmenu';
 
 @Component({
   selector: 'docs-tieredmenu-popup-example',
-  imports: [WjButton, WjTieredMenu],
+  imports: [WjButton, WjTieredMenu, WjIcon],
   template: `
     <div class="row">
       <wj-button
@@ -16,17 +17,7 @@ import { WjTieredMenu } from 'weeljack-ng/tieredmenu';
         [ariaExpanded]="open()"
         (click)="menu.toggle($event)"
       >
-        <svg
-          aria-hidden="true"
-          width="16"
-          height="16"
-          viewBox="0 0 16 16"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="1.5"
-        >
-          <path d="m4 6 4 4 4-4" />
-        </svg>
+        <wj-icon [icon]="chevronDown" />
       </wj-button>
     </div>
     <wj-tieredmenu
@@ -47,6 +38,7 @@ import { WjTieredMenu } from 'weeljack-ng/tieredmenu';
   `,
 })
 export class TieredMenuPopupExample {
+  protected readonly chevronDown = wjIconChevronDown;
   protected readonly open = signal(false);
   protected readonly items: WjMenuItem[] = [
     { label: 'New', items: [{ label: 'Document' }, { label: 'Spreadsheet' }, { label: 'Folder' }] },

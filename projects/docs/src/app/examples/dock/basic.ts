@@ -1,33 +1,36 @@
 import { Component } from '@angular/core';
 import type { WjMenuItem } from 'weeljack-ng';
 import { WjDock, WjDockItemSlot } from 'weeljack-ng/dock';
+import {
+  WjIcon,
+  wjIconCalendar,
+  wjIconHouse,
+  wjIconMail,
+  wjIconSearch,
+  wjIconSettings,
+  type WjIconDef,
+} from 'weeljack-ng/icon';
 
 @Component({
   selector: 'docs-dock-basic-example',
-  imports: [WjDock, WjDockItemSlot],
+  imports: [WjDock, WjDockItemSlot, WjIcon],
   template: `
     <div class="stage">
       <wj-dock [model]="items" ariaLabel="Apps">
         <ng-template wjDockItem let-item>
-          <svg
-            aria-hidden="true"
-            focusable="false"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="1.5"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <path [attr.d]="icons.get(item)" />
-          </svg>
+          @let icon = icons.get(item);
+          @if (icon) {
+            <wj-icon class="glyph" [icon]="icon" />
+          }
         </ng-template>
       </wj-dock>
     </div>
   `,
   styles: `
+    .glyph {
+      font-size: 1.5rem;
+    }
+
     :host {
       display: block;
       inline-size: 100%;
@@ -62,14 +65,11 @@ export class DockBasicExample {
   ];
 
   /** Icons by item: the slot hands back your own objects, so they are the keys. */
-  protected readonly icons = new Map<WjMenuItem, string>([
-    [this.home, 'M3 11l9-8 9 8M5 10v10h5v-6h4v6h5V10'],
-    [this.search, 'M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14zM21 21l-4.3-4.3'],
-    [this.mail, 'M3 6h18v12H3zM3 7l9 6 9-6'],
-    [this.calendar, 'M4 6h16v14H4zM4 10h16M8 3v4M16 3v4'],
-    [
-      this.settings,
-      'M4 7h8M16 7h4M4 17h4M12 17h8M14 5a2 2 0 1 0 0 4 2 2 0 0 0 0-4zM10 15a2 2 0 1 0 0 4 2 2 0 0 0 0-4z',
-    ],
+  protected readonly icons = new Map<WjMenuItem, WjIconDef>([
+    [this.home, wjIconHouse],
+    [this.search, wjIconSearch],
+    [this.mail, wjIconMail],
+    [this.calendar, wjIconCalendar],
+    [this.settings, wjIconSettings],
   ]);
 }

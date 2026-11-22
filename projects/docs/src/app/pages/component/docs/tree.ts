@@ -32,7 +32,7 @@ export const DOC: ComponentDoc = {
     {
       title: 'Custom nodes',
       description:
-        'A `wjTreeNode` template renders every node, with your own node as `let-node`: `[wjTreeNodeOf]` types it from your nodes, so `node.data?.items` is a `number` under strict templates. Here a decorative glyph (`aria-hidden`), the label and, for folders, a muted count. Muted text is for a tree with no selection: on a hover or a picked node it falls under 4.5:1. The template renders inside the node’s label, and the node is named from what it shows. Give the template at creation: Optimus reads it once. A node that carries a `type` from elsewhere shows its `label` instead.',
+        'A `wjTreeNode` template renders every node, with your own node as `let-node`: `[wjTreeNodeOf]` types it from your nodes, so `node.data?.items` is a `number` under strict templates. Here a decorative `wj-icon` (a folder or a file), the label and, for folders, a muted count. Muted text is for a tree with no selection: on a hover or a picked node it falls under 4.5:1. The template renders inside the node’s label, and the node is named from what it shows. Give the template at creation: Optimus reads it once. A node that carries a `type` from elsewhere shows its `label` instead.',
       sourceKey: 'tree/custom-nodes',
       component: TreeCustomNodesExample,
     },

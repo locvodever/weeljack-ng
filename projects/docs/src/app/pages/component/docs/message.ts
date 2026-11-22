@@ -66,7 +66,7 @@ export const DOC: ComponentDoc = {
     'The role follows the severity. `error` and `warn` are `role="alert"` with `aria-live="assertive"`; `info`, `success`, `secondary` and `contrast` are `role="status"` with `aria-live="polite"`. Optimus writes `role="alert"` with `aria-live="polite"` on every severity, a contradictory pair: this is an Optimus gap, fixed here.',
     'A message is announced only when it is rendered after the page has loaded. Render it with `@if` when its condition arises; one that is already there at load is read in document order, not announced.',
     'Keep `error` and `warn` for what needs attention now, because they interrupt.',
-    'Say what happened and what to do, in words: colour and role are not enough. There is no severity icon, so lead with a short phrase, as the examples do. To add an icon, project an inline SVG with `aria-hidden="true"` before the text.',
+    'Say what happened and what to do, in words: colour and role are not enough. There is no severity icon, so lead with a short phrase, as the examples do. To add an icon, project a `wj-icon` before the text: it is decorative by default (`aria-hidden`), so the text stays the message.',
     'The close button is named from the translation (`aria.close`, "Close" in English), so you never pass a label. It is 28 × 28 px at every size.',
     'Closing hides the message for everyone. Optimus only collapses a closed message and keeps it exposed to assistive technology: this is an Optimus gap, fixed here. Once the leave motion has ended (at once under reduced motion), `wj-message` sets `hidden` on itself, so it leaves the layout and the accessibility tree. A closed message is not shown again; render it again with `@if`.',
     'Focus is the app’s to move. Focus on the close button is lost when the message hides, so move it in `(closed)` to the next sensible control.',
@@ -90,7 +90,7 @@ export const DOC: ComponentDoc = {
     {
       part: 'icon',
       description:
-        'The icon. `wj-message` sets no icon, so it is not rendered: project an inline SVG instead.',
+        'The icon. `wj-message` sets no icon, so it is not rendered: project a `wj-icon` instead.',
     },
     { part: 'text', description: 'The text part that holds the projected content.' },
     { part: 'closeButton', description: 'The button that closes the message.' },

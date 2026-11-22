@@ -35,7 +35,7 @@ export const DOC: ComponentDoc = {
     {
       title: 'With an icon',
       description:
-        'Content you project renders before the value. Use a decorative icon at `1em` in `currentColor` and mark it `aria-hidden`, so it follows the tag’s colour and size.',
+        'Content you project renders before the value. Project a `wj-icon`: it is `1em`, in `currentColor` and decorative by default, so it follows the tag’s colour and size.',
       sourceKey: 'tag/with-icon',
       component: TagWithIconExample,
     },
@@ -50,7 +50,7 @@ export const DOC: ComponentDoc = {
   keyboard: [{ key: 'None', effect: 'A tag is not focusable and adds no Tab stop.' }],
   aria: [
     'A tag is read as its text. Do not carry meaning by colour alone: the `value` says what the colour means, for example “Overdue” in `danger`, not just a red tag.',
-    'Mark a projected icon `aria-hidden="true"` (and `focusable="false"` on an SVG) so a screen reader reads only the value.',
+    'A projected `wj-icon` is hidden from screen readers by default, so a screen reader reads only the value. Mark any other projected icon `aria-hidden="true"`.',
     'A tag has no focusable element, so it has no ARIA inputs, and an `aria-*` attribute on `wj-tag` does not raise `WJ0003`. A tag that needs to be clicked or removed wants a different component.',
     'Text and fill meet 4.5:1 contrast in the light and dark schemes for the unset look and every severity.',
     'The screen-reader pass (NVDA with Chrome) is recorded on this page before `0.1.0`.',

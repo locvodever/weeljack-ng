@@ -52,7 +52,7 @@ export const DOC: ComponentDoc = {
     {
       title: 'Content slot',
       description:
-        'Put an `ng-template` marked `wjSplitButtonContent` inside the split button (import `WjSplitButtonContentSlot`: without it the template is silently dropped) to draw the main button’s content yourself, such as a decorative icon beside the text. Optimus names the button from `ariaLabel`, or else from `label`, so draw the `label` as the visible text and keep the icon `aria-hidden`. The slot has no context. Give it when the split button is created: Optimus reads it once, and a slot that appears later is not drawn.',
+        'Put an `ng-template` marked `wjSplitButtonContent` inside the split button (import `WjSplitButtonContentSlot`: without it the template is silently dropped) to draw the main button’s content yourself, such as a `wj-icon` beside the text. Optimus names the button from `ariaLabel`, or else from `label`, so draw the `label` as the visible text and leave the icon decorative. The slot has no context. Give it when the split button is created: Optimus reads it once, and a slot that appears later is not drawn.',
       sourceKey: 'splitbutton/content-slot',
       component: SplitButtonContentSlotExample,
     },

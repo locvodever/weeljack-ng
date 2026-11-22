@@ -1,24 +1,18 @@
 import { Component } from '@angular/core';
 import type { WjMenuItem } from 'weeljack-ng';
+import { WjIcon, wjIconFolder, wjIconPlus, wjIconSave, type WjIconDef } from 'weeljack-ng/icon';
 import { WjMenu, WjMenuItemSlot } from 'weeljack-ng/menu';
 
 @Component({
   selector: 'docs-menu-item-slot-example',
-  imports: [WjMenu, WjMenuItemSlot],
+  imports: [WjMenu, WjMenuItemSlot, WjIcon],
   template: `
     <wj-menu class="column" [model]="items" ariaLabel="File">
       <ng-template wjMenuItem let-item>
-        <svg
-          aria-hidden="true"
-          width="16"
-          height="16"
-          viewBox="0 0 16 16"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="1.5"
-        >
-          <path [attr.d]="icons.get(item)" />
-        </svg>
+        @let icon = icons.get(item);
+        @if (icon) {
+          <wj-icon [icon]="icon" />
+        }
         <span>{{ item.label }}</span>
       </ng-template>
     </wj-menu>
@@ -36,9 +30,9 @@ export class MenuItemSlotExample {
   protected readonly items: WjMenuItem[] = [this.create, this.open, this.save];
 
   /** Icons by item: the slot hands back your own objects, so they are the keys. */
-  protected readonly icons = new Map<WjMenuItem, string>([
-    [this.create, 'M8 3v10M3 8h10'],
-    [this.open, 'M2 5h5l1 1h6v7H2z'],
-    [this.save, 'M3 3h8l2 2v8H3zM5 3v4h5V3'],
+  protected readonly icons = new Map<WjMenuItem, WjIconDef>([
+    [this.create, wjIconPlus],
+    [this.open, wjIconFolder],
+    [this.save, wjIconSave],
   ]);
 }

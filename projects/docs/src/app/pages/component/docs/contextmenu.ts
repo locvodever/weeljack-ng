@@ -36,7 +36,7 @@ export const DOC: ComponentDoc = {
     {
       title: 'Item slot',
       description:
-        'Put an `ng-template` marked `wjContextMenuItem` inside the menu (import `WjContextMenuItemSlot`: without it the template is silently dropped) to draw each item yourself, at every level: here an icon beside each label and a chevron on the item that has `items`. `let-item` is your own item object, so a `Map` keyed by the items finds per-item data. Draw the item’s `label` as visible text, because the menu names the item from it, and add no link or button of your own: the menu wraps your template in the item’s link, so it keeps the padding, the height and the Enter and Space keys of a plain item. The slot replaces the whole default rendering, so it owns the submenu mark. Give the menu the slot when it is created.',
+        'Put an `ng-template` marked `wjContextMenuItem` inside the menu (import `WjContextMenuItemSlot`: without it the template is silently dropped) to draw each item yourself, at every level: here a `wj-icon` beside each label and a chevron `wj-icon` on the item that has `items`. `let-item` is your own item object, so a `Map` keyed by the items finds per-item data. Draw the item’s `label` as visible text, because the menu names the item from it, and add no link or button of your own: the menu wraps your template in the item’s link, so it keeps the padding, the height and the Enter and Space keys of a plain item. The slot replaces the whole default rendering, so it owns the submenu mark. Give the menu the slot when it is created.',
       sourceKey: 'contextmenu/item-slot',
       component: ContextMenuItemSlotExample,
     },

@@ -10,9 +10,10 @@ any app, not one app. **"WeeljackNg" / `weeljack-ng` has no "h" on purpose — n
 
 **Decisions.** `docs/adr/` is **required reading** before you change the Optimus boundary (0001), a
 wrapper's API (0002), the theme contract (0003), the package layout (0004), versioning (0005), the
-Optimus-lag policy (0006) or the licence (0007). Planning history lives on the effort map in Loc's
-Second Brain (`SecondBrain/projects/weeljack-ng/efforts/weeljack-ng-library/map.md`). A number in
-parentheses below is a ticket there (`questions/NN-*.md`), and nothing here is re-decided in code.
+Optimus-lag policy (0006), the licence (0007) or the icon set (0008). Planning history lives on
+the effort map in Loc's Second Brain
+(`SecondBrain/projects/weeljack-ng/efforts/weeljack-ng-library/map.md`). A number in parentheses
+below is a ticket there (`questions/NN-*.md`), and nothing here is re-decided in code.
 
 **Vocabulary.**
 - **wrapper** — a `wj-*` component or `wj` attribute directive over one Optimus entry.
@@ -276,7 +277,16 @@ parser for `*.html`. All Markdown is ignored. `.gitattributes` pins `eol=lf`.
 - `THIRD-PARTY-NOTICES.md` lists, per upstream package, the full MIT text with its copyright lines
   and the WeeljackNg files adapted from it. Third-party text never goes into `LICENSE`.
 - A file that only imports, wraps or configures Optimus is not a copy.
-- **Copy only from Optimus or PrimeNG v21 and earlier. Never from PrimeNG v22+** (proprietary).
+- **Icon data (ADR 0008, amending 0007).** `scripts/generate-icons.mjs` writes
+  `projects/weeljack-ng/icon/icon-set.ts` from the pinned `lucide` devDependency and
+  `icon/icon-set.json`. It is data, not component code, under ISC (MIT for the icons Lucide derived
+  from Feather). The generated file opens with `SPDX-License-Identifier: ISC AND MIT`, the source
+  package and version, the copyright lines and a `Modifications Copyright` line;
+  `THIRD-PARTY-NOTICES.md` carries Lucide's licence and the Feather-derived list; `npm run build`
+  runs `generate-icons --check` and fails on drift. Never hand-edit `icon-set.ts`, and never wrap
+  the OpenNG icon font (`@openng/icons`).
+- **Copy only from Optimus or PrimeNG v21 and earlier, plus Lucide icon data under ADR 0008. Never
+  from PrimeNG v22+** (proprietary).
 
 ## 9. Branches, commits, releases (14, 20)
 

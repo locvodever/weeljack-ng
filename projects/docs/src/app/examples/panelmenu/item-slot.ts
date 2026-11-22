@@ -1,29 +1,20 @@
 import { Component, signal } from '@angular/core';
 import type { WjMenuItem, WjMenuItemCommandEvent } from 'weeljack-ng';
+import { WjIcon, wjIconFile, wjIconFolder, type WjIconDef } from 'weeljack-ng/icon';
 import { WjPanelMenu, WjPanelMenuItemSlot } from 'weeljack-ng/panelmenu';
-
-const FOLDER = 'M2 4h4l1 1h7v8H2z';
-const PAGE = 'M4 2h5l3 3v9H4zM9 2v3h3';
 
 @Component({
   selector: 'docs-panelmenu-item-slot-example',
-  imports: [WjPanelMenu, WjPanelMenuItemSlot],
+  imports: [WjPanelMenu, WjPanelMenuItemSlot, WjIcon],
   template: `
     <div class="column">
       <nav aria-label="Documentation">
         <wj-panelmenu [model]="items">
           <ng-template wjPanelMenuItem let-item>
-            <svg
-              aria-hidden="true"
-              width="16"
-              height="16"
-              viewBox="0 0 16 16"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.5"
-            >
-              <path [attr.d]="icons.get(item)" />
-            </svg>
+            @let icon = icons.get(item);
+            @if (icon) {
+              <wj-icon [icon]="icon" />
+            }
             <span>{{ item.label }}</span>
           </ng-template>
         </wj-panelmenu>
@@ -59,10 +50,10 @@ export class PanelmenuItemSlotExample {
   ];
 
   /** Icons by item: the slot hands back your own objects, so they are the keys. */
-  protected readonly icons = new Map<WjMenuItem, string>(
+  protected readonly icons = new Map<WjMenuItem, WjIconDef>(
     this.items.flatMap((panel) => [
-      [panel, FOLDER] as const,
-      ...(panel.items ?? []).map((item) => [item, PAGE] as const),
+      [panel, wjIconFolder] as const,
+      ...(panel.items ?? []).map((item) => [item, wjIconFile] as const),
     ]),
   );
 }
