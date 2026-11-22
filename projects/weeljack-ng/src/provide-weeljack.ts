@@ -6,13 +6,21 @@ import {
   type EnvironmentProviders,
 } from '@angular/core';
 import { Optimus, provideOptimus } from '@openng/optimus-ui/config';
-import { definePreset } from '@openng/optimus-ui-themes';
-import { _WJ0010, _WJ_EN, _WJ_PROVIDED, _warnOnce } from 'weeljack-ng/private';
-import { badColours, brandContrastIssues, brandPreset, type WjColorScale } from './brand';
-import { wjLayerStyles } from './layer-styles';
+import { _WJ_EN, _WJ_PROVIDED } from 'weeljack-ng/private';
+import type { WjColorScale } from './brand';
+import {
+  _WJ_THEME_OPTIONS,
+  _wjThemePreset,
+  _wjWarnBadColours,
+  _wjWarnContrast,
+} from './theme-runtime';
 import type { WjTranslation } from './translation';
 
-/** The theme options `provideWeeljack` reads once at bootstrap (05 Q3). */
+/**
+ * The theme options `provideWeeljack` reads once at bootstrap (05 Q3). `WjTheme`
+ * (`weeljack-ng/theme`) can change `primary` and `surface` at runtime; nothing else changes after
+ * bootstrap.
+ */
 export interface WjThemeOptions {
   /**
    * The brand colour: a `#rgb` / `#rrggbb` base or a `{palette}` name such as `{indigo}` (it
@@ -42,20 +50,21 @@ export interface WjThemeOptions {
   translation?: WjTranslation;
 }
 
-const WJ0200 = 'WJ0200';
 const DARK_MODE_SELECTORS = { off: 'none', system: 'system', class: '.wj-dark' } as const;
 
 /**
  * Themes WeeljackNg and configures Optimus. The one place `provideOptimus` is called; apps never
  * call it themselves (09 Q6).
  *
+ * Read once at bootstrap. `WjTheme` (`weeljack-ng/theme`) can change `primary` and `surface` at
+ * runtime; nothing else changes after bootstrap.
+ *
  * The `csp.nonce` is forwarded from Angular's `CSP_NONCE` token, which reads the `ngCspNonce`
  * attribute on the root element unless the app provides the token itself, so no option is added.
  */
 export function provideWeeljack(options: WjThemeOptions = {}): EnvironmentProviders {
   const { darkMode = 'off', primary, surface, translation } = options;
-  const brand = brandPreset(primary, surface);
-  const preset = definePreset(brand, { css: wjLayerStyles });
+  const { brand, preset } = _wjThemePreset(primary, surface);
   // Optimus's `setTranslation` is shallow, so `aria` is merged here and never passed partial.
   const merged = {
     ..._WJ_EN,
@@ -66,6 +75,7 @@ export function provideWeeljack(options: WjThemeOptions = {}): EnvironmentProvid
 
   return makeEnvironmentProviders([
     { provide: _WJ_PROVIDED, useValue: true },
+    { provide: _WJ_THEME_OPTIONS, useValue: { primary, surface, darkMode } },
     // Ahead of Optimus's own initializer: its config is static and cannot read the DI token, so
     // the nonce is on the service before the theme effect first injects a style.
     provideAppInitializer(() => {
@@ -79,31 +89,8 @@ export function provideWeeljack(options: WjThemeOptions = {}): EnvironmentProvid
         return;
       }
       // `_warnOnce` dedupes per code, so every bad option goes into the one message.
-      const bad = badColours(primary, surface);
-      if (bad.length > 0) {
-        _warnOnce(
-          WJ0200,
-          'provideWeeljack',
-          `not a colour: ${bad.join(', ')}`,
-          'Pass #rrggbb, a {palette} or a scale',
-        );
-      }
-      try {
-        const issues = brandContrastIssues(
-          brand,
-          darkMode === 'off' ? ['light'] : ['light', 'dark'],
-        );
-        if (issues.length > 0) {
-          _warnOnce(
-            _WJ0010,
-            'provideWeeljack',
-            `the brand colours fail WCAG AA contrast: ${issues.join('; ')}`,
-            'Use a darker step of the scale, or override the named --wj-* variables',
-          );
-        }
-      } catch {
-        // A colour the check cannot parse is Optimus's to report; a dev warning never blocks.
-      }
+      _wjWarnBadColours('provideWeeljack', primary, surface);
+      _wjWarnContrast('provideWeeljack', brand, darkMode);
     }),
     provideOptimus({
       translation: merged,

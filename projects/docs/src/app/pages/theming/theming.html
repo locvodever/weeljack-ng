@@ -19,8 +19,12 @@
 <section aria-labelledby="options">
   <h2 id="options" tabindex="-1">Options</h2>
   <p>
-    <code>provideWeeljack</code> reads its options once, at bootstrap. There is no runtime API to
-    change them, so a different option means a different build or a reload.
+    <code>provideWeeljack</code> reads its options once, at bootstrap. Only <code>primary</code> and
+    <code>surface</code> can change later, through <code>WjTheme</code> (<a
+      href="guides/theming#runtime"
+      (click)="jump($event, 'runtime')"
+      >below</a
+    >).
   </p>
 
   <h3><code>primary</code> and <code>surface</code></h3>
@@ -54,6 +58,60 @@
     <a href="guides/theming#language" (click)="jump($event, 'language')">Language</a>.
   </p>
   <docs-code-block [code]="examples.translationVi" label="translation example" />
+</section>
+
+<section aria-labelledby="runtime">
+  <h2 id="runtime" tabindex="-1">Change colours at runtime</h2>
+  <p>
+    <code>WjTheme</code>, from <code>weeljack-ng/theme</code>, changes <code>primary</code> and
+    <code>surface</code> after bootstrap, in the same forms. The result equals bootstrapping with
+    those values, and <code>reset()</code> goes back to what <code>provideWeeljack</code> set.
+  </p>
+  <docs-code-block [code]="examples.runtime" label="WjTheme example" />
+  <ul>
+    <li>
+      A string that is not a colour logs <code>WJ0200</code> and changes nothing. A colour under AA
+      contrast applies and logs <code>WJ0010</code>, once for each different colour.
+    </li>
+    <li>On the server the calls do nothing: the server renders the bootstrap theme.</li>
+    <li>
+      Dark mode, radius and fonts are still read once, at bootstrap. An app that never imports
+      <code>weeljack-ng/theme</code> ships none of it.
+    </li>
+  </ul>
+  @if (themeService; as service) {
+    <div class="scroll" tabindex="0" role="region" aria-label="WjTheme table">
+      <table>
+        <caption>
+          WjTheme
+        </caption>
+        <thead>
+          <tr>
+            <th scope="col">Member</th>
+            <th scope="col">Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (property of service.properties; track property.name) {
+            <tr>
+              <th scope="row">
+                <code>{{ property.name }}: {{ property.type }}</code>
+              </th>
+              <td><docs-text [value]="property.description" /></td>
+            </tr>
+          }
+          @for (method of service.methods; track method.signature) {
+            <tr>
+              <th scope="row">
+                <code>{{ method.signature }}</code>
+              </th>
+              <td><docs-text [value]="method.description" /></td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
 </section>
 
 <section aria-labelledby="default-look">
