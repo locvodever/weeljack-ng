@@ -1,0 +1,66 @@
+<nav aria-label="Documentation">
+  <ul class="groups">
+    @for (group of groups; track group.id) {
+      @let open = state.isOpen(group.id);
+      <li>
+        <button
+          type="button"
+          class="head"
+          [attr.aria-expanded]="open"
+          [attr.aria-controls]="idPrefix() + '-' + group.id"
+          (click)="state.toggle(group.id)"
+        >
+          {{ group.label }}
+          <span class="chevron" aria-hidden="true"></span>
+        </button>
+        <ul class="links" [id]="idPrefix() + '-' + group.id" [hidden]="!open">
+          @for (link of group.links; track link.path) {
+            <li>
+              <a
+                [routerLink]="link.path"
+                [relativeTo]="root"
+                routerLinkActive
+                [routerLinkActiveOptions]="{ exact: true }"
+                ariaCurrentWhenActive="page"
+                (click)="linkClick.emit()"
+                >{{ link.label }}</a
+              >
+            </li>
+          }
+          @if (group.id === 'components') {
+            @for (sub of components; track sub.id) {
+              @let subOpen = state.isOpen(sub.id);
+              <li>
+                <button
+                  type="button"
+                  class="head sub"
+                  [attr.aria-expanded]="subOpen"
+                  [attr.aria-controls]="idPrefix() + '-' + sub.id"
+                  (click)="state.toggle(sub.id)"
+                >
+                  {{ sub.label }}
+                  <span class="chevron" aria-hidden="true"></span>
+                </button>
+                <ul class="links" [id]="idPrefix() + '-' + sub.id" [hidden]="!subOpen">
+                  @for (link of sub.links; track link.entry) {
+                    <li>
+                      <a
+                        [routerLink]="['components', link.entry]"
+                        [relativeTo]="root"
+                        routerLinkActive
+                        [routerLinkActiveOptions]="{ exact: true }"
+                        ariaCurrentWhenActive="page"
+                        (click)="linkClick.emit()"
+                        >{{ link.title }}</a
+                      >
+                    </li>
+                  }
+                </ul>
+              </li>
+            }
+          }
+        </ul>
+      </li>
+    }
+  </ul>
+</nav>

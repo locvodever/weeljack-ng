@@ -1,71 +1,50 @@
 <a class="skip-link" href="#main" (click)="skipToMain($event)">Skip to content</a>
 <header class="header">
-  <nav class="bar" aria-label="Main">
+  <div class="bar">
+    <button
+      type="button"
+      class="action menu"
+      aria-haspopup="dialog"
+      [attr.aria-expanded]="menuOpen()"
+      (click)="openMenu()"
+    >
+      <span class="glyph" aria-hidden="true"></span>
+      Menu
+    </button>
     <div class="group">
       <a class="wordmark" routerLink="">WeeljackNg</a>
       <span class="version">v{{ version }}</span>
     </div>
-    <ul class="pages">
-      <li>
-        <a
-          class="page-link"
-          routerLink="getting-started"
-          routerLinkActive
-          [routerLinkActiveOptions]="{ exact: true }"
-          ariaCurrentWhenActive="page"
-          >Get started</a
-        >
-      </li>
-      <li>
-        <a
-          class="page-link"
-          routerLink="components"
-          routerLinkActive
-          [routerLinkActiveOptions]="{ exact: true }"
-          ariaCurrentWhenActive="page"
-          >Components</a
-        >
-      </li>
-      <li>
-        <a
-          class="page-link"
-          routerLink="guides/theming"
-          routerLinkActive
-          [routerLinkActiveOptions]="{ exact: true }"
-          ariaCurrentWhenActive="page"
-          >Theming</a
-        >
-      </li>
-      <li>
-        <a
-          class="page-link"
-          routerLink="changelog"
-          routerLinkActive
-          [routerLinkActiveOptions]="{ exact: true }"
-          ariaCurrentWhenActive="page"
-          >Changelog</a
-        >
-      </li>
-    </ul>
     <div class="group utilities">
-      <a class="action" href="https://github.com/locvodever/weeljack-ng" rel="noopener">GitHub</a>
+      <a class="action github" href="https://github.com/locvodever/weeljack-ng" rel="noopener"
+        >GitHub</a
+      >
       <button type="button" class="action" [attr.aria-pressed]="dark()" (click)="toggleDark()">
-        Dark mode <span aria-hidden="true">{{ dark() ? 'on' : 'off' }}</span>
+        Dark mode <span class="state" aria-hidden="true">{{ dark() ? 'on' : 'off' }}</span>
       </button>
     </div>
-  </nav>
+  </div>
 </header>
-<div class="alert-slot" role="alert">
-  @if (failed() !== null) {
-    <div class="banner">
-      <p>Couldn't load this page.</p>
-      <button #reload type="button" class="action" (click)="loadFailedPage()">Reload</button>
+<div class="shell">
+  <docs-sidebar class="side" idPrefix="sidebar" />
+  <div class="centre">
+    <div class="alert-slot" role="alert">
+      @if (failed() !== null) {
+        <div class="banner">
+          <p>Couldn't load this page.</p>
+          <button #reload type="button" class="action" (click)="loadFailedPage()">Reload</button>
+        </div>
+      }
     </div>
-  }
+    <main id="main" tabindex="-1">
+      <router-outlet />
+    </main>
+  </div>
+  <div class="aside">
+    <ng-container #toc />
+  </div>
 </div>
-<main id="main" tabindex="-1">
-  <router-outlet />
-</main>
+<ng-container #drawer />
 <footer class="footer">
   <div class="footer-inner">
     <nav aria-label="Footer">

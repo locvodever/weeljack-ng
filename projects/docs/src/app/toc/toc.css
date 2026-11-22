@@ -1,0 +1,48 @@
+:host {
+  display: block;
+  position: sticky;
+  inset-block-start: 56px;
+  max-block-size: calc(100dvh - 56px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  font-size: 0.875rem;
+}
+
+nav {
+  padding: 32px 8px 24px 16px;
+}
+
+.title {
+  margin: 0 0 8px;
+  font-weight: 600;
+  color: var(--wj-text-color);
+}
+
+ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+a {
+  display: block;
+  padding: 4px 8px;
+  border-inline-start: 2px solid transparent;
+  color: var(--wj-text-muted-color);
+  line-height: 20px;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+a:hover,
+a[aria-current='true'] {
+  color: var(--wj-text-color);
+}
+
+a[aria-current='true'] {
+  border-inline-start-color: var(--wj-primary-color);
+}
+
+.sub a {
+  padding-inline-start: 20px;
+}

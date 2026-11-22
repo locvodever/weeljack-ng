@@ -1,0 +1,103 @@
+:host {
+  display: block;
+}
+
+:host(.sticky) {
+  position: sticky;
+  inset-block-start: 56px;
+  max-block-size: calc(100dvh - 56px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.groups {
+  padding: 24px 8px;
+}
+
+.links {
+  margin-block-end: 8px;
+}
+
+.links .links {
+  padding-inline-start: 12px;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-sizing: border-box;
+  inline-size: 100%;
+  min-block-size: 32px;
+  padding: 4px 8px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--wj-text-color);
+  font: inherit;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  text-align: start;
+  cursor: pointer;
+}
+
+.head:hover {
+  background: var(--wj-content-hover-background);
+}
+
+.sub {
+  color: var(--wj-text-muted-color);
+}
+
+/* The muted label on the hover fill is under 4.5:1 in the light scheme: hover takes the full colour. */
+.sub:hover {
+  color: var(--wj-text-color);
+}
+
+.chevron {
+  flex: none;
+  inline-size: 6px;
+  block-size: 6px;
+  margin-inline-start: 8px;
+  border-inline-end: 2px solid currentcolor;
+  border-block-end: 2px solid currentcolor;
+  transform: rotate(-45deg);
+  transition: transform 150ms ease-out;
+}
+
+[aria-expanded='true'] > .chevron {
+  transform: rotate(45deg);
+}
+
+a {
+  display: block;
+  padding: 4px 8px;
+  border-inline-start: 2px solid transparent;
+  border-radius: 6px;
+  color: var(--wj-text-color);
+  font-size: 0.9375rem;
+  line-height: 24px;
+  text-decoration: none;
+}
+
+a:hover {
+  background: var(--wj-content-hover-background);
+}
+
+a[aria-current='page'] {
+  border-inline-start-color: var(--wj-primary-color);
+  background: var(--wj-content-hover-background);
+  font-weight: 600;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chevron {
+    transition: none;
+  }
+}
