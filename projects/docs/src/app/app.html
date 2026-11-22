@@ -19,6 +19,16 @@
       <a class="action github" href="https://github.com/locvodever/weeljack-ng" rel="noopener"
         >GitHub</a
       >
+      <button
+        #themeButton
+        type="button"
+        class="action theme"
+        aria-haspopup="dialog"
+        [attr.aria-expanded]="themeOpen()"
+        (click)="toggleTheme($event, themeButton)"
+      >
+        Theme
+      </button>
       <button type="button" class="action" [attr.aria-pressed]="dark()" (click)="toggleDark()">
         Dark mode <span class="state" aria-hidden="true">{{ dark() ? 'on' : 'off' }}</span>
       </button>
@@ -45,6 +55,7 @@
   </div>
 </div>
 <ng-container #drawer />
+<ng-container #themePopover />
 <footer class="footer">
   <div class="footer-inner">
     <nav aria-label="Footer">

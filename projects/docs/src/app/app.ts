@@ -20,6 +20,8 @@ import { NavigationFailure } from './navigation-failure/navigation-failure';
 import type { DocsNavDrawer } from './nav-drawer/nav-drawer';
 import { DocsSidebar } from './sidebar/sidebar';
 import { DocsNavState } from './sidebar/nav-state';
+import type { DocsThemePopover } from './theme-panel/theme-popover';
+import { THEME_STORAGE_KEY } from './theme-panel/theme-storage-key';
 
 /** Class on `<html>` that `provideWeeljack({ darkMode: 'class' })` reads as "dark". */
 const DARK_CLASS = 'wj-dark';
@@ -43,16 +45,20 @@ export class App {
   private readonly navState = inject(DocsNavState);
   private readonly tocHost = viewChild.required('toc', { read: ViewContainerRef });
   private readonly drawerHost = viewChild.required('drawer', { read: ViewContainerRef });
+  private readonly themeHost = viewChild.required('themePopover', { read: ViewContainerRef });
   private readonly reloadButton = viewChild<ElementRef<HTMLButtonElement>>('reload');
 
   protected readonly version = apiIndex.version;
   protected readonly failed = this.failure.url;
   protected readonly dark = signal(this.document.documentElement.classList.contains(DARK_CLASS));
   protected readonly menuOpen = signal(false);
+  protected readonly themeOpen = signal(false);
 
   /** The drawer's chunk, requested at most once. */
   private drawerChunk: Promise<typeof import('./nav-drawer/nav-drawer')> | null = null;
   private drawer: ComponentRef<DocsNavDrawer> | null = null;
+  /** The theme popover, created on the first Theme click. */
+  private themePopover: Promise<DocsThemePopover> | null = null;
   /** True from the moment the drawer opens until it has closed (its leave motion included). */
   private drawerBusy = false;
   /** A navigation ended while the drawer was open or closing: the `h1` takes focus once it is gone. */
@@ -90,6 +96,20 @@ export class App {
     afterNextRender(() => {
       void import('./toc/toc').then(({ DocsToc }) => {
         this.tocHost().createComponent(DocsToc);
+      });
+    });
+
+    // A remembered palette applies after load. With none stored, the theme chunk never loads.
+    afterNextRender(() => {
+      try {
+        if (this.document.defaultView?.localStorage.getItem(THEME_STORAGE_KEY) === null) {
+          return;
+        }
+      } catch {
+        return;
+      }
+      void import('./theme-panel/theme-choice').then(({ DocsThemeChoice }) => {
+        this.injector.get(DocsThemeChoice).restore();
       });
     });
 
@@ -183,6 +203,24 @@ export class App {
       },
       { injector: this.injector },
     );
+  }
+
+  /** Opens the theme popover beside `button`, or closes it; the first click loads its chunk. */
+  protected toggleTheme(event: Event, button: HTMLElement): void {
+    this.themePopover ??= import('./theme-panel/theme-popover').then(({ DocsThemePopover }) => {
+      const { instance } = this.themeHost().createComponent(DocsThemePopover);
+      instance.opened.subscribe(() => {
+        this.themeOpen.set(true);
+      });
+      instance.closed.subscribe(() => {
+        this.themeOpen.set(false);
+      });
+      return instance;
+    });
+    // `event.currentTarget` is gone after the await, so the target is passed explicitly.
+    void this.themePopover.then((popover) => {
+      popover.toggle(event, button);
+    });
   }
 
   protected toggleDark(): void {

@@ -52,6 +52,13 @@ const outDir = join(root, 'projects', 'docs', 'src', 'generated', 'api');
 /** Secondary entries that are not component entries: they get no page and no guard. */
 const NON_COMPONENT_ENTRIES = new Set(['private', 'locale']);
 
+/**
+ * Entries documented on a guide page (entry -> the guide's route). They are extracted like any
+ * entry, but left out of `index.json`'s `entries`, so they get no `components/<entry>` route, no
+ * catalog row and no prerender check for a `DOC`. The guide imports `api/<entry>.json` itself.
+ */
+const GUIDE_ENTRIES = new Map([['theme', 'guides/theming']]);
+
 /** @param {string} path */
 function toPosix(path) {
   return path.split(sep).join('/');
@@ -571,12 +578,13 @@ if (failures.length > 0) {
   process.exit(1);
 }
 
+const pageEntries = entries.filter((entry) => !GUIDE_ENTRIES.has(entry));
 /** @type {{ version: string }} */
 const libraryManifest = JSON.parse(readFileSync(join(libraryRoot, 'package.json'), 'utf8'));
 writeFileSync(
   join(outDir, 'index.json'),
-  `${JSON.stringify({ version: libraryManifest.version, entries }, null, 2)}\n`,
+  `${JSON.stringify({ version: libraryManifest.version, entries: pageEntries }, null, 2)}\n`,
 );
 console.log(
-  `extract-api: index.json -> ${entries.join(', ')} (version ${libraryManifest.version})`,
+  `extract-api: index.json -> ${pageEntries.join(', ')} (version ${libraryManifest.version})`,
 );

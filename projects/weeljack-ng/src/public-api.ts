@@ -5,11 +5,19 @@
  * `menu-item.ts`; the tree node and its selection mode of `tree-node.ts`; the choice-control option
  * of `option.ts`), and the shared confirmation service `WjConfirmationService` with its
  * `WjConfirmation` (`confirmation.ts`), which the confirm dialog and the confirm popup both serve.
- * The root never exports a component or re-exports another entry (01 Q2).
+ * The root never exports a component or re-exports another entry (01 Q2). The four `_`-prefixed
+ * names of `theme-runtime.ts` are `@docs-private` and outside semver, like `weeljack-ng/private`'s;
+ * they exist for `weeljack-ng/theme` only.
  */
 export { type WjColorScale } from './brand';
 export { WjConfirmationService, type WjConfirmation } from './confirmation';
 export { provideWeeljack, type WjThemeOptions } from './provide-weeljack';
+export {
+  _WJ_THEME_OPTIONS,
+  _wjThemePreset,
+  _wjWarnBadColours,
+  _wjWarnContrast,
+} from './theme-runtime';
 export { type WjOwnStrings, type WjTranslation } from './translation';
 export type {
   WjColumnFilterType,

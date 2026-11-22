@@ -2,9 +2,11 @@ import { DOCUMENT } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { WjButton } from 'weeljack-ng/button';
+import themeApi from '../../../generated/api/theme.json';
 import exampleSources from '../../../generated/examples.json';
 import theme from '../../../generated/theme.json';
 import { CodeBlock } from '../../code-block/code-block';
+import { DocsText } from '../../text/text';
 
 const SOURCES: ReadonlyMap<string, string> = new Map(Object.entries(exampleSources));
 
@@ -37,7 +39,7 @@ const LAYER_ORDER_CSS = '@layer base, wj, utilities;';
 /** `/guides/theming` (FR-19 ... FR-22): content in the PRD's order, tables from `npm run generate`. */
 @Component({
   selector: 'docs-theming-page',
-  imports: [CodeBlock, RouterLink, WjButton],
+  imports: [CodeBlock, DocsText, RouterLink, WjButton],
   templateUrl: './theming.html',
   styleUrl: './theming.css',
 })
@@ -50,6 +52,7 @@ export class ThemingPage {
   /** The in-page list, in the order of the sections below. */
   protected readonly sections = [
     { id: 'options', title: 'Options' },
+    { id: 'runtime', title: 'Change colours at runtime' },
     { id: 'default-look', title: 'The default look' },
     { id: 'contrast', title: 'Contrast' },
     { id: 'css-variables', title: 'CSS variables' },
@@ -61,12 +64,15 @@ export class ThemingPage {
     { key: 'light', title: 'Light scheme', rows: theme.contrast.light },
     { key: 'dark', title: 'Dark scheme', rows: theme.contrast.dark },
   ] as const;
+  /** `WjTheme`'s members, properties first, from the generated `api/theme.json`. */
+  protected readonly themeService = themeApi.services.find((service) => service.name === 'WjTheme');
   protected readonly primitive = theme.primitive;
   protected readonly semantic = theme.semantic;
 
   protected readonly examples = {
     primaryHex: example('primary-hex'),
     primaryScale: example('primary-scale'),
+    runtime: example('runtime'),
     surface: example('surface'),
     darkModeSystem: example('dark-mode-system'),
     darkModeClass: example('dark-mode-class'),

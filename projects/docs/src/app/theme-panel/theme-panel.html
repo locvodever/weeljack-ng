@@ -1,0 +1,81 @@
+<h2 class="title" [id]="idPrefix() + '-theme-title'">Theme</h2>
+
+<fieldset class="row">
+  <legend class="legend">
+    <span>Primary</span>
+    <span class="current" aria-hidden="true">
+      <span>{{ choice.primaryRow()?.label ?? 'Noir' }}</span>
+      @if (choice.primaryRow(); as row) {
+        <span class="step">· {{ row.step }}</span>
+      }
+    </span>
+  </legend>
+  <div class="swatches">
+    <label class="swatch">
+      <input
+        class="radio"
+        type="radio"
+        [name]="idPrefix() + '-primary'"
+        [checked]="choice.primary() === null"
+        (change)="choice.select('primary', null)"
+      />
+      <span class="chip" [style.--swatch]="noir.swatch" [style.--check]="noir.check"></span>
+      <span class="name">Noir</span>
+    </label>
+    @for (row of choice.primaries; track row.name) {
+      <label class="swatch">
+        <input
+          class="radio"
+          type="radio"
+          [name]="idPrefix() + '-primary'"
+          [checked]="choice.primary() === row.name"
+          (change)="choice.select('primary', row.name)"
+        />
+        <span class="chip" [style.--swatch]="row.swatch" [style.--check]="row.check"></span>
+        <span class="name">{{ row.label }}</span>
+      </label>
+    }
+  </div>
+</fieldset>
+
+<fieldset class="row">
+  <legend class="legend">
+    <span>Surface</span>
+    <span class="current" aria-hidden="true">
+      <span>{{ choice.surfaceRow()?.label ?? 'Zinc' }}</span>
+    </span>
+  </legend>
+  <div class="swatches">
+    <label class="swatch">
+      <input
+        class="radio"
+        type="radio"
+        [name]="idPrefix() + '-surface'"
+        [checked]="choice.surface() === null"
+        (change)="choice.select('surface', null)"
+      />
+      <span class="chip" [style.--swatch]="zinc.swatch" [style.--check]="zinc.check"></span>
+      <span class="name">Zinc</span>
+    </label>
+    @for (row of choice.surfaces; track row.name) {
+      <label class="swatch">
+        <input
+          class="radio"
+          type="radio"
+          [name]="idPrefix() + '-surface'"
+          [checked]="choice.surface() === row.name"
+          (change)="choice.select('surface', row.name)"
+        />
+        <span class="chip" [style.--swatch]="row.swatch" [style.--check]="row.check"></span>
+        <span class="name">{{ row.label }}</span>
+      </label>
+    }
+  </div>
+</fieldset>
+
+<h3 class="use">Use this in your app</h3>
+<docs-code-block [code]="choice.snippet()" label="provideWeeljack call for this theme" />
+
+<div class="reset">
+  <wj-button label="Reset" severity="secondary" variant="outlined" (click)="choice.reset()" />
+</div>
