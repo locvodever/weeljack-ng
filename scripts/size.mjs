@@ -5,6 +5,7 @@ import { gzipSync } from 'node:zlib';
 import { transformSync } from 'esbuild';
 import { ROOT, libraryEntries } from './entries.mjs';
 import { ICON_IMPORT_LIMIT, measureIconImport } from './icon-import-size.mjs';
+import { measurePresetImports } from './preset-import-size.mjs';
 
 /**
  * `size` (FR-31, 21 Q1-Q2). One budget per shipped entry: the entry's FESM, minified with esbuild
@@ -124,6 +125,16 @@ const iconImportOk = iconImport.bytes <= ICON_IMPORT_LIMIT && iconImport.icons =
 lines.push(
   `| app: \`WjIcon\` + \`wjIconPlus\` (linked, production) | - | - | ${kb(ICON_IMPORT_LIMIT)} KB | ${kb(iconImport.bytes)} KB (${String(iconImport.icons)} icon) | ${iconImportOk ? 'ok' : 'OVER'} |`,
 );
+
+// The preset-import check (ADR 0010): the Optimus base folders each preset-carrying bundle pulls.
+// The gzip is printed with no limit; a wrong composition fails the run.
+const presetImports = await measurePresetImports();
+for (const { entry, bases, bytes, problems } of presetImports) {
+  const composition = bases.length === 0 ? 'no base' : bases.join(', ');
+  lines.push(
+    `| import: \`${entry}\` (bases bundled, production) | - | - | - | ${kb(bytes)} KB (${composition}) | ${problems.length === 0 ? 'ok' : 'WRONG'} |`,
+  );
+}
 console.log(lines.join('\n'));
 
 const summary = process.env['GITHUB_STEP_SUMMARY'];
@@ -136,6 +147,13 @@ if (!iconImportOk) {
     `size: an app importing WjIcon and one icon measures ${String(iconImport.bytes)} B with ${String(iconImport.icons)} icon object(s); the limit is ${String(ICON_IMPORT_LIMIT)} B and exactly 1 icon object (tree-shaking).`,
   );
   process.exitCode = 1;
+}
+
+for (const { entry, problems } of presetImports) {
+  for (const problem of problems) {
+    console.error(`size: the app bundle of \`${entry}\` ${problem}.`);
+    process.exitCode = 1;
+  }
 }
 
 const over = results.filter(({ bytes, limit }) => bytes > limit);
