@@ -1,10 +1,15 @@
+import { Component } from '@angular/core';
+import { TestBed } from '@angular/core/testing';
+import { ButtonModule } from '@openng/optimus-ui/button';
 import aura from '@openng/optimus-ui-themes/aura';
 import { BRAND_DIGESTS, NOIR_DIGEST, canonicalJson } from '../spec-support/noir-golden';
+import { SHEETS } from '../spec-support/theme-snapshot';
 import { brandPreset } from './brand';
 import { tokensFor, tokenValue } from './contrast';
 import { wjLayerStyles } from './layer-styles';
 import { _wjNoir, wjNoirOnZinc } from './noir-on-zinc';
 import type { WjPreset } from './preset';
+import { provideWeeljack } from './public-api';
 import { _wjThemePreset } from './theme-runtime';
 
 const SURFACES = ['zinc', 'slate', 'gray', 'neutral', 'stone'];
@@ -278,5 +283,64 @@ describe('_brand', () => {
     ] as const) {
       expect(brandPreset(primary, surface, preset)).toEqual(brandPreset(primary, surface, plain));
     }
+  });
+});
+
+@Component({
+  selector: 'wj-css-host',
+  imports: [ButtonModule],
+  template: `<p-button label="Go" />`,
+})
+class CssHost {}
+
+describe('_css', () => {
+  const CSS = '.wj-preset-css-probe{color:red}';
+
+  afterEach(() => {
+    TestBed.resetTestingModule();
+    document.head.querySelectorAll(SHEETS).forEach((style) => {
+      style.remove();
+    });
+  });
+
+  it('the built root css is wjLayerStyles followed by the preset _css', () => {
+    const preset: WjPreset = { _base: aura, _css: CSS };
+
+    expect(at(_wjThemePreset(undefined, undefined, preset).preset, 'css')).toBe(
+      wjLayerStyles + CSS,
+    );
+  });
+
+  it('a preset without _css builds wjLayerStyles alone, deep-equal to before', () => {
+    const none: WjPreset = { _base: aura };
+    const empty: WjPreset = { _base: aura, _css: '' };
+
+    expect(at(_wjThemePreset(undefined, undefined, none).preset, 'css')).toBe(wjLayerStyles);
+    expect(_wjThemePreset(undefined, undefined, empty)).toEqual(
+      _wjThemePreset(undefined, undefined, none),
+    );
+  });
+
+  it('provideWeeljack writes both into global-style, inside @layer wj', async () => {
+    TestBed.configureTestingModule({
+      providers: [provideWeeljack({ preset: { _base: aura, _css: CSS } })],
+    });
+    const fixture = TestBed.createComponent(CssHost);
+    await fixture.whenStable();
+
+    const global = document.head.querySelector<HTMLStyleElement>(
+      'style[data-optimus-style-id="global-style"]',
+    );
+    const layers = Array.from(global?.sheet?.cssRules ?? []).filter(
+      (rule): rule is CSSLayerBlockRule => rule instanceof CSSLayerBlockRule,
+    );
+    const selectors = layers
+      .flatMap((layer) => Array.from(layer.cssRules))
+      .filter((rule): rule is CSSStyleRule => rule instanceof CSSStyleRule)
+      .map((rule) => rule.selectorText);
+
+    expect(layers.map((layer) => layer.name)).toEqual(['wj']);
+    expect(selectors).toContain('.wj-preset-css-probe');
+    expect(selectors.some((selector) => selector.includes('.p-button'))).toBe(true);
   });
 });

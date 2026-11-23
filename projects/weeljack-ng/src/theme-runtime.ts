@@ -34,7 +34,7 @@ export function _wjThemePreset(
   preset: WjPreset = _wjNoir,
 ) {
   const brand = brandPreset(primary, surface, preset);
-  return { brand, preset: definePreset(brand, { css: wjLayerStyles }) };
+  return { brand, preset: definePreset(brand, { css: wjLayerStyles + (preset._css ?? '') }) };
 }
 
 /**

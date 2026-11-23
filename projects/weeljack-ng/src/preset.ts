@@ -40,4 +40,12 @@ export interface WjPreset {
    * @docs-private
    */
   readonly _brand?: (name: string) => object | undefined;
+
+  /**
+   * The preset's own layer CSS, appended after `wjLayerStyles` in the preset's root `css`, so
+   * Optimus writes it into `global-style` inside `@layer wj`.
+   *
+   * @docs-private
+   */
+  readonly _css?: string;
 }
