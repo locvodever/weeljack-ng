@@ -22,6 +22,7 @@ const EXPECTED_BASES = new Map([
   ['weeljack-ng/preset-noir', []],
   ['weeljack-ng/preset-aura', ['aura']],
   ['weeljack-ng/preset-lara', ['lara']],
+  ['weeljack-ng/preset-material', ['material']],
 ]);
 
 const THEMES_INPUT = /@openng\/optimus-ui-themes\/dist\/([^/]+)\//;

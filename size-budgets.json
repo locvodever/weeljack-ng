@@ -70,6 +70,12 @@
       "note": "wjNora, Nora's correction look, its emerald and the _brand rows for the 16 dark palettes that fail on Nora (ADR 0010). FESM measured with its Optimus base (the Nora base) external, so the row is the preset's own data. Set 2026-11-23 at measured 921 B gzip plus at most 0.05 KB (51.2 B), rounded down to 0.94 KB: a limit of 962.6 B, a margin of 41.6 B."
     },
     {
+      "entry": "weeljack-ng/preset-material",
+      "optimus": "own",
+      "kb": 1.93,
+      "note": "wjMaterial, Optimus's Material base under every WeeljackNg guarantee (ADR 0010), holding its correction look, its generated palette-step table, its `_brand` rows and its `_css`. The Material base is external to the measurement. Set 2026-11-23 at measured 1.88 KB gzip (1929 B) plus 0.05 KB: a limit of 1.93 KB is 1976 B, a margin of 47 B."
+    },
+    {
       "entry": "weeljack-ng/splitter",
       "optimus": "splitter",
       "kb": 2.75,
