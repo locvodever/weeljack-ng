@@ -2,6 +2,29 @@
 
 <fieldset class="row">
   <legend class="legend">
+    <span>Preset</span>
+    <span class="current" aria-hidden="true">
+      <span>{{ choice.presetRow()?.label ?? 'Noir' }}</span>
+    </span>
+  </legend>
+  <div class="options">
+    @for (row of choice.presets; track row.name) {
+      <label class="option">
+        <input
+          class="radio"
+          type="radio"
+          [name]="idPrefix() + '-preset'"
+          [checked]="(choice.preset() ?? 'noir') === row.name"
+          (change)="choice.select('preset', row.name === 'noir' ? null : row.name)"
+        />
+        <span class="option-text">{{ row.label }}</span>
+      </label>
+    }
+  </div>
+</fieldset>
+
+<fieldset class="row">
+  <legend class="legend">
     <span>Primary</span>
     <span class="current" aria-hidden="true">
       <span>{{ choice.primaryRow()?.label ?? 'Noir' }}</span>

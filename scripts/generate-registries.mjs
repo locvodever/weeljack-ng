@@ -2,6 +2,7 @@
 import { existsSync, mkdirSync, readdirSync, writeFileSync } from 'node:fs';
 import { dirname, join, parse } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { libraryEntries } from './entries.mjs';
 
 /**
  * Docs registries, generated so a new entry edits no shared file. Writes two TypeScript files under
@@ -13,7 +14,9 @@ import { fileURLToPath } from 'node:url';
  * - `api-documents.ts`: `API_DOCUMENTS`, entry -> `() => import(<entry>.json)`, from every
  *   `generated/api/<entry>.json` that `extract-api.mjs` wrote. Each loader's result is typed
  *   `ApiDocument`, so the compiler checks the JSON's shape against the script's output.
- * Output is sorted by entry, hence deterministic. Run after `extract-api.mjs`.
+ * A third file, `preset-loaders.ts`, lists the `weeljack-ng/preset-*` entries as `import()` loaders, in
+ * the order of `PRESET_ORDER`, so the docs app never imports a preset statically.
+ * Output is deterministic. Run after `extract-api.mjs`.
  */
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const docsSrc = join(root, 'projects', 'docs', 'src');
@@ -37,6 +40,23 @@ const docEntries = stems(
   (name) => name.endsWith('.ts') && !name.endsWith('.spec.ts') && !name.endsWith('.d.ts'),
 );
 const apiEntries = stems(apiDir, (name) => name.endsWith('.json') && name !== 'index.json');
+
+/** The presets M1 names, in the order the theme panel lists them. */
+const PRESET_ORDER = ['noir', 'aura', 'lara', 'nora', 'material', 'police'];
+const presetNames = libraryEntries()
+  .map((entry) => /^weeljack-ng\/preset-([^/]+)$/.exec(entry))
+  .flatMap((match) => (match?.[1] === undefined ? [] : [match[1]]));
+const unknownPreset = presetNames.find((name) => !PRESET_ORDER.includes(name));
+if (unknownPreset !== undefined) {
+  console.error(
+    `generate-registries: unknown preset entry weeljack-ng/preset-${unknownPreset}; add it to PRESET_ORDER`,
+  );
+  process.exit(1);
+}
+const presets = PRESET_ORDER.filter((name) => presetNames.includes(name)).map((name) => {
+  const label = name.charAt(0).toUpperCase() + name.slice(1);
+  return { name, label, exportName: `wj${label}`, entry: `weeljack-ng/preset-${name}` };
+});
 
 mkdirSync(outDir, { recursive: true });
 
@@ -62,6 +82,36 @@ ${apiEntries.map((entry) => `  ['${entry}', () => import('./api/${entry}.json').
 `,
 );
 
+writeFileSync(
+  join(outDir, 'preset-loaders.ts'),
+  `${HEADER}import type { WjPreset } from 'weeljack-ng';
+
+/** One base preset of the theme panel's Preset row. */
+export interface PresetLoader {
+  readonly name: string;
+  readonly label: string;
+  readonly exportName: string;
+  readonly entry: string;
+  readonly load: () => Promise<WjPreset>;
+}
+
+/** The presets, in the panel's order. Each loads its own lazy chunk; none is in the initial bundle. */
+export const PRESET_LOADERS: readonly PresetLoader[] = [
+${presets
+  .map(
+    (p) => `  {
+    name: '${p.name}',
+    label: '${p.label}',
+    exportName: '${p.exportName}',
+    entry: '${p.entry}',
+    load: () => import('${p.entry}').then((m) => m.${p.exportName}),
+  },`,
+  )
+  .join('\n')}
+];
+`,
+);
+
 console.log(
-  `generate-registries: ${String(docEntries.length)} doc page(s), ${String(apiEntries.length)} API document(s)`,
+  `generate-registries: ${String(docEntries.length)} doc page(s), ${String(apiEntries.length)} API document(s), ${String(presets.length)} preset(s)`,
 );
