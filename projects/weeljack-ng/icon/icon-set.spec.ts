@@ -43,8 +43,8 @@ async function renderAll(): Promise<ReturnType<typeof TestBed.createComponent<Ho
 }
 
 describe('the icon set', () => {
-  it('holds 80 icons, and wjIconDef is not one of them', () => {
-    expect(ICONS).toHaveLength(80);
+  it('holds 85 icons, and wjIconDef is not one of them', () => {
+    expect(ICONS).toHaveLength(85);
     expect(ICONS.map(([name]) => name)).not.toContain('wjIconDef');
   });
 
@@ -58,7 +58,7 @@ describe('the icon set', () => {
     const fixture = await renderAll();
     const hosts = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('wj-icon'));
 
-    expect(hosts).toHaveLength(80);
+    expect(hosts).toHaveLength(85);
     for (const [index, [exported, def]] of ICONS.entries()) {
       const host = hosts[index];
       const svg = host?.querySelector('svg');
@@ -77,6 +77,6 @@ describe('the icon set', () => {
     const trash = await loader.getHarness(WjIconHarness.with({ name: 'trash' }));
     expect(await trash.getName()).toBe('trash');
     expect(await trash.getShapeCount()).toBe(set.wjIconTrash.nodes.length);
-    expect(await loader.getAllHarnesses(WjIconHarness)).toHaveLength(80);
+    expect(await loader.getAllHarnesses(WjIconHarness)).toHaveLength(85);
   });
 });
