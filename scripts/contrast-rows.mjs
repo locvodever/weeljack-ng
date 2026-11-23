@@ -66,6 +66,22 @@ const PAIRS = {
       NON_TEXT,
     ],
     ['placeholder', 'form.field.placeholder.color', 'form.field.background', TEXT],
+    // One token feeds float label and ifta label (`aura/floatlabel`, `aura/iftalabel`): the focused
+    // label sits on the field, the filled field, the page (over variant) and a card.
+    [
+      'focused float label on the field',
+      'form.field.float.label.focus.color',
+      'form.field.background',
+      TEXT,
+    ],
+    [
+      'focused float label on the filled field',
+      'form.field.float.label.focus.color',
+      'form.field.filled.focus.background',
+      TEXT,
+    ],
+    ['focused float label on the page', 'form.field.float.label.focus.color', 'surface.50', TEXT],
+    ['focused float label on cards', 'form.field.float.label.focus.color', 'surface.0', TEXT],
     ['invalid border', 'form.field.invalid.border.color', 'form.field.background', NON_TEXT],
     ['rating invalid star on cards', 'form.field.invalid.border.color', 'surface.0', NON_TEXT],
     [
@@ -316,6 +332,27 @@ const PAIRS = {
       NON_TEXT,
     ],
     ['placeholder', 'form.field.placeholder.color', 'form.field.background', TEXT],
+    // One token feeds float label and ifta label (`aura/floatlabel`, `aura/iftalabel`): the focused
+    // label sits on the field, the filled field, the page (over variant) and a card.
+    [
+      'focused float label on the field',
+      'form.field.float.label.focus.color',
+      'form.field.background',
+      TEXT,
+    ],
+    [
+      'focused float label on the filled field',
+      'form.field.float.label.focus.color',
+      'form.field.filled.focus.background',
+      TEXT,
+    ],
+    ['focused float label on the page', 'form.field.float.label.focus.color', 'surface.950', TEXT],
+    [
+      'focused float label on cards',
+      'form.field.float.label.focus.color',
+      'content.background',
+      TEXT,
+    ],
     ['invalid border', 'form.field.invalid.border.color', 'form.field.background', NON_TEXT],
     [
       'rating invalid star on cards',

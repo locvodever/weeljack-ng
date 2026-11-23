@@ -83,6 +83,11 @@ export const wjGuarantees = {
         offset: '2px',
         shadow: 'none',
       },
+      // The focused float label takes the primary's hover step: one darker than the AA step in
+      // light, like Aura's own 600-on-500, so it stays AA on the filled field and the page. Dark
+      // keeps Aura's {primary.color} (its colorScheme.dark is emitted after the base). At the base,
+      // not colorScheme.light, because Optimus emits colorScheme.light before the base.
+      floatLabelFocusColor: '{primary.hover.color}',
     },
     colorScheme: {
       light: {
