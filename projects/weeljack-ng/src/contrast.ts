@@ -3,6 +3,10 @@
  * resolver, and the ratio. One module, three readers: `scripts/check-contrast.mjs` (the gate),
  * the dev-mode brand warning in `brand.ts`, and `scripts/extract-theme.mjs` (the docs page), through `scripts/contrast-rows.mjs`.
  *
+ * Optimus 2.0.2 writes each tier's `colorScheme.light` before its base in one rule that applies in
+ * both schemes, then the dark rule. So a light value in `colorScheme.light` loses to the base in
+ * the browser, and a light-only token applies in dark too. `tokensFor` follows that order.
+ *
  * Erasable TypeScript only, and no imports at all (not even relative ones), so Node's type
  * stripping loads it from a script. Nothing here touches the DOM or a browser global. Unused
  * exports tree-shake out of the root FESM.
@@ -56,7 +60,11 @@ function flattenComponent(tokens: Tokens, name: string, tree: unknown): void {
   }
 }
 
-/** Every token `preset` defines for one scheme, as dotted path -> raw value. */
+/**
+ * Every token `preset` paints for one scheme, in the order Optimus 2.0.2 emits them, as dotted
+ * path -> raw value. Semantic: base, light, base again (the base wins in light and keeps its
+ * insertion position), then dark in dark. Component: light, base, then dark in dark.
+ */
 export function tokensFor(preset: unknown, scheme: 'light' | 'dark'): Tokens {
   const tokens: Tokens = new Map();
   if (!isRecord(preset)) {
@@ -67,18 +75,24 @@ export function tokensFor(preset: unknown, scheme: 'light' | 'dark'): Tokens {
   const semantic = preset['semantic'];
   if (isRecord(semantic)) {
     const { colorScheme, ...rest } = semantic;
+    const schemes: Record<string, unknown> = isRecord(colorScheme) ? colorScheme : {};
     flatten(tokens, '', rest);
-    if (isRecord(colorScheme)) {
-      flatten(tokens, '', colorScheme[scheme]);
+    flatten(tokens, '', schemes['light']);
+    flatten(tokens, '', rest);
+    if (scheme === 'dark') {
+      flatten(tokens, '', schemes['dark']);
     }
   }
 
   const components = preset['components'];
   if (isRecord(components)) {
     for (const [name, component] of Object.entries(components)) {
+      const schemes: Record<string, unknown> =
+        isRecord(component) && isRecord(component['colorScheme']) ? component['colorScheme'] : {};
+      flattenComponent(tokens, name, schemes['light']);
       flattenComponent(tokens, name, component);
-      if (isRecord(component) && isRecord(component['colorScheme'])) {
-        flattenComponent(tokens, name, component['colorScheme'][scheme]);
+      if (scheme === 'dark') {
+        flattenComponent(tokens, name, schemes['dark']);
       }
     }
   }
