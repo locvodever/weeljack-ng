@@ -40,6 +40,18 @@
       "note": "WjTheme: the runtime primary and surface switch (ADR 0009). The preset is built by the root's own code (_wjThemePreset), so this row is the service alone. Set 2026-11-22 at measured 0.94 KB gzip (960 B) plus 0.04 KB."
     },
     {
+      "entry": "weeljack-ng/preset-noir",
+      "optimus": "own",
+      "kb": 0.12,
+      "note": "wjNoir, the default look \"Noir on zinc\" re-bound from the root's _wjNoir (ADR 0010). FESM measured with its Optimus base external, so the row is the preset's own data. Set 2026-11-23 at measured 0.08 KB gzip (79 B) plus 0.04 KB: a limit of 0.12 KB is 123 B, a margin of 44 B."
+    },
+    {
+      "entry": "weeljack-ng/preset-aura",
+      "optimus": "own",
+      "kb": 0.16,
+      "note": "wjAura, Aura's emerald at its AA step on Aura's slate (ADR 0010). FESM measured with its Optimus base external, so the row is the preset's own data. Set 2026-11-23 at measured 0.11 KB gzip (117 B) plus 0.05 KB: a limit of 0.16 KB is 164 B, a margin of 47 B."
+    },
+    {
       "entry": "weeljack-ng/splitter",
       "optimus": "splitter",
       "kb": 2.75,

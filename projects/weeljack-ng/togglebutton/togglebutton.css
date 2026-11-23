@@ -2,7 +2,7 @@
    sits at the start and the rest of the row stays empty. An app that gives the host an inline size
    gets a steady-width button: the Optimus root fills it and its label stays centred. The heights
    (44 / 36 / 52 px), the picked pill and the unpicked text colour are the preset's `togglebutton`
-   tokens (`wjAlwaysOn`), shared with `wj-selectbutton`; nothing of the look is set here. No
+   tokens (`wjGuarantees`), shared with `wj-selectbutton`; nothing of the look is set here. No
    transition and no animation of its own. */
 @layer wj {
   :host {

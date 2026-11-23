@@ -2,6 +2,8 @@
 /**
  * The contrast pair list and its evaluation, shared by `check-contrast.mjs` (the gate) and
  * `extract-theme.mjs` (the docs page's table), so the page shows exactly what the gate checks.
+ * The gate evaluates every preset through `contrastRows(scheme, preset)`; the argument defaults to
+ * `wjNoirOnZinc`, the default look, which is what `extract-theme.mjs` reads.
  *
  * Every pair names the preset token that paints it, so a change to the preset is what gets
  * checked, not a copy of it. The math is the shared `contrast.ts` (also read by the dev-mode brand

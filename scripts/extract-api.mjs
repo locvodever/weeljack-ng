@@ -66,12 +66,17 @@ function toPosix(path) {
 
 /** Every `weeljack-ng/<entry>` folder (one level deep) that carries an `ng-package.json`. */
 function discoverEntries() {
-  return readdirSync(libraryRoot, { withFileTypes: true })
-    .filter((item) => item.isDirectory())
-    .map((item) => item.name)
-    .filter((name) => existsSync(join(libraryRoot, name, 'ng-package.json')))
-    .filter((name) => !NON_COMPONENT_ENTRIES.has(name))
-    .sort();
+  return (
+    readdirSync(libraryRoot, { withFileTypes: true })
+      .filter((item) => item.isDirectory())
+      .map((item) => item.name)
+      .filter((name) => existsSync(join(libraryRoot, name, 'ng-package.json')))
+      .filter((name) => !NON_COMPONENT_ENTRIES.has(name))
+      // A preset entry exports one constant, so the empty-entry guard below would fail
+      // `npm run generate`; its docs are the Theming page's Presets section (T5).
+      .filter((name) => !name.startsWith('preset-'))
+      .sort()
+  );
 }
 
 /** Collapses JSDoc line wrapping so a description is one line of text. */

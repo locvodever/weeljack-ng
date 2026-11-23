@@ -7,10 +7,14 @@
  * `WjConfirmation` (`confirmation.ts`), which the confirm dialog and the confirm popup both serve.
  * The root never exports a component or re-exports another entry (01 Q2). The four `_`-prefixed
  * names of `theme-runtime.ts` are `@docs-private` and outside semver, like `weeljack-ng/private`'s;
- * they exist for `weeljack-ng/theme` only.
+ * they exist for `weeljack-ng/theme` only. `WjPreset` is the public, opaque type of a base preset
+ * (ADR 0010): an app passes one from its own entry as `provideWeeljack({ preset })`. `_wjNoir` is
+ * `_`-prefixed, `@docs-private` and outside semver, and exists for `weeljack-ng/preset-noir` only.
  */
 export { type WjColorScale } from './brand';
 export { WjConfirmationService, type WjConfirmation } from './confirmation';
+export { _wjNoir } from './noir-on-zinc';
+export type { WjPreset } from './preset';
 export { provideWeeljack, type WjThemeOptions } from './provide-weeljack';
 export {
   _WJ_THEME_OPTIONS,

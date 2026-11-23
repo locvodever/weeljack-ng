@@ -1,18 +1,24 @@
 import aura from '@openng/optimus-ui-themes/aura';
 import { definePreset, palette, type ColorScale } from '@openng/optimus-ui-themes';
+import type { WjPreset } from './preset';
 
 /*
  * The default look, "Noir on zinc" (22 Q1-Q3, variant B of the default-look prototype), built on
- * Aura. Everything this file does not name stays Aura. It is two layers:
- *  - `wjAlwaysOn`: the AA corrections and sizing over Aura (22 Q2-Q3), whatever the brand;
- *  - `wjNoirPrimary`: the ink primary (22 Q1), dropped when an app passes its own `primary`, so
- *    Aura's own primary mapping holds.
- * `wjNoirOnZinc` is Aura, then both.
+ * Aura, and the layer every preset shares (ADR 0010). Everything this file does not name stays
+ * Aura. It holds:
+ *  - `wjGuarantees`: the AA corrections and sizing over any base (22 Q2-Q3), whatever the preset
+ *    and the brand;
+ *  - `_wjNoir`: Noir as one preset, Aura plus its look (zinc light surfaces, the 8/12 px corners
+ *    and the tag radius) and its ink primary (22 Q1), which an app's own `primary` replaces so
+ *    Aura's own primary mapping holds;
+ *  - `wjNoirOnZinc`: Aura, the guarantees, Noir's look and ink composed in that order, for
+ *    `scripts/contrast-rows.mjs` and `scripts/extract-theme.mjs` only. The runtime never uses it.
  *
  * Two readers share this file and keep it dependency-light on purpose:
- *  - `provideWeeljack` hands the preset to the one `provideOptimus` call;
+ *  - `brandPreset` composes a preset from it for the one `provideOptimus` call;
  *  - `scripts/check-contrast.mjs` imports it under Node's type stripping to resolve it in both
- *    schemes. So: only erasable TypeScript, imports only from `@openng/*`, no relative imports.
+ *    schemes. So: only erasable TypeScript, runtime imports only from `@openng/*`, no runtime
+ *    relative import (a type-only import is erased, so it is fine).
  */
 
 /** Light severity fills move from Aura's 500 to 700 (white text stays AA); hover and active follow. */
@@ -48,10 +54,11 @@ function messageText(colour: string) {
 const zinc = palette('{zinc}') as ColorScale;
 
 /**
- * Aura plus the always-on layer: focus ring, 44px controls, AA boundaries and severity fills.
- * Not exported from the root entry: apps never see a raw preset (05 Q3).
+ * The layer every preset shares: the 2 px focus ring, 44/36/52 px controls, 24 px hit boxes and
+ * the AA corrections (boundaries, severity fills, slider, switch, toast and the rest). Not
+ * exported from the root entry: apps never see a raw layer (05 Q3, ADR 0010).
  */
-export const wjAlwaysOn = definePreset(aura, {
+export const wjGuarantees = {
   semantic: {
     // One focus ring on every control: 2px solid primary, 2px offset.
     focusRing: {
@@ -69,7 +76,6 @@ export const wjAlwaysOn = definePreset(aura, {
       // 27px text, 11.5px padding).
       sm: { fontSize: '0.875rem', paddingX: '0.75rem', paddingY: '0.40625rem' },
       lg: { fontSize: '1.125rem', paddingX: '1rem', paddingY: '0.71875rem' },
-      borderRadius: '{border.radius.lg}',
       focusRing: {
         width: '2px',
         style: 'solid',
@@ -78,17 +84,8 @@ export const wjAlwaysOn = definePreset(aura, {
         shadow: 'none',
       },
     },
-    // 12px on cards, toasts and overlays.
-    content: { borderRadius: '{border.radius.xl}' },
-    overlay: {
-      select: { borderRadius: '{border.radius.xl}' },
-      popover: { borderRadius: '{border.radius.xl}' },
-      modal: { borderRadius: '{border.radius.xl}' },
-    },
     colorScheme: {
       light: {
-        // Zinc surfaces: page zinc.50, white cards (surface.0).
-        surface: { 0: '#ffffff', ...zinc },
         formField: {
           // AA: control boundaries and the invalid border reach 3:1.
           borderColor: '{surface.500}',
@@ -136,7 +133,6 @@ export const wjAlwaysOn = definePreset(aura, {
         },
       },
     },
-    tag: { root: { borderRadius: '{border.radius.md}' } },
     checkbox: {
       root: { width: '1.5rem', height: '1.5rem' },
       icon: { size: '1rem' },
@@ -339,7 +335,30 @@ export const wjAlwaysOn = definePreset(aura, {
       },
     },
   },
-});
+};
+
+/**
+ * Noir's look: the five leaves the guarantees leave out. Zinc light surfaces (page zinc.50, white
+ * cards), the 8 px form-field corner, 12 px on cards, toasts and overlays, and the tag's 6 px.
+ * An app's `primary` leaves it in place; an app's `surface` replaces the surfaces.
+ */
+const noirLook = {
+  semantic: {
+    formField: { borderRadius: '{border.radius.lg}' },
+    content: { borderRadius: '{border.radius.xl}' },
+    overlay: {
+      select: { borderRadius: '{border.radius.xl}' },
+      popover: { borderRadius: '{border.radius.xl}' },
+      modal: { borderRadius: '{border.radius.xl}' },
+    },
+    colorScheme: {
+      light: { surface: { 0: '#ffffff', ...zinc } },
+    },
+  },
+  components: {
+    tag: { root: { borderRadius: '{border.radius.md}' } },
+  },
+};
 
 /**
  * The noir primary layer (22 Q1): ink primary, a zinc palette in both schemes, and the highlight
@@ -389,5 +408,16 @@ const noirPrimary = {
   },
 };
 
-/** The default look: Aura, the always-on layer, then the noir primary. What `check:contrast` reads. */
-export const wjNoirOnZinc = definePreset(wjAlwaysOn, noirPrimary);
+/**
+ * Noir, the default preset (ADR 0010): Aura, Noir's look and its ink primary. `weeljack-ng/preset-noir`
+ * re-binds it as `wjNoir`; nothing else imports it by this name.
+ *
+ * @docs-private
+ */
+export const _wjNoir: WjPreset = { _base: aura, _look: noirLook, _ink: noirPrimary };
+
+/**
+ * The default look composed in full: Aura, the guarantees, Noir's look, then the ink. What
+ * `scripts/contrast-rows.mjs` and `scripts/extract-theme.mjs` read. The runtime path never uses it.
+ */
+export const wjNoirOnZinc = definePreset(aura, wjGuarantees, noirLook, noirPrimary);

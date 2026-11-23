@@ -1,7 +1,8 @@
 import { definePreset, palette, type ColorScale } from '@openng/optimus-ui-themes';
 import { pairRatio, tokensFor } from './contrast';
-import { wjAlwaysOn, wjNoirOnZinc } from './noir-on-zinc';
+import { _wjNoir, wjGuarantees } from './noir-on-zinc';
 import { _wjPaletteSteps } from './palette-steps';
+import type { WjPreset } from './preset';
 
 /**
  * A brand colour scale (05 Q3): a `#rgb` / `#rrggbb` base or a `{palette}` name such as
@@ -27,6 +28,10 @@ export type WjColorScale =
       readonly 950: string;
     };
 
+/** One layer `definePreset` takes. `WjPreset`'s fields are opaque `object`s, so a layer is narrowed here. */
+type Layer = Parameters<typeof definePreset>[number];
+const isLayer = (value: object | undefined): value is Layer => value !== undefined;
+
 const COLOUR = /^(#([\da-f]{3}){1,2}|\{[\w-]+\})$/i;
 type Surface = WjColorScale | { light: WjColorScale; dark: WjColorScale } | undefined;
 
@@ -51,25 +56,32 @@ function toScale(input: WjColorScale | undefined): ColorScale | undefined {
 }
 
 /**
- * The preset for the app's brand, before the layer styles: Aura, the always-on AA layer, then
- * either the noir primary or the app's own `primary`, then the app's `surface` per scheme.
- * With an app's own primary, the slider range and the knob value arc are ink (`{surface.950}`) in
- * light and the primary's 200 step in dark, so they clear 3:1 on the `{surface.500}` track for
- * every named palette; Noir keeps its ink primary there. With neither option it is exactly the
- * default look.
+ * The preset for the app's brand, before the layer styles, stacked in this order: the preset's
+ * Optimus base, `wjGuarantees` (the AA corrections every preset shares), the preset's look, then
+ * the colour or the ink, then the app's `surface` per scheme. `preset` defaults to Noir.
+ *
+ * The colour is the app's `primary` when it is valid, else the preset's own `_primary`; an invalid
+ * app primary falls back to the preset's colour, then to its `_ink`. With a colour, the primary
+ * layer is the brand layer: the scale, its light AA step, and the slider range and knob value arc
+ * as ink (`{surface.950}`) in light and the colour's 200 step in dark, so they clear 3:1 on the
+ * `{surface.500}` track for every named palette. With no colour it is the preset's ink (Noir keeps
+ * its ink primary there). With no arguments the result is exactly the default look.
  */
 export function brandPreset(
   primary: WjColorScale | undefined,
   surface: Surface,
+  preset: WjPreset = _wjNoir,
 ): ReturnType<typeof definePreset> {
-  const brand = toScale(primary);
-  // A `{name}` primary takes its AA step in light, from the generated table (own keys only).
-  const name = typeof primary === 'string' && primary.startsWith('{') ? primary.slice(1, -1) : '';
+  const own = toScale(primary);
+  const colour = own === undefined ? preset._primary : primary;
+  const brand = own ?? toScale(preset._primary);
+  // A `{name}` colour takes its AA step in light, from the generated table (own keys only).
+  const name = typeof colour === 'string' && colour.startsWith('{') ? colour.slice(1, -1) : '';
   const step = Object.hasOwn(_wjPaletteSteps, name) ? _wjPaletteSteps[name] : undefined;
-  const base =
+  const primaryLayer =
     brand === undefined
-      ? wjNoirOnZinc
-      : definePreset(wjAlwaysOn, {
+      ? preset._ink
+      : {
           semantic: {
             primary: brand,
             // Spread (here and in the surface below), never `light: undefined`: `definePreset`
@@ -90,7 +102,7 @@ export function brandPreset(
           // on the `{surface.500}` track for every named primary. The light value sits in the
           // component base, never in `colorScheme.light`: Optimus 2.0.2 writes `colorScheme.light`
           // before the base in one rule, so there it would lose to Aura's base `{primary.color}` in
-          // the browser while the gate passed it (`noir-on-zinc.ts:172-173` does the same). Ink,
+          // the browser while the gate passed it (`noir-on-zinc.ts`'s breadcrumb does the same). Ink,
           // because no primary step passes every palette in light (`{primary.950}` fails cyan, sky
           // and teal). `{primary.200}` in dark: the most saturated step that clears 3:1 on every
           // palette (worst 3.18); `{primary.300}` fails 100 of 220 rows.
@@ -104,7 +116,11 @@ export function brandPreset(
               colorScheme: { dark: { value: { background: '{primary.200}' } } },
             },
           },
-        });
+        };
+  // A preset without `_look` or `_ink` just has no such layer: there is no branch per field.
+  const base = definePreset(
+    ...[preset._base, wjGuarantees, preset._look, primaryLayer].filter(isLayer),
+  );
   if (surface === undefined) {
     return base;
   }
