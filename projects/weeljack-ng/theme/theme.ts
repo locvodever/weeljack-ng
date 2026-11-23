@@ -159,9 +159,12 @@ export class WjTheme {
         sheet.remove();
       }
     }
-    // Mounted components reload their sheets on `theme:change`, synchronously. The common sheets
-    // are loaded by a component too, so with none mounted they are written here.
+    // Mounted components reload their sheets on `theme:change`, synchronously. A directive with no
+    // style of its own (`pAnimateOnScroll`, under `wjAnimateOnScroll`) has no preset to read: it
+    // writes `global-style` without the layer styles and marks `common` loaded. So the common
+    // sheets are always written here, from the preset just set.
     usePreset(preset);
+    Theme.deleteLoadedStyleName('common');
     this.optimus.loadCommonTheme();
     // A component's `-style` sheet is not rewritten by a switch, and one whose component unmounted
     // keeps the old preset's text: Optimus finds it by id and skips the write on the next mount.

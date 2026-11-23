@@ -58,7 +58,8 @@ function toScale(input: WjColorScale | undefined): ColorScale | undefined {
 /**
  * The preset for the app's brand, before the layer styles, stacked in this order: the preset's
  * Optimus base, `wjGuarantees` (the AA corrections every preset shares), the preset's look, then
- * the colour or the ink, the preset's `_brand` layer, then the app's `surface` per scheme. `preset` defaults to Noir.
+ * the colour or the ink, the preset's `_brand(name)` layer (`name` is the colour's palette name, or
+ * `''`), then the app's `surface` per scheme. `preset` defaults to Noir.
  *
  * The colour is the app's `primary` when it is valid, else the preset's own `_primary`; an invalid
  * app primary falls back to the preset's colour, then to its `_ink`. With a colour, the primary
@@ -117,8 +118,7 @@ export function brandPreset(
             },
           },
         };
-  // A preset without `_look`, `_ink` or `_brand` just has no such layer: there is no branch per
-  // field. `_brand(name)` comes after the colour or the ink and before the app's `surface`.
+  // A preset without `_look` or `_ink` just has no such layer: there is no branch per field.
   const base = definePreset(
     ...[preset._base, wjGuarantees, preset._look, primaryLayer, preset._brand?.(name)].filter(
       isLayer,

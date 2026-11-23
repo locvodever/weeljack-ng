@@ -58,6 +58,18 @@
       "note": "wjPolice: Aura with a navy ink, slate surfaces and squarer corners. The base is external, so this row is the preset's own layers. Set 2026-11-23 at measured 0.58 KB gzip (598 B) plus 0.05 KB."
     },
     {
+      "entry": "weeljack-ng/preset-lara",
+      "optimus": "own",
+      "kb": 0.56,
+      "note": "wjLara: Lara with its own emerald and the 31-op correction layer. The base is external, so this row is the preset's own layers. Set 2026-11-23 at measured 0.51 KB gzip (525 B) plus 0.05 KB."
+    },
+    {
+      "entry": "weeljack-ng/preset-nora",
+      "optimus": "own",
+      "kb": 0.94,
+      "note": "wjNora, Nora's correction look, its emerald and the _brand rows for the 16 dark palettes that fail on Nora (ADR 0010). FESM measured with its Optimus base (the Nora base) external, so the row is the preset's own data. Set 2026-11-23 at measured 921 B gzip plus at most 0.05 KB (51.2 B), rounded down to 0.94 KB: a limit of 962.6 B, a margin of 41.6 B."
+    },
+    {
       "entry": "weeljack-ng/preset-material",
       "optimus": "own",
       "kb": 1.87,

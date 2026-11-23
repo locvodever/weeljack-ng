@@ -201,88 +201,89 @@ describe('the preset builder', () => {
     }
   });
 
+  describe('_brand', () => {
+    /** A colour preset whose `_brand` records each name and sets a slider and a surface token. */
+    function recording(): { readonly preset: WjPreset; readonly names: string[] } {
+      const names: string[] = [];
+      const preset: WjPreset = {
+        _base: aura,
+        _primary: '{emerald}',
+        _brand: (name) => {
+          names.push(name);
+          return {
+            semantic: { colorScheme: { light: { surface: { 500: '#abcdef' } } } },
+            components: { slider: { range: { background: '#123456' } } },
+          };
+        },
+      };
+      return { preset, names };
+    }
+    const slider = 'components.slider.range.background';
+
+    it('is called with the palette name of an app `{palette}`, and with "" for a hex or a scale', () => {
+      const { preset, names } = recording();
+      const scale = {
+        50: '#f0f9ff',
+        100: '#e0f2fe',
+        200: '#bae6fd',
+        300: '#7dd3fc',
+        400: '#38bdf8',
+        500: '#0ea5e9',
+        600: '#0284c7',
+        700: '#0369a1',
+        800: '#075985',
+        900: '#0c4a6e',
+        950: '#082f49',
+      };
+
+      brandPreset('{blue}', undefined, preset);
+      brandPreset('#1d4ed8', undefined, preset);
+      brandPreset(scale, undefined, preset);
+
+      expect(names).toEqual(['blue', '', '']);
+    });
+
+    it('is called with the name of the preset `_primary` when the app sets none', () => {
+      const { preset, names } = recording();
+
+      brandPreset(undefined, undefined, preset);
+
+      expect(names).toEqual(['emerald']);
+    });
+
+    it('its layer wins over the brand layer and loses to an app surface', () => {
+      const { preset } = recording();
+      const surface = 'semantic.colorScheme.light.surface.500';
+
+      const noApp = brandPreset('{blue}', undefined, preset);
+      const withApp = brandPreset('{blue}', '{slate}', preset);
+
+      expect(at(noApp, slider)).toBe('#123456');
+      expect(at(noApp, surface)).toBe('#abcdef');
+      expect(at(withApp, slider)).toBe('#123456');
+      expect(at(withApp, surface)).toBe('{slate.500}');
+      expect(at(brandPreset('{blue}', undefined, COLOUR_FAKE), slider)).toBe('{surface.950}');
+    });
+
+    it('a `_brand` that returns undefined, or no `_brand`, changes nothing', () => {
+      const silent: WjPreset = { ...COLOUR_FAKE, _brand: () => undefined };
+
+      for (const primary of [undefined, '{blue}', '#1d4ed8'] as const) {
+        expect(brandPreset(primary, '{slate}', silent)).toEqual(
+          brandPreset(primary, '{slate}', COLOUR_FAKE),
+        );
+      }
+      expect(brandPreset(undefined, undefined, { ...INK_FAKE, _brand: () => undefined })).toEqual(
+        brandPreset(undefined, undefined, INK_FAKE),
+      );
+    });
+  });
+
   it('rejects a raw Optimus preset at the type level', () => {
     // @ts-expect-error a raw Optimus preset is not a WjPreset: it has no `_base`
     const raw: WjPreset = aura;
 
     expect(raw).toBe(aura);
-  });
-});
-
-/** A scale the builder accepts as an app primary: every step a hex. */
-const SCALE = {
-  50: '#eff6ff',
-  100: '#dbeafe',
-  200: '#bfdbfe',
-  300: '#93c5fd',
-  400: '#60a5fa',
-  500: '#3b82f6',
-  600: '#2563eb',
-  700: '#1d4ed8',
-  800: '#1e40af',
-  900: '#1e3a8a',
-  950: '#172554',
-};
-
-describe('_brand', () => {
-  /** A fake whose `_brand` records every name it is called with and returns one fixed layer. */
-  function brandFake(layer: object | undefined, extra: Partial<WjPreset> = {}) {
-    const names: string[] = [];
-    const preset: WjPreset = {
-      _base: aura,
-      ...extra,
-      _brand: (name) => {
-        names.push(name);
-        return layer;
-      },
-    };
-    return { names, preset };
-  }
-
-  it('is called with the palette name for a named primary, and with "" for a hex and a scale', () => {
-    const { names, preset } = brandFake(undefined, { _ink: {} });
-
-    brandPreset('{blue}', undefined, preset);
-    brandPreset('#1d4ed8', undefined, preset);
-    brandPreset(SCALE, undefined, preset);
-
-    expect(names).toEqual(['blue', '', '']);
-  });
-
-  it('is called with the name of the preset _primary when the app sets none', () => {
-    const { names, preset } = brandFake(undefined, { _primary: '{emerald}' });
-
-    brandPreset(undefined, undefined, preset);
-
-    expect(names).toEqual(['emerald']);
-  });
-
-  it('its layer wins over the brand layer and loses to an app surface', () => {
-    const { preset } = brandFake({
-      components: { slider: { range: { background: '#123456' } } },
-      semantic: { colorScheme: { light: { surface: { 500: '#aaaaaa' } } } },
-    });
-    const surface = 'semantic.colorScheme.light.surface.500';
-
-    const noApp = brandPreset('{blue}', undefined, preset);
-    const withApp = brandPreset('{blue}', '{slate}', preset);
-
-    // The brand layer sets the slider range to `{surface.950}`; `_brand` comes after it.
-    expect(at(noApp, 'components.slider.range.background')).toBe('#123456');
-    expect(at(noApp, surface)).toBe('#aaaaaa');
-    expect(at(withApp, surface)).toBe('{slate.500}');
-  });
-
-  it('a preset without _brand resolves as one whose _brand returns nothing', () => {
-    const { preset } = brandFake(undefined, { _primary: '{emerald}' });
-    const plain: WjPreset = { _base: aura, _primary: '{emerald}' };
-
-    for (const [primary, surface] of [
-      [undefined, undefined],
-      ['{blue}', '{slate}'],
-    ] as const) {
-      expect(brandPreset(primary, surface, preset)).toEqual(brandPreset(primary, surface, plain));
-    }
   });
 });
 
