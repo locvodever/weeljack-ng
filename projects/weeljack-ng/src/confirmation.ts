@@ -1,15 +1,5 @@
-import { Injectable, Injector, inject, runInInjectionContext } from '@angular/core';
-import type { Confirmation } from '@openng/optimus-ui/api';
-import {
-  _CONFIRM_DIALOG_KEY,
-  _CONFIRM_POPUP_KEY,
-  _WJ_CONFIRMATIONS,
-  _confirmationHosts,
-  _warnOnce,
-} from 'weeljack-ng/private';
-
-/** `confirm()` ran with no host rendered for it, so the confirmation was dropped. */
-const WJ0150 = 'WJ0150';
+import { Injectable, Injector, inject } from '@angular/core';
+import { _WJ_CONFIRMATIONS, _confirm } from 'weeljack-ng/private';
 
 /**
  * What to ask for `WjConfirmationService.confirm`. Only these fields are used: any other key of a
@@ -63,43 +53,7 @@ export class WjConfirmationService {
    * run once, with no arguments, when the reader chooses.
    */
   confirm(confirmation: WjConfirmation): void {
-    const { message, header, acceptLabel, rejectLabel, accept, reject, target } = confirmation;
-    const key = target === undefined ? _CONFIRM_DIALOG_KEY : _CONFIRM_POPUP_KEY;
-    if (_confirmationHosts(this.confirmations, key) === 0) {
-      // `confirm()` runs from an event handler, outside any injection context.
-      runInInjectionContext(this.injector, () => {
-        _warnOnce(
-          WJ0150,
-          'WjConfirmationService',
-          `confirm() was called with no ${key} rendered, so the confirmation was dropped`,
-          `Render one ${key} in your app shell`,
-        );
-      });
-    }
-    // Optional keys are left out rather than set to `undefined` (`exactOptionalPropertyTypes`).
-    const forwarded: Confirmation = {
-      key,
-      message,
-      ...(header === undefined ? {} : { header }),
-      ...(acceptLabel === undefined ? {} : { acceptLabel }),
-      ...(rejectLabel === undefined ? {} : { rejectLabel }),
-      ...(accept === undefined
-        ? {}
-        : {
-            accept: () => {
-              accept();
-            },
-          }),
-      ...(reject === undefined
-        ? {}
-        : {
-            reject: () => {
-              reject();
-            },
-          }),
-      ...(target === undefined ? {} : { target }),
-    };
-    this.confirmations.confirm(forwarded);
+    _confirm(this.confirmations, this.injector, confirmation);
   }
 
   /** Closes the open confirmation without running `accept` or `reject`. */

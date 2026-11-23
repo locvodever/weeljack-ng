@@ -5,9 +5,11 @@
 export {
   _CONFIRM_DIALOG_KEY,
   _CONFIRM_POPUP_KEY,
+  _confirm,
   _confirmationHosts,
   _registerConfirmationHost,
   _WJ_CONFIRMATIONS,
+  type _ConfirmationShape,
 } from './confirmation';
 export {
   _checkAriaOnHost,
