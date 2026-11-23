@@ -3,6 +3,8 @@ import { definePreset } from '@openng/optimus-ui-themes';
 import { _WJ0010, _warnOnce } from 'weeljack-ng/private';
 import { badColours, brandContrastIssues, brandPreset, type WjColorScale } from './brand';
 import { wjLayerStyles } from './layer-styles';
+import { _wjNoir } from './noir-on-zinc';
+import type { WjPreset } from './preset';
 import type { WjThemeOptions } from './provide-weeljack';
 
 /** A brand option whose string is not a colour (`provideWeeljack` and `WjTheme` share it). */
@@ -10,26 +12,28 @@ const WJ0200 = 'WJ0200';
 
 /**
  * The theme options `provideWeeljack` was given, as given (`darkMode` defaulted to `'off'`).
- * `WjTheme` reads them to know what `reset()` returns to.
+ * `WjTheme` reads them to know what `reset()` returns to: these values, `preset` included
+ * (`undefined` means Noir).
  *
  * @docs-private
  */
 export const _WJ_THEME_OPTIONS = new InjectionToken<
-  Pick<WjThemeOptions, 'primary' | 'surface' | 'darkMode'>
+  Pick<WjThemeOptions, 'primary' | 'surface' | 'darkMode' | 'preset'>
 >('WJ_THEME_OPTIONS');
 
 /**
  * The one place a brand becomes an Optimus preset, so `provideWeeljack` and `WjTheme` cannot
- * drift. `brand` is what the contrast check reads; `preset` is what Optimus applies (the brand
- * with the layer styles on top).
+ * drift. It takes the base `preset`, with Noir as the default. `brand` is what the contrast check
+ * reads; `preset` is what Optimus applies (the brand with the layer styles on top).
  *
  * @docs-private
  */
 export function _wjThemePreset(
   primary: WjColorScale | undefined,
   surface: WjThemeOptions['surface'],
+  preset: WjPreset = _wjNoir,
 ) {
-  const brand = brandPreset(primary, surface);
+  const brand = brandPreset(primary, surface, preset);
   return { brand, preset: definePreset(brand, { css: wjLayerStyles }) };
 }
 

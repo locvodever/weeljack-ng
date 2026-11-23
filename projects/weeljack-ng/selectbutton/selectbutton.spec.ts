@@ -25,7 +25,7 @@ const ROOT = document.documentElement;
 /** `--wj-form-field-invalid-border-color` in the light scheme. */
 const INVALID_BORDER = 'rgb(220, 38, 38)';
 
-/** The toggle button's colours as the preset sets them (`wjAlwaysOn.components.togglebutton`). */
+/** The toggle button's colours as the preset sets them (`wjGuarantees.components.togglebutton`). */
 const LOOK = {
   light: {
     unpicked: 'rgb(82, 82, 91)', // surface.600

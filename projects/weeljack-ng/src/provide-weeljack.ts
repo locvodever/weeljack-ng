@@ -8,6 +8,7 @@ import {
 import { Optimus, provideOptimus } from '@openng/optimus-ui/config';
 import { _WJ_EN, _WJ_PROVIDED } from 'weeljack-ng/private';
 import type { WjColorScale } from './brand';
+import type { WjPreset } from './preset';
 import {
   _WJ_THEME_OPTIONS,
   _wjThemePreset,
@@ -50,6 +51,16 @@ export interface WjThemeOptions {
    * is not switched at runtime, and `LOCALE_ID` and `<html lang>` are left alone.
    */
   translation?: WjTranslation;
+  /**
+   * A WeeljackNg base preset: an object imported from its own entry, for example
+   * `import { wjAura } from 'weeljack-ng/preset-aura'`. Absent, Noir ("Noir on zinc"), the default
+   * look, which needs no import; `{ preset: wjNoir }` is the same. Only WeeljackNg's own presets
+   * are accepted. `primary` and `surface` still apply on top of any preset. Every preset keeps
+   * WeeljackNg's guarantees: 44 px controls, AA contrast, one 2 px focus ring, 24 px hit boxes,
+   * reduced motion and `@layer wj`. An app on a preset other than Noir also ships Aura, the
+   * default's base, about 14.4 KB gzip. Read once at bootstrap.
+   */
+  preset?: WjPreset;
 }
 
 const DARK_MODE_SELECTORS = { off: 'none', system: 'system', class: '.wj-dark' } as const;
@@ -65,8 +76,8 @@ const DARK_MODE_SELECTORS = { off: 'none', system: 'system', class: '.wj-dark' }
  * attribute on the root element unless the app provides the token itself, so no option is added.
  */
 export function provideWeeljack(options: WjThemeOptions = {}): EnvironmentProviders {
-  const { darkMode = 'off', primary, surface, translation } = options;
-  const { brand, preset } = _wjThemePreset(primary, surface);
+  const { darkMode = 'off', primary, surface, translation, preset: base } = options;
+  const { brand, preset } = _wjThemePreset(primary, surface, base);
   // Optimus's `setTranslation` is shallow, so `aria` is merged here and never passed partial.
   const merged = {
     ..._WJ_EN,
@@ -77,7 +88,7 @@ export function provideWeeljack(options: WjThemeOptions = {}): EnvironmentProvid
 
   return makeEnvironmentProviders([
     { provide: _WJ_PROVIDED, useValue: true },
-    { provide: _WJ_THEME_OPTIONS, useValue: { primary, surface, darkMode } },
+    { provide: _WJ_THEME_OPTIONS, useValue: { primary, surface, darkMode, preset: base } },
     // Ahead of Optimus's own initializer: its config is static and cannot read the DI token, so
     // the nonce is on the service before the theme effect first injects a style.
     provideAppInitializer(() => {
