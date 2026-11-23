@@ -102,6 +102,10 @@ const PAIRS = {
     ['info button', 'button.info.color', 'button.info.background', TEXT],
     ['warn button', 'button.warn.color', 'button.warn.background', TEXT],
     ['danger button', 'button.danger.color', 'button.danger.background', TEXT],
+    // Severity fills and the simple message's text: the per-preset a11y pass caught Nora's and
+    // Material's failures here, which no row read.
+    ['help button', 'button.help.color', 'button.help.background', TEXT],
+    ['contrast button', 'button.contrast.color', 'button.contrast.background', TEXT],
     ['secondary button', 'button.secondary.color', 'button.secondary.background', TEXT],
     ['outlined secondary button text', 'button.outlined.secondary.color', 'surface.0', TEXT],
     ['tag info', 'tag.info.color', 'tag.info.background', TEXT],
@@ -109,6 +113,8 @@ const PAIRS = {
     ['tag secondary', 'tag.secondary.color', 'tag.secondary.background', TEXT],
     ['tag success', 'tag.success.color', 'tag.success.background', TEXT],
     ['tag danger', 'tag.danger.color', 'tag.danger.background', TEXT],
+    ['tag primary', 'tag.primary.color', 'tag.primary.background', TEXT],
+    ['tag contrast', 'tag.contrast.color', 'tag.contrast.background', TEXT],
     ['toast success summary', 'toast.success.color', 'toast.success.background', TEXT, 'surface.0'],
     ['toast error summary', 'toast.error.color', 'toast.error.background', TEXT, 'surface.0'],
     ['toast warn summary', 'toast.warn.color', 'toast.warn.background', TEXT, 'surface.0'],
@@ -136,6 +142,15 @@ const PAIRS = {
     ['message success outlined text', 'message.success.outlined.color', 'surface.0', TEXT],
     ['message warn outlined text', 'message.warn.outlined.color', 'surface.0', TEXT],
     ['message error outlined text', 'message.error.outlined.color', 'surface.0', TEXT],
+    // The simple message paints its text straight on the card or the page, no fill behind it.
+    ['message info simple text on cards', 'message.info.simple.color', 'surface.0', TEXT],
+    ['message info simple text on the page', 'message.info.simple.color', 'surface.50', TEXT],
+    ['message success simple text on cards', 'message.success.simple.color', 'surface.0', TEXT],
+    ['message success simple text on the page', 'message.success.simple.color', 'surface.50', TEXT],
+    ['message warn simple text on cards', 'message.warn.simple.color', 'surface.0', TEXT],
+    ['message warn simple text on the page', 'message.warn.simple.color', 'surface.50', TEXT],
+    ['message error simple text on cards', 'message.error.simple.color', 'surface.0', TEXT],
+    ['message error simple text on the page', 'message.error.simple.color', 'surface.50', TEXT],
     [
       'message info close ring',
       'message.info.close.button.focus.ring.color',
@@ -380,9 +395,28 @@ const PAIRS = {
     ],
     ['error text', 'error.color', 'content.background', TEXT],
     ['success button', 'button.success.color', 'button.success.background', TEXT],
+    // Severity fills and the simple message's text: the per-preset a11y pass caught Nora's and
+    // Material's failures here, which no row read. Dark tag fills are translucent, so they
+    // composite over the card.
+    ['info button', 'button.info.color', 'button.info.background', TEXT],
+    ['warn button', 'button.warn.color', 'button.warn.background', TEXT],
     ['danger button', 'button.danger.color', 'button.danger.background', TEXT],
+    ['help button', 'button.help.color', 'button.help.background', TEXT],
+    ['contrast button', 'button.contrast.color', 'button.contrast.background', TEXT],
     ['secondary button', 'button.secondary.color', 'button.secondary.background', TEXT],
     ['tag success', 'tag.success.color', 'tag.success.background', TEXT, 'content.background'],
+    ['tag primary', 'tag.primary.color', 'tag.primary.background', TEXT, 'content.background'],
+    [
+      'tag secondary',
+      'tag.secondary.color',
+      'tag.secondary.background',
+      TEXT,
+      'content.background',
+    ],
+    ['tag info', 'tag.info.color', 'tag.info.background', TEXT, 'content.background'],
+    ['tag warn', 'tag.warn.color', 'tag.warn.background', TEXT, 'content.background'],
+    ['tag danger', 'tag.danger.color', 'tag.danger.background', TEXT, 'content.background'],
+    ['tag contrast', 'tag.contrast.color', 'tag.contrast.background', TEXT, 'content.background'],
     [
       'toast success summary',
       'toast.success.color',
@@ -440,6 +474,30 @@ const PAIRS = {
     ['message success outlined text', 'message.success.outlined.color', 'content.background', TEXT],
     ['message warn outlined text', 'message.warn.outlined.color', 'content.background', TEXT],
     ['message error outlined text', 'message.error.outlined.color', 'content.background', TEXT],
+    // The simple message paints its text straight on the card or the page, no fill behind it.
+    ['message info simple text on cards', 'message.info.simple.color', 'content.background', TEXT],
+    ['message info simple text on the page', 'message.info.simple.color', 'surface.950', TEXT],
+    [
+      'message success simple text on cards',
+      'message.success.simple.color',
+      'content.background',
+      TEXT,
+    ],
+    [
+      'message success simple text on the page',
+      'message.success.simple.color',
+      'surface.950',
+      TEXT,
+    ],
+    ['message warn simple text on cards', 'message.warn.simple.color', 'content.background', TEXT],
+    ['message warn simple text on the page', 'message.warn.simple.color', 'surface.950', TEXT],
+    [
+      'message error simple text on cards',
+      'message.error.simple.color',
+      'content.background',
+      TEXT,
+    ],
+    ['message error simple text on the page', 'message.error.simple.color', 'surface.950', TEXT],
     [
       'message info close ring',
       'message.info.close.button.focus.ring.color',
