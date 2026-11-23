@@ -1,6 +1,7 @@
 import aura from '@openng/optimus-ui-themes/aura';
 import { BRAND_DIGESTS, NOIR_DIGEST, canonicalJson } from '../spec-support/noir-golden';
 import { brandPreset } from './brand';
+import { tokensFor, tokenValue } from './contrast';
 import { wjLayerStyles } from './layer-styles';
 import { _wjNoir, wjNoirOnZinc } from './noir-on-zinc';
 import type { WjPreset } from './preset';
@@ -105,6 +106,24 @@ describe('the preset builder', () => {
     expect(at(named, 'components.badge.root.borderRadius')).not.toBe('99px');
     expect(at(alone, 'components.card.root.borderRadius')).toBe('5px');
     expect(at(named, 'components.card.root.borderRadius')).toBe('5px');
+  });
+
+  it('the focused float label takes the primary hover step in light, under wjAura and a named primary', () => {
+    const label = 'form.field.float.label.focus.color';
+    const hover = 'primary.hover.color';
+    const forms = [
+      brandPreset(undefined, undefined, COLOUR_FAKE),
+      brandPreset('{pink}', undefined),
+    ];
+
+    for (const preset of forms) {
+      const light = tokensFor(preset, 'light');
+      expect(tokenValue(light, label)).toBe(tokenValue(light, hover));
+    }
+    expect(tokenValue(tokensFor(forms[1], 'light'), label).toLowerCase()).toBe('#be185d');
+    // Dark keeps Aura's {primary.color}.
+    const dark = tokensFor(forms[1], 'dark');
+    expect(tokenValue(dark, label)).toBe(tokenValue(dark, 'primary.color'));
   });
 
   it('the colour form takes its AA step and the slider and knob arc (F5)', () => {
