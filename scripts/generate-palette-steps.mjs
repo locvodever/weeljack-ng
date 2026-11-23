@@ -2,64 +2,65 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
 import { format, resolveConfig } from 'prettier';
-import { loadBrand } from './brand-reader.mjs';
+import { loadBrand, loadPreset } from './brand-reader.mjs';
 import { ROOT } from './entries.mjs';
 
 /**
- * `generate:palette-steps`. Writes `projects/weeljack-ng/src/palette-steps.ts`: for every Aura colour
- * palette, the lightest step whose light `primary.color` passes the library's own brand check, so
- * `brandPreset('{name}')` takes it in light with no contrast math in production. Aura's step 500
- * fails white text for every colour palette (WCAG AA 4.5:1), the same defect `severity700` fixes
- * for the severity fills.
+ * `generate:palette-steps`. Writes two tables, one per base that needs its own:
  *
- * - The names are every key of Aura's `primitive` whose value is a colour scale (it has a `500`).
+ * - `projects/weeljack-ng/src/palette-steps.ts`: for every Aura colour palette, the lightest step
+ *   whose light `primary.color` passes the library's own brand check, so `brandPreset('{name}')`
+ *   takes it in light with no contrast math in production. Aura's step 500 fails white text for
+ *   every colour palette (WCAG AA 4.5:1), the same defect `severity700` fixes for the severity
+ *   fills.
+ * - `projects/weeljack-ng/preset-material/palette-steps.ts`: the same for Material's primitives,
+ *   which `wjMaterial`'s `_brand` writes after the root's Aura step.
+ *
+ * Rules shared by both:
+ * - The names are every key of the base's `primitive` whose value is a colour scale (it has a `500`).
+ * - A step passes when `brandContrastIssues` is empty in light and dark on all five surfaces (zinc,
+ *   slate, gray, neutral, stone). Each candidate is applied explicitly with `definePreset` on top of
+ *   `brandPreset`, so a committed table never decides the next one: the candidate layer is merged
+ *   after the preset's own `_brand` row. Material is judged over `wjMaterial` as an app gets it, so
+ *   its dark rows are in force.
+ * - A name with no passing candidate is left out and printed with its first failing pair at each step.
+ *
+ * Aura:
  * - Candidate steps are 500, 600 and 700, in that order. The light hover and active colours sit one
  *   and two steps darker (+100, +200), so 800 would need an active step of 1000, which does not
  *   exist: candidates stop at 700.
- * - A step passes when `brandContrastIssues` is empty in light on all five surfaces (zinc, slate,
- *   gray, neutral, stone). Each candidate is applied explicitly with `definePreset` on top of
- *   `brandPreset`, so the committed table never decides the next one. Dark is checked too, and
- *   is unchanged from Aura.
- * - Only names whose step is not 500 are written, in Aura's order. A name with no passing candidate
- *   is left out and printed with its first failing pair at each step.
+ * - Only names whose step is not 500 are written, in Aura's order: a palette missing from the table
+ *   already passes at 500.
  *
- * `--check` writes nothing and exits 1 when the file differs from what would be written;
- * `npm run build` runs it. The file is formatted with the repo's Prettier config.
+ * Material:
+ * - Candidate steps are 500 to 950. Hover and active are +100 and +200, each clamped at 950.
+ * - Every passing palette is written, those at 500 included, because Aura's table would otherwise
+ *   apply to a palette Material's table does not name.
+ *
+ * `--check` writes nothing and exits 1 when a file differs from what would be written;
+ * `npm run build` runs it. Each file is formatted with the repo's Prettier config.
  */
-const FILE = join(ROOT, 'projects', 'weeljack-ng', 'src', 'palette-steps.ts');
+const LIBRARY = join(ROOT, 'projects', 'weeljack-ng');
+const AURA_FILE = join(LIBRARY, 'src', 'palette-steps.ts');
+const MATERIAL_FILE = join(LIBRARY, 'preset-material', 'palette-steps.ts');
 const SURFACES = ['zinc', 'slate', 'gray', 'neutral', 'stone'];
-const STEPS = [500, 600, 700];
+const AURA_STEPS = [500, 600, 700];
+const MATERIAL_STEPS = [500, 600, 700, 800, 900, 950];
+const LAST_STEP = 950;
+
+/** @typedef {import('../projects/weeljack-ng/src/preset.ts').WjPreset} WjPreset */
 
 const check = process.argv.includes('--check');
 const { brandPreset, brandContrastIssues, definePreset, aura } = await loadBrand();
+const material = await loadPreset('weeljack-ng/preset-material');
 const version = readVersion();
 
-/** @type {Record<string, number>} */
-const table = {};
-for (const [name, scale] of Object.entries(aura.primitive)) {
-  if (typeof scale !== 'object' || !('500' in scale)) continue;
-  /** @type {string[]} */
-  const tried = [];
-  let chosen;
-  for (const step of STEPS) {
-    const why = failure(name, step);
-    if (why === undefined) {
-      chosen = step;
-      break;
-    }
-    tried.push(`${String(step)}: ${why}`);
-  }
-  if (chosen === undefined) {
-    console.log(`generate-palette-steps: left out ${name}: ${tried.join('; ')}`);
-  } else if (chosen !== 500) {
-    table[name] = chosen;
-  }
-}
-
-const entries = Object.entries(table)
+const auraTable = tableFor(aura.primitive, AURA_STEPS, undefined, 'Aura');
+const auraEntries = Object.entries(auraTable)
+  .filter(([, step]) => step !== 500)
   .map(([name, step]) => `${name}: ${String(step)}`)
   .join(', ');
-const source = `/**
+const auraSource = `/**
  * Generated by \`scripts/generate-palette-steps.mjs\` from \`@openng/optimus-ui-themes ${version}\`, do not edit.
  * Run \`npm run generate:palette-steps\` to refresh it.
  *
@@ -67,56 +68,137 @@ const source = `/**
  * named palette. A palette missing here already passes at 500.
  * @docs-private
  */
-export const _wjPaletteSteps: Readonly<Record<string, number>> = { ${entries} };
+export const _wjPaletteSteps: Readonly<Record<string, number>> = { ${auraEntries} };
 `;
-const text = await pretty(source);
-const current = existsSync(FILE) ? readFileSync(FILE, 'utf8') : undefined;
-const name = relative(ROOT, FILE).split(sep).join('/');
-if (current !== text) {
+
+const materialTable = tableFor(primitivesOf(material), MATERIAL_STEPS, material, 'Material');
+const materialEntries = Object.entries(materialTable)
+  .map(([name, step]) => `${name}: ${String(step)}`)
+  .join(', ');
+const materialSource = `/**
+ * Generated by \`scripts/generate-palette-steps.mjs\` from \`@openng/optimus-ui-themes ${version}\`, do not edit.
+ * Run \`npm run generate:palette-steps\` to refresh it.
+ *
+ * The lightest Material step (500 to 950) whose white-text light \`primary.color\` passes WCAG AA,
+ * per named palette, with the dark steps of \`wjMaterial\` in force. Every palette that passes is
+ * here, those at 500 included, so Aura's table never applies to a Material app.
+ * @docs-private
+ */
+export const _wjMaterialPaletteSteps: Readonly<Record<string, number>> = { ${materialEntries} };
+`;
+
+const upToDate = [
+  await emit(AURA_FILE, auraSource, Object.values(auraTable).filter((s) => s !== 500).length),
+  await emit(MATERIAL_FILE, materialSource, Object.keys(materialTable).length),
+];
+if (check && upToDate.includes(false)) {
+  process.exit(1);
+}
+
+/**
+ * The palette-name to step table for one base's primitives.
+ * @param {Record<string, unknown>} primitives
+ * @param {number[]} steps candidate steps, tried in order
+ * @param {WjPreset | undefined} preset the preset the candidate is judged over (Noir when undefined)
+ * @param {string} label for the printed lines
+ * @returns {Record<string, number>}
+ */
+function tableFor(primitives, steps, preset, label) {
+  /** @type {Record<string, number>} */
+  const table = {};
+  for (const [name, scale] of Object.entries(primitives)) {
+    if (typeof scale !== 'object' || scale === null || !('500' in scale)) continue;
+    /** @type {string[]} */
+    const tried = [];
+    let chosen;
+    for (const step of steps) {
+      const why = failure(name, step, preset);
+      if (why === undefined) {
+        chosen = step;
+        break;
+      }
+      tried.push(`${String(step)}: ${why}`);
+    }
+    if (chosen === undefined) {
+      const prefix = label === 'Aura' ? '' : `${label}: `;
+      console.log(`generate-palette-steps: ${prefix}left out ${name}: ${tried.join('; ')}`);
+    } else {
+      table[name] = chosen;
+    }
+  }
+  return table;
+}
+
+/**
+ * Writes `source` to `file` when it differs. Under `--check` it writes nothing and reports.
+ * @param {string} file
+ * @param {string} source
+ * @param {number} count entries written, for the printed line
+ * @returns {Promise<boolean>} false when `--check` found the file out of date
+ */
+async function emit(file, source, count) {
+  const text = await pretty(file, source);
+  const current = existsSync(file) ? readFileSync(file, 'utf8') : undefined;
+  if (current === text) return true;
+  const name = relative(ROOT, file).split(sep).join('/');
   if (check) {
     console.error(
       `generate-palette-steps: ${name} differs from the generated output. Run \`npm run generate:palette-steps\` and commit the result.`,
     );
-    process.exit(1);
+    return false;
   }
-  writeFileSync(FILE, text, 'utf8');
-  console.log(
-    `generate-palette-steps: wrote ${name} (${String(Object.keys(table).length)} entries)`,
-  );
+  writeFileSync(file, text, 'utf8');
+  console.log(`generate-palette-steps: wrote ${name} (${String(count)} entries)`);
+  return true;
 }
 
 /**
  * What a light step fails, in `brandContrastIssues`' words, or `undefined` when it passes (and dark
- * passes too).
+ * passes too). The candidate is merged after `brandPreset`, so it out-ranks whatever row the
+ * committed table gave the same palette.
  * @param {string} palette
  * @param {number} step
+ * @param {WjPreset | undefined} preset
  */
-function failure(palette, step) {
+function failure(palette, step, preset) {
+  const at = (/** @type {number} */ n) => `{primary.${String(Math.min(LAST_STEP, n))}}`;
   const light = {
     semantic: {
       colorScheme: {
         light: {
           primary: {
-            color: `{primary.${String(step)}}`,
-            hoverColor: `{primary.${String(step + 100)}}`,
-            activeColor: `{primary.${String(step + 200)}}`,
+            color: at(step),
+            hoverColor: at(step + 100),
+            activeColor: at(step + 200),
           },
         },
       },
     },
   };
   for (const surface of SURFACES) {
-    const preset = definePreset(brandPreset(`{${palette}}`, `{${surface}}`), light);
-    const issues = brandContrastIssues(preset, ['light', 'dark']);
+    const resolved = definePreset(brandPreset(`{${palette}}`, `{${surface}}`, preset), light);
+    const issues = brandContrastIssues(resolved, ['light', 'dark']);
     if (issues.length > 0) return `${issues[0] ?? ''} (on ${surface})`;
   }
   return undefined;
 }
 
-/** @param {string} source @returns {Promise<string>} Prettier-formatted */
-async function pretty(source) {
-  const options = await resolveConfig(FILE);
-  return format(source, { ...options, filepath: FILE });
+/**
+ * A preset base's `primitive` object, or an empty one.
+ * @param {WjPreset} preset
+ * @returns {Record<string, unknown>}
+ */
+function primitivesOf(preset) {
+  const base = /** @type {{ primitive?: unknown }} */ (preset._base);
+  return typeof base.primitive === 'object' && base.primitive !== null
+    ? /** @type {Record<string, unknown>} */ (base.primitive)
+    : {};
+}
+
+/** @param {string} file @param {string} source @returns {Promise<string>} Prettier-formatted */
+async function pretty(file, source) {
+  const options = await resolveConfig(file);
+  return format(source, { ...options, filepath: file });
 }
 
 /** @returns {string} the pinned themes package version */

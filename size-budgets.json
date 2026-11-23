@@ -58,6 +58,12 @@
       "note": "wjPolice: Aura with a navy ink, slate surfaces and squarer corners. The base is external, so this row is the preset's own layers. Set 2026-11-23 at measured 0.58 KB gzip (598 B) plus 0.05 KB."
     },
     {
+      "entry": "weeljack-ng/preset-material",
+      "optimus": "own",
+      "kb": 1.87,
+      "note": "wjMaterial, Optimus's Material base under every WeeljackNg guarantee (ADR 0010), holding its correction look, its generated palette-step table, its `_brand` rows and its `_css`. The Material base is external to the measurement. Set 2026-11-23 at measured 1.83 KB gzip (1871 B) plus 0.04 KB: a limit of 1.87 KB is 1915 B, a margin of 44 B."
+    },
+    {
       "entry": "weeljack-ng/splitter",
       "optimus": "splitter",
       "kb": 2.75,
