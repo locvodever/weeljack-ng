@@ -569,12 +569,13 @@ const PAIRS = {
  */
 
 /**
- * Every pair of the default preset, "Noir on zinc", resolved for one scheme.
+ * Every pair of `preset`, the default look ("Noir on zinc") when absent, resolved for one scheme.
  * @param {'light' | 'dark'} scheme
+ * @param {unknown} [preset]
  * @returns {ContrastRow[]}
  */
-export function contrastRows(scheme) {
-  const tokens = tokensFor(wjNoirOnZinc, scheme);
+export function contrastRows(scheme, preset = wjNoirOnZinc) {
+  const tokens = tokensFor(preset, scheme);
   return PAIRS[scheme].map(([name, foreground, background, need, layer]) => {
     const ratio = pairRatio(tokens, foreground, background, layer);
     return {

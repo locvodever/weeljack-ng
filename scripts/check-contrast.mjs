@@ -12,8 +12,8 @@
  *
  * "Named palettes" then checks every Aura colour palette, the neutrals included, as a `'{name}'`
  * primary on each of the five surfaces, light and dark, through `brandPreset` (which applies the
- * generated `palette-steps.ts`), so a future Optimus palette change fails here, not in an app's
- * console. Each failing palette counts in `FAIL rows`.
+ * generated `palette-steps.ts`): the full pair list plus the brand pairs, so a future Optimus
+ * palette change fails here, not in an app's console. Each failing palette counts in `FAIL rows`.
  */
 import { loadBrand } from './brand-reader.mjs';
 import { contrastRows } from './contrast-rows.mjs';
@@ -47,6 +47,15 @@ for (const [name, scale] of Object.entries(aura.primitive)) {
   for (const surface of SURFACES) {
     const preset = brandPreset(`{${name}}`, `{${surface}}`);
     problems.push(...brandContrastIssues(preset, ['light', 'dark']).map((p) => `${surface}: ${p}`));
+    for (const scheme of /** @type {const} */ (['light', 'dark'])) {
+      for (const row of contrastRows(scheme, preset)) {
+        if (!row.pass) {
+          problems.push(
+            `${surface} ${scheme}: ${row.name} is ${row.ratio.toFixed(2)}:1, needs ${String(row.need)}:1`,
+          );
+        }
+      }
+    }
     const tokens = tokensFor(preset, 'light');
     worst = Math.min(worst, pairRatio(tokens, 'button.primary.color', 'button.primary.background'));
   }

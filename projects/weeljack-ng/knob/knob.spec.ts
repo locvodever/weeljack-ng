@@ -36,6 +36,12 @@ const LOOK = {
   },
 };
 
+/** The value arc under an app's own `{blue}` primary, on the default surface. */
+const BLUE_VALUE = {
+  light: 'rgb(9, 9, 11)', // surface.950: ink, in the component base
+  dark: 'rgb(191, 219, 254)', // blue.200: primary.200, in colorScheme.dark
+};
+
 /** A consumer's template: one knob, bare (named by a visible text) or inside a field. */
 @Component({
   selector: 'wj-knob-host',
@@ -297,10 +303,13 @@ async function renderAs<T>(
   type: new () => T,
   setup: (component: T) => void = () => undefined,
   scheme: Scheme = 'light',
+  options: { primary?: string } = {},
 ): Promise<Rendered<T>> {
   ROOT.classList.toggle('wj-dark', scheme === 'dark');
   document.body.style.backgroundColor = 'var(--wj-content-background)';
-  TestBed.configureTestingModule({ providers: [provideWeeljack({ darkMode: 'class' })] });
+  TestBed.configureTestingModule({
+    providers: [provideWeeljack({ ...options, darkMode: 'class' })],
+  });
   const fixture = TestBed.createComponent(type);
   setup(fixture.componentInstance);
   await fixture.whenStable();
@@ -1242,6 +1251,12 @@ describe('WjKnob', () => {
         expect(getComputedStyle(rangeOf(element)).stroke).toBe(LOOK[scheme].range);
         expect(getComputedStyle(arcOf(element)).stroke).toBe(LOOK[scheme].value);
         expect(getComputedStyle(textOf(element)).fill).toBe(LOOK[scheme].text);
+      });
+
+      it('draws the value in ink (light) or the primary’s 200 step (dark) under a named primary', async () => {
+        const { element } = await renderAs(Host, undefined, scheme, { primary: '{blue}' });
+
+        expect(getComputedStyle(arcOf(element)).stroke).toBe(BLUE_VALUE[scheme]);
       });
     });
 
