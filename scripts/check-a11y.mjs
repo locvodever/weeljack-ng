@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { chromium } from 'playwright';
 import { AXE_RUN_OPTIONS } from '../projects/weeljack-ng/spec-support/axe.ts';
+import { checkPresets } from './a11y-presets.mjs';
 import { checkThemePanel } from './a11y-theme-panel.mjs';
 import { BASE, prerenderedPagePaths, startDocsServer } from './serve-docs.mjs';
 
@@ -21,6 +22,9 @@ import { BASE, prerenderedPagePaths, startDocsServer } from './serve-docs.mjs';
  * (one lazy chunk request is aborted during one navigation to another component page, and routing
  * is restored afterwards), the first not-wrapped slug and the first planned slug of
  * `catalog.json`, each while one exists (a line says so when it is skipped).
+ *
+ * Then, each preset but Noir (`a11y-presets.mjs`, PRD FR-14): every component page again, light and
+ * dark, with that preset stored before load, one timing line per preset.
  *
  * Needs Playwright's Chromium (`npx playwright install chromium`) or `CHROME_BIN`.
  */
@@ -322,6 +326,11 @@ try {
   });
   states += themePanel.states;
   failed += themePanel.failed;
+
+  // Every preset but Noir over the component pages (PRD FR-14).
+  const presets = await checkPresets({ browser, server, settle, axeBothSchemes });
+  states += presets.states;
+  failed += presets.failed;
 } finally {
   await browser.close();
   await server.close();
