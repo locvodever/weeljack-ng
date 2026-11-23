@@ -33,4 +33,12 @@ export interface WjPreset {
    * @docs-private
    */
   readonly _ink?: object;
+  /**
+   * Per-palette corrections a base needs over the brand branch. Called with the palette name of
+   * the colour that applies (`emerald`), or `''` for a hex or a scale; returns a layer or
+   * `undefined`. The layer sits over the brand layer (or the ink) and under an app's `surface`.
+   *
+   * @docs-private
+   */
+  readonly _brand?: (name: string) => object | undefined;
 }
