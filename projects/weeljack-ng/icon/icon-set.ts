@@ -167,6 +167,35 @@ export const wjIconEllipsisVertical: WjIconDef = {
   ],
 };
 
+/** The Lucide `layout-dashboard` icon. */
+export const wjIconLayoutDashboard: WjIconDef = {
+  name: 'layout-dashboard',
+  viewBox: '0 0 24 24',
+  nodes: [
+    ['rect', { width: '7', height: '9', x: '3', y: '3', rx: '1' }],
+    ['rect', { width: '7', height: '5', x: '14', y: '3', rx: '1' }],
+    ['rect', { width: '7', height: '9', x: '14', y: '12', rx: '1' }],
+    ['rect', { width: '7', height: '5', x: '3', y: '16', rx: '1' }],
+  ],
+};
+
+/** The Lucide `ticket` icon. */
+export const wjIconTicket: WjIconDef = {
+  name: 'ticket',
+  viewBox: '0 0 24 24',
+  nodes: [
+    [
+      'path',
+      {
+        d: 'M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z',
+      },
+    ],
+    ['path', { d: 'M13 5v2' }],
+    ['path', { d: 'M13 17v2' }],
+    ['path', { d: 'M13 11v2' }],
+  ],
+};
+
 /** The Lucide `plus` icon. Derived from Feather (MIT). */
 export const wjIconPlus: WjIconDef = {
   name: 'plus',
@@ -586,6 +615,18 @@ export const wjIconLayoutGrid: WjIconDef = {
   ],
 };
 
+/** The Lucide `chart-column` icon. */
+export const wjIconChartColumn: WjIconDef = {
+  name: 'chart-column',
+  viewBox: '0 0 24 24',
+  nodes: [
+    ['path', { d: 'M3 3v16a2 2 0 0 0 2 2h16' }],
+    ['path', { d: 'M18 17V9' }],
+    ['path', { d: 'M13 17V5' }],
+    ['path', { d: 'M8 17v-3' }],
+  ],
+};
+
 /** The Lucide `info` icon. Derived from Feather (MIT). */
 export const wjIconInfo: WjIconDef = {
   name: 'info',
@@ -680,6 +721,17 @@ export const wjIconBan: WjIconDef = {
   nodes: [
     ['circle', { cx: '12', cy: '12', r: '10' }],
     ['path', { d: 'M4.929 4.929 19.07 19.071' }],
+  ],
+};
+
+/** The Lucide `timer` icon. */
+export const wjIconTimer: WjIconDef = {
+  name: 'timer',
+  viewBox: '0 0 24 24',
+  nodes: [
+    ['line', { x1: '10', x2: '14', y1: '2', y2: '2' }],
+    ['line', { x1: '12', x2: '15', y1: '14', y2: '11' }],
+    ['circle', { cx: '12', cy: '14', r: '8' }],
   ],
 };
 
@@ -954,5 +1006,20 @@ export const wjIconUtensils: WjIconDef = {
     ['path', { d: 'M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2' }],
     ['path', { d: 'M7 2v20' }],
     ['path', { d: 'M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7' }],
+  ],
+};
+
+/** The Lucide `headset` icon. */
+export const wjIconHeadset: WjIconDef = {
+  name: 'headset',
+  viewBox: '0 0 24 24',
+  nodes: [
+    [
+      'path',
+      {
+        d: 'M3 11h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-5Zm0 0a9 9 0 1 1 18 0m0 0v5a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3Z',
+      },
+    ],
+    ['path', { d: 'M21 16v2a4 4 0 0 1-4 4h-5' }],
   ],
 };

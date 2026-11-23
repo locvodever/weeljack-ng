@@ -30,8 +30,8 @@
     {
       "entry": "weeljack-ng/icon",
       "optimus": "own",
-      "kb": 5.44,
-      "note": "wj-icon and the generated icon set (80 Lucide icons, ADR 0008). Measured as one whole module, so every icon counts here; an app pays only for WjIcon and the icons it imports (the tree-shake check in size.mjs measures the linked, production app bundle: at most 1.15 KB for WjIcon plus one icon, measured 1127 B). Adding icons raises this row by their measured gzip (2026-11-22: 4296 B for 80). Set 2026-11-22 at measured 5.39 KB gzip (5524 B) plus 0.05 KB."
+      "kb": 5.69,
+      "note": "wj-icon and the generated icon set (85 Lucide icons, ADR 0008). Measured as one whole module, so every icon counts here; an app pays only for WjIcon and the icons it imports (the tree-shake check in size.mjs measures the linked, production app bundle: at most 1.15 KB for WjIcon plus one icon, measured 1127 B). The 5 admin icons (L1, 2026-11-24) cost 257 B over the 80's 5524 B. Set 2026-11-24 at measured 5.65 KB gzip (5781 B) plus 45 B, the cap of +0.25 KB over 5.44."
     },
     {
       "entry": "weeljack-ng/theme",

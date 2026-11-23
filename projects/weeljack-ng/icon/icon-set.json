@@ -17,7 +17,9 @@
       "external-link",
       "house",
       "ellipsis",
-      "ellipsis-vertical"
+      "ellipsis-vertical",
+      "layout-dashboard",
+      "ticket"
     ],
     "actions": [
       "plus",
@@ -53,7 +55,8 @@
       "arrow-up-down",
       "grip-vertical",
       "list",
-      "layout-grid"
+      "layout-grid",
+      "chart-column"
     ],
     "status": [
       "info",
@@ -64,7 +67,8 @@
       "circle-question-mark",
       "bell",
       "loader-circle",
-      "ban"
+      "ban",
+      "timer"
     ],
     "things": [
       "user",
@@ -87,7 +91,8 @@
       "globe",
       "sun",
       "moon",
-      "utensils"
+      "utensils",
+      "headset"
     ]
   }
 }

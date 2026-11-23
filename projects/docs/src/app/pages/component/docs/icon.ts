@@ -11,7 +11,7 @@ export const DOC: ComponentDoc = {
   entry: 'icon',
   title: 'Icon',
   purpose:
-    "An inline SVG icon that takes the text's size and colour, from WeeljackNg's set of 80 or your own.",
+    "An inline SVG icon that takes the text's size and colour, from WeeljackNg's set of 85 or your own.",
   examples: [
     {
       title: 'Basic',
@@ -58,7 +58,7 @@ export const DOC: ComponentDoc = {
     {
       title: 'The set',
       description:
-        'All 80 icons. Search by name, then choose one to copy its import line. Names follow Lucide 1.77.0: `trash` (was trash-2), `circle-exclamation-point` (circle-alert), `triangle-exclamation-point` (triangle-alert), `circle-question-mark` (circle-help), `house`, `funnel`, `ellipsis`, `ellipsis-vertical`.',
+        'All 85 icons. Search by name, then choose one to copy its import line. Names follow Lucide 1.77.0: `trash` (was trash-2), `circle-exclamation-point` (circle-alert), `triangle-exclamation-point` (triangle-alert), `circle-question-mark` (circle-help), `house`, `funnel`, `ellipsis`, `ellipsis-vertical`.',
       sourceKey: 'icon/gallery',
       component: IconGalleryExample,
     },
