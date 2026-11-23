@@ -33,4 +33,11 @@ export interface WjPreset {
    * @docs-private
    */
   readonly _ink?: object;
+  /**
+   * Per-palette corrections a base needs over the brand branch. It is called with the palette name
+   * of the colour that applies, or `''` for a hex or a scale, and returns a layer or `undefined`.
+   *
+   * @docs-private
+   */
+  readonly _brand?: (name: string) => object | undefined;
 }

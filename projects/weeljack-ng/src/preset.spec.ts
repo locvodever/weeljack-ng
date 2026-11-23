@@ -203,3 +203,80 @@ describe('the preset builder', () => {
     expect(raw).toBe(aura);
   });
 });
+
+/** A scale the builder accepts as an app primary: every step a hex. */
+const SCALE = {
+  50: '#eff6ff',
+  100: '#dbeafe',
+  200: '#bfdbfe',
+  300: '#93c5fd',
+  400: '#60a5fa',
+  500: '#3b82f6',
+  600: '#2563eb',
+  700: '#1d4ed8',
+  800: '#1e40af',
+  900: '#1e3a8a',
+  950: '#172554',
+};
+
+describe('_brand', () => {
+  /** A fake whose `_brand` records every name it is called with and returns one fixed layer. */
+  function brandFake(layer: object | undefined, extra: Partial<WjPreset> = {}) {
+    const names: string[] = [];
+    const preset: WjPreset = {
+      _base: aura,
+      ...extra,
+      _brand: (name) => {
+        names.push(name);
+        return layer;
+      },
+    };
+    return { names, preset };
+  }
+
+  it('is called with the palette name for a named primary, and with "" for a hex and a scale', () => {
+    const { names, preset } = brandFake(undefined, { _ink: {} });
+
+    brandPreset('{blue}', undefined, preset);
+    brandPreset('#1d4ed8', undefined, preset);
+    brandPreset(SCALE, undefined, preset);
+
+    expect(names).toEqual(['blue', '', '']);
+  });
+
+  it('is called with the name of the preset _primary when the app sets none', () => {
+    const { names, preset } = brandFake(undefined, { _primary: '{emerald}' });
+
+    brandPreset(undefined, undefined, preset);
+
+    expect(names).toEqual(['emerald']);
+  });
+
+  it('its layer wins over the brand layer and loses to an app surface', () => {
+    const { preset } = brandFake({
+      components: { slider: { range: { background: '#123456' } } },
+      semantic: { colorScheme: { light: { surface: { 500: '#aaaaaa' } } } },
+    });
+    const surface = 'semantic.colorScheme.light.surface.500';
+
+    const noApp = brandPreset('{blue}', undefined, preset);
+    const withApp = brandPreset('{blue}', '{slate}', preset);
+
+    // The brand layer sets the slider range to `{surface.950}`; `_brand` comes after it.
+    expect(at(noApp, 'components.slider.range.background')).toBe('#123456');
+    expect(at(noApp, surface)).toBe('#aaaaaa');
+    expect(at(withApp, surface)).toBe('{slate.500}');
+  });
+
+  it('a preset without _brand resolves as one whose _brand returns nothing', () => {
+    const { preset } = brandFake(undefined, { _primary: '{emerald}' });
+    const plain: WjPreset = { _base: aura, _primary: '{emerald}' };
+
+    for (const [primary, surface] of [
+      [undefined, undefined],
+      ['{blue}', '{slate}'],
+    ] as const) {
+      expect(brandPreset(primary, surface, preset)).toEqual(brandPreset(primary, surface, plain));
+    }
+  });
+});
