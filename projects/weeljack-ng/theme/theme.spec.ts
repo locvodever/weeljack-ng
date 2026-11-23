@@ -9,6 +9,7 @@ import { Tree } from '@openng/optimus-ui/tree';
 import lara from '@openng/optimus-ui-themes/lara';
 import type { MockInstance } from 'vitest';
 import { provideWeeljack, type WjPreset, type WjThemeOptions } from 'weeljack-ng';
+import { WjAnimateOnScroll } from 'weeljack-ng/animateonscroll';
 import { wjAura } from 'weeljack-ng/preset-aura';
 import { wjNoir } from 'weeljack-ng/preset-noir';
 import {
@@ -47,6 +48,14 @@ class ThemeHost {
 
 @Component({ selector: 'wj-empty-host', template: '' })
 class EmptyHost {}
+
+/** Only an Optimus directive that has no style of its own: it answers `theme:change` with `{}`. */
+@Component({
+  selector: 'wj-directive-host',
+  imports: [WjAnimateOnScroll],
+  template: `<div wjAnimateOnScroll>Directive</div>`,
+})
+class DirectiveHost {}
 
 /** An app's brand scales, as in provide-weeljack.spec.ts. */
 const APP_PRIMARY = {
@@ -105,18 +114,21 @@ interface RenderOptions {
   tag?: boolean;
   tree?: boolean;
   empty?: boolean;
+  directive?: boolean;
 }
 
 async function render(
   options: WjThemeOptions = {},
-  { extra = [], tag = true, tree = false, empty = false }: RenderOptions = {},
-): Promise<ComponentFixture<ThemeHost | EmptyHost>> {
+  { extra = [], tag = true, tree = false, empty = false, directive = false }: RenderOptions = {},
+): Promise<ComponentFixture<ThemeHost | EmptyHost | DirectiveHost>> {
   TestBed.configureTestingModule({
     providers: [provideWeeljack({ darkMode: 'class', ...options }), ...extra],
   });
-  const fixture: ComponentFixture<ThemeHost | EmptyHost> = empty
-    ? TestBed.createComponent(EmptyHost)
-    : TestBed.createComponent(ThemeHost);
+  const fixture: ComponentFixture<ThemeHost | EmptyHost | DirectiveHost> = directive
+    ? TestBed.createComponent(DirectiveHost)
+    : empty
+      ? TestBed.createComponent(EmptyHost)
+      : TestBed.createComponent(ThemeHost);
   if (fixture.componentInstance instanceof ThemeHost) {
     fixture.componentInstance.showTag.set(tag);
     fixture.componentInstance.showTree.set(tree);
@@ -301,6 +313,42 @@ describe('WjTheme', () => {
     TestBed.inject(WjTheme).setPrimary('#0f766e');
 
     expect(getComputedStyle(ROOT).getPropertyValue('--wj-primary-color').trim()).toBe('#0f766e');
+  });
+
+  describe('with only a directive that has no style of its own', () => {
+    const directive: RenderOptions = { directive: true };
+
+    it('starts equal to the empty page, so the reference is sound', async () => {
+      expectPage(
+        await freshPage({ preset: wjAura }, directive),
+        await freshPage({ preset: wjAura }, { empty: true }),
+      );
+    });
+
+    it('writes the common sheets for setPreset', async () => {
+      const done = await switchedPage(
+        {},
+        (theme) => {
+          theme.setPreset(wjAura);
+        },
+        directive,
+      );
+
+      expectPage(done, await freshPage({ preset: wjAura }, directive));
+    });
+
+    it('writes the common sheets for setPrimary', async () => {
+      const done = await switchedPage(
+        {},
+        (theme) => {
+          theme.setPrimary('#0f766e');
+        },
+        directive,
+      );
+
+      expect(done.vars.light['--wj-primary-color']).toBe('#0f766e');
+      expectPage(done, await freshPage({ primary: '#0f766e' }, directive));
+    });
   });
 
   describe('component token sheets', () => {
