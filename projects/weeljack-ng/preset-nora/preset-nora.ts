@@ -86,7 +86,10 @@ const _look = {
         },
       },
     },
-    tag: { ...tagLight, colorScheme: { light: tagLight } },
+    tag: {
+      ...tagLight,
+      colorScheme: { light: tagLight, dark: { danger: { background: '{red.400}' } } },
+    },
     slider: {
       track: { background: '{surface.500}' },
       handle: {
@@ -117,7 +120,14 @@ const _look = {
     toggleswitch: { ...toggleswitchLight, colorScheme: { light: toggleswitchLight } },
     button: {
       colorScheme: {
-        dark: { root: { danger: { background: '{red.400}', borderColor: '{red.400}' } } },
+        // Nora's dark 950 text on a 500 fill: danger 4.29:1 and help 3.79:1 (the a11y pass
+        // found help and the danger tag, which `check:contrast` has no row for).
+        dark: {
+          root: {
+            danger: { background: '{red.400}', borderColor: '{red.400}' },
+            help: { background: '{purple.400}', borderColor: '{purple.400}' },
+          },
+        },
       },
     },
     badge: { colorScheme: { dark: { danger: { background: '{red.400}' } } } },
