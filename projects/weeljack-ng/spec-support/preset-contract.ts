@@ -2,7 +2,7 @@ import { Component } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { Optimus } from '@openng/optimus-ui/config';
 import { userEvent } from 'vitest/browser';
-import { provideWeeljack, type WjPreset } from 'weeljack-ng';
+import { provideWeeljack, type WjPreset, type WjThemeOptions } from 'weeljack-ng';
 import { WjButton } from 'weeljack-ng/button';
 import { WjCheckbox } from 'weeljack-ng/checkbox';
 import { WjIcon, wjIconSettings } from 'weeljack-ng/icon';
@@ -12,8 +12,10 @@ import { WjRating } from 'weeljack-ng/rating';
 import { WjSelect, type WjSelectOption } from 'weeljack-ng/select';
 import { WjSlider } from 'weeljack-ng/slider';
 import { WjToggleButton } from 'weeljack-ng/togglebutton';
+import { WjTheme } from 'weeljack-ng/theme';
 import { WjToggleSwitch } from 'weeljack-ng/toggleswitch';
 import { expectNoAxeViolations } from './axe';
+import { capture, expectPage } from './theme-snapshot';
 
 /*
  * The shared preset contract (ADR 0010, PRD FR-21): the guarantees every WeeljackNg preset holds
@@ -77,15 +79,17 @@ class PresetContractHost {
   protected readonly fruit = FRUIT;
 }
 
-/** Renders the fixture under `preset` in `scheme`, and returns it with its settled root. */
+/** Renders the fixture under `preset` (Noir when omitted) in `scheme`, with its settled root. */
 async function renderPresetFixture(
-  preset: WjPreset,
+  preset: WjPreset | undefined,
   scheme: Scheme,
 ): Promise<{ fixture: ComponentFixture<PresetContractHost>; root: HTMLElement }> {
   if (scheme === 'dark') {
     ROOT.classList.add('wj-dark');
   }
-  TestBed.configureTestingModule({ providers: [provideWeeljack({ preset, darkMode: 'class' })] });
+  const options: WjThemeOptions =
+    preset === undefined ? { darkMode: 'class' } : { preset, darkMode: 'class' };
+  TestBed.configureTestingModule({ providers: [provideWeeljack(options)] });
   const fixture = TestBed.createComponent(PresetContractHost);
   const root = fixture.nativeElement as HTMLElement;
   document.body.appendChild(root);
@@ -326,6 +330,32 @@ export function describePresetContract(name: string, preset: WjPreset): void {
 
           await expectNoAxeViolations(root);
         });
+      });
+    });
+
+    // `snapshot()` reads light and then dark itself, so one run covers both schemes; it needs the
+    // page to start in light, which is why this sits beside the per-scheme blocks.
+    describe('runtime switch', () => {
+      it('equals a fresh bootstrap, and setPreset() returns to Noir', async () => {
+        const first = await renderPresetFixture(undefined, 'light');
+        const theme = TestBed.inject(WjTheme);
+        theme.setPreset(preset);
+        await first.fixture.whenStable();
+        const switched = capture();
+        theme.setPreset();
+        await first.fixture.whenStable();
+        const returned = capture();
+        cleanUpPresetFixture();
+
+        await renderPresetFixture(preset, 'light');
+        const bootstrapped = capture();
+        cleanUpPresetFixture();
+
+        await renderPresetFixture(undefined, 'light');
+        const noir = capture();
+
+        expectPage(switched, bootstrapped);
+        expectPage(returned, noir);
       });
     });
   });

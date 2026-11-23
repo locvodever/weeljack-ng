@@ -5,14 +5,27 @@ import { Checkbox } from '@openng/optimus-ui/checkbox';
 import { InputTextModule } from '@openng/optimus-ui/inputtext';
 import { Tag } from '@openng/optimus-ui/tag';
 import { ToggleSwitch } from '@openng/optimus-ui/toggleswitch';
+import { Tree } from '@openng/optimus-ui/tree';
+import lara from '@openng/optimus-ui-themes/lara';
 import type { MockInstance } from 'vitest';
-import { provideWeeljack, type WjThemeOptions } from 'weeljack-ng';
+import { provideWeeljack, type WjPreset, type WjThemeOptions } from 'weeljack-ng';
+import { wjAura } from 'weeljack-ng/preset-aura';
+import { wjNoir } from 'weeljack-ng/preset-noir';
+import {
+  SHEETS,
+  capture,
+  expectEqual,
+  expectPage,
+  snapshot,
+  type Page,
+  type Snapshot,
+} from '../spec-support/theme-snapshot';
 import { WjTheme } from './public-api';
 
 /** Real Optimus parts whose tokens the Noir layer and the always-on layer touch. */
 @Component({
   selector: 'wj-theme-host',
-  imports: [ButtonModule, InputTextModule, Tag, ToggleSwitch, Checkbox],
+  imports: [ButtonModule, InputTextModule, Tag, ToggleSwitch, Checkbox, Tree],
   template: `
     <p-button label="Default" />
     <input pInputText aria-label="Name" value="Loc" />
@@ -21,10 +34,15 @@ import { WjTheme } from './public-api';
     }
     <p-toggleswitch ariaLabel="Notifications" />
     <p-checkbox [binary]="true" ariaLabel="Agree" />
+    @if (showTree()) {
+      <p-tree [value]="nodes" />
+    }
   `,
 })
 class ThemeHost {
   readonly showTag = signal(true);
+  readonly showTree = signal(false);
+  protected readonly nodes = [{ key: 'root', label: 'Root' }];
 }
 
 @Component({ selector: 'wj-empty-host', template: '' })
@@ -73,24 +91,25 @@ const STONE_DARK = {
 };
 const THIRD_SURFACE = { light: APP_SURFACE, dark: STONE_DARK };
 
-const ROOT = document.documentElement;
-const SHEETS = 'style[data-optimus-style-id]';
+/**
+ * A base that is not a WeeljackNg preset's, with none of its own layers: Lara's component styles
+ * differ from Noir's, so a switch to it and back is visible in a `-style` sheet.
+ */
+const LARA_FAKE: WjPreset = { _base: lara };
 
-interface Snapshot {
-  light: Record<string, string>;
-  dark: Record<string, string>;
-}
+const ROOT = document.documentElement;
 
 /** What `render` mounts: the host, whether it shows the tag, and extra providers. */
 interface RenderOptions {
   extra?: Provider[];
   tag?: boolean;
+  tree?: boolean;
   empty?: boolean;
 }
 
 async function render(
   options: WjThemeOptions = {},
-  { extra = [], tag = true, empty = false }: RenderOptions = {},
+  { extra = [], tag = true, tree = false, empty = false }: RenderOptions = {},
 ): Promise<ComponentFixture<ThemeHost | EmptyHost>> {
   TestBed.configureTestingModule({
     providers: [provideWeeljack({ darkMode: 'class', ...options }), ...extra],
@@ -100,6 +119,7 @@ async function render(
     : TestBed.createComponent(ThemeHost);
   if (fixture.componentInstance instanceof ThemeHost) {
     fixture.componentInstance.showTag.set(tag);
+    fixture.componentInstance.showTree.set(tree);
   }
   document.body.appendChild(fixture.nativeElement as HTMLElement);
   await fixture.whenStable();
@@ -120,76 +140,38 @@ function resetApp(): void {
   clearPage();
 }
 
-/** Every `--wj-*` name declared in a rule, walking `@layer` and `@media`. */
-function declaredNames(list: CSSRuleList, names: Set<string>): void {
-  for (const rule of Array.from(list)) {
-    if (rule instanceof CSSStyleRule) {
-      for (const name of Array.from(rule.style)) {
-        if (name.startsWith('--wj-')) {
-          names.add(name);
-        }
-      }
-    }
-    if (rule instanceof CSSGroupingRule) {
-      declaredNames(rule.cssRules, names);
-    }
-  }
-}
-
-function resolved(names: readonly string[]): Record<string, string> {
-  const style = getComputedStyle(ROOT);
-  return Object.fromEntries(names.map((name) => [name, style.getPropertyValue(name).trim()]));
-}
-
-/** Every `--wj-*` variable the Optimus sheets declare, as `<html>` resolves it, light and dark. */
-function snapshot(): Snapshot {
-  const names = new Set<string>();
-  document.head.querySelectorAll<HTMLStyleElement>(SHEETS).forEach((style) => {
-    if (style.sheet) {
-      declaredNames(style.sheet.cssRules, names);
-    }
-  });
-  const sorted = Array.from(names).sort();
-  const light = resolved(sorted);
-  ROOT.classList.add('wj-dark');
-  const dark = resolved(sorted);
-  ROOT.classList.remove('wj-dark');
-  return { light, dark };
-}
-
-/** The names whose value differs, or that only one side declares. */
-function differences(a: Record<string, string>, b: Record<string, string>): string[] {
-  return Array.from(new Set([...Object.keys(a), ...Object.keys(b)]))
-    .filter((name) => a[name] !== b[name])
-    .map((name) => `${name}: ${a[name] ?? '(absent)'} vs ${b[name] ?? '(absent)'}`);
-}
-
-function expectEqual(actual: Snapshot, expected: Snapshot): void {
-  expect(Object.keys(actual.light).length).toBeGreaterThan(100);
-  expect(differences(actual.light, expected.light)).toEqual([]);
-  expect(differences(actual.dark, expected.dark)).toEqual([]);
-}
-
 /** A bootstrap of `options`, mounted and read, then torn down. */
-async function fresh(options: WjThemeOptions, mount: RenderOptions = {}): Promise<Snapshot> {
+async function freshPage(options: WjThemeOptions, mount: RenderOptions = {}): Promise<Page> {
   await render(options, mount);
-  const result = snapshot();
+  const result = capture();
   resetApp();
   return result;
 }
 
 /** A bootstrap of `options`, then `act` on its `WjTheme`, read, then torn down. */
+async function switchedPage(
+  options: WjThemeOptions,
+  act: (theme: WjTheme) => void,
+  mount: RenderOptions = {},
+): Promise<Page> {
+  const fixture = await render(options, mount);
+  act(TestBed.inject(WjTheme));
+  await fixture.whenStable();
+  const result = capture();
+  resetApp();
+  return result;
+}
+
+async function fresh(options: WjThemeOptions, mount: RenderOptions = {}): Promise<Snapshot> {
+  return (await freshPage(options, mount)).vars;
+}
+
 async function switched(
   options: WjThemeOptions,
   act: (theme: WjTheme) => void,
   mount: RenderOptions = {},
 ): Promise<Snapshot> {
-  const fixture = await render(options, mount);
-  act(TestBed.inject(WjTheme));
-  await fixture.whenStable();
-  const result = snapshot();
-  resetApp();
-  return result;
+  return (await switchedPage(options, act, mount)).vars;
 }
 
 function calls(warn: { mock: { calls: unknown[][] } }, code: string): string[] {
@@ -344,6 +326,125 @@ describe('WjTheme', () => {
 
       expectEqual(without, await fresh({ primary: '#0f766e' }, { tag: false }));
       expectEqual(remounted, await fresh({ primary: '#0f766e' }, { tag: true }));
+    });
+  });
+
+  describe('the preset', () => {
+    it('starts at the bootstrap value, follows setPreset and returns on no argument and reset', async () => {
+      await render();
+      const theme = TestBed.inject(WjTheme);
+      expect(theme.preset()).toBeUndefined();
+
+      theme.setPreset(wjAura);
+      expect(theme.preset()).toBe(wjAura);
+      theme.setPreset();
+      expect(theme.preset()).toBeUndefined();
+
+      theme.setPreset(wjAura);
+      theme.reset();
+      expect(theme.preset()).toBeUndefined();
+      resetApp();
+
+      await render({ preset: wjAura });
+      const aura = TestBed.inject(WjTheme);
+      expect(aura.preset()).toBe(wjAura);
+
+      aura.setPreset(wjNoir);
+      expect(aura.preset()).toBe(wjNoir);
+      aura.setPreset();
+      expect(aura.preset()).toBe(wjAura);
+
+      aura.setPreset(wjNoir);
+      aura.reset();
+      expect(aura.preset()).toBe(wjAura);
+    });
+
+    it('is kept by setPrimary from a wjAura bootstrap', async () => {
+      const done = await switchedPage({ preset: wjAura }, (theme) => {
+        theme.setPrimary('{blue}');
+      });
+
+      expectPage(done, await freshPage({ preset: wjAura, primary: '{blue}' }));
+    });
+
+    it('is kept by setSurface from a wjAura bootstrap', async () => {
+      const done = await switchedPage({ preset: wjAura }, (theme) => {
+        theme.setSurface('{slate}');
+      });
+
+      expectPage(done, await freshPage({ preset: wjAura, surface: '{slate}' }));
+    });
+
+    it('keeps the primary and the surface when it changes, and reset() returns the bootstrap', async () => {
+      const boot: WjThemeOptions = { primary: '#c2410c', surface: '{stone}' };
+
+      expectPage(
+        await switchedPage(boot, (theme) => {
+          theme.setPreset(wjAura);
+        }),
+        await freshPage({ ...boot, preset: wjAura }),
+      );
+      expectPage(
+        await switchedPage(boot, (theme) => {
+          theme.setPreset(wjAura);
+          theme.reset();
+        }),
+        await freshPage(boot),
+      );
+    });
+
+    it('returns to a wjAura bootstrap for no argument', async () => {
+      expectPage(
+        await switchedPage({ preset: wjAura }, (theme) => {
+          theme.setPreset(wjNoir);
+          theme.setPreset();
+        }),
+        await freshPage({ preset: wjAura }),
+      );
+    });
+  });
+
+  describe('component style sheets', () => {
+    const treeSheet = 'style[data-optimus-style-id="tree-style"]';
+
+    it('drops the sheet of an unmounted component and writes it again on mount', async () => {
+      const fixture = await render({}, { tree: true });
+      const host = fixture.componentInstance as ThemeHost;
+      expect(document.head.querySelector(treeSheet)).not.toBeNull();
+
+      host.showTree.set(false);
+      fixture.detectChanges();
+      TestBed.inject(WjTheme).setPreset(LARA_FAKE);
+      await fixture.whenStable();
+
+      expect(document.head.querySelector(treeSheet)).toBeNull();
+      const without = capture();
+
+      host.showTree.set(true);
+      fixture.detectChanges();
+      await fixture.whenStable();
+      const remounted = capture();
+      resetApp();
+
+      expectPage(without, await freshPage({ preset: LARA_FAKE }));
+      expectPage(remounted, await freshPage({ preset: LARA_FAKE }, { tree: true }));
+    });
+
+    it('drops it the other way, from the fake back to Noir', async () => {
+      const fixture = await render({ preset: LARA_FAKE }, { tree: true });
+      const host = fixture.componentInstance as ThemeHost;
+      expect(document.head.querySelector(treeSheet)).not.toBeNull();
+
+      host.showTree.set(false);
+      fixture.detectChanges();
+      TestBed.inject(WjTheme).setPreset(wjNoir);
+      await fixture.whenStable();
+
+      expect(document.head.querySelector(treeSheet)).toBeNull();
+      const done = capture();
+      resetApp();
+
+      expectPage(done, await freshPage({ preset: wjNoir }));
     });
   });
 
@@ -532,12 +633,15 @@ describe('WjTheme', () => {
       theme.setPrimary('#0f766e');
       theme.setSurface('{slate}');
       theme.setPrimary('teal-ish');
+      theme.setPreset(wjAura);
+      theme.setPreset();
       theme.reset();
       await fixture.whenStable();
 
       expect(sheets()).toEqual(before);
       expect(theme.primary()).toBeUndefined();
       expect(theme.surface()).toBeUndefined();
+      expect(theme.preset()).toBeUndefined();
       expect(warn).not.toHaveBeenCalled();
     });
   });
@@ -548,6 +652,7 @@ describe('WjTheme', () => {
 
       theme.setPrimary('#0f766e');
       theme.setSurface('teal-ish');
+      theme.setPreset(wjAura);
       theme.reset();
 
       expect(calls(warn, 'WJ0001')).toHaveLength(1);
@@ -555,6 +660,7 @@ describe('WjTheme', () => {
       expect(calls(warn, 'WJ0200')).toHaveLength(0);
       expect(theme.primary()).toBeUndefined();
       expect(theme.surface()).toBeUndefined();
+      expect(theme.preset()).toBeUndefined();
       expect(document.head.querySelectorAll(SHEETS)).toHaveLength(0);
     });
   });
