@@ -52,6 +52,12 @@
       "note": "wjAura, Aura's emerald at its AA step on Aura's slate (ADR 0010). FESM measured with its Optimus base external, so the row is the preset's own data. Set 2026-11-23 at measured 0.11 KB gzip (117 B) plus 0.05 KB: a limit of 0.16 KB is 164 B, a margin of 47 B."
     },
     {
+      "entry": "weeljack-ng/preset-police",
+      "optimus": "own",
+      "kb": 0.63,
+      "note": "wjPolice: Aura with a navy ink, slate surfaces and squarer corners. The base is external, so this row is the preset's own layers. Set 2026-11-23 at measured 0.58 KB gzip (598 B) plus 0.05 KB."
+    },
+    {
       "entry": "weeljack-ng/preset-lara",
       "optimus": "own",
       "kb": 0.56,
