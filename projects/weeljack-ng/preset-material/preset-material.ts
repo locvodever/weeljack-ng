@@ -13,7 +13,7 @@ import { _wjMaterialPaletteSteps } from './palette-steps.ts';
  *  - `scripts/check-contrast.mjs` imports it under Node's type stripping to resolve it in both
  *    schemes, and `scripts/generate-palette-steps.mjs` bundles it to judge each candidate step.
  * It holds, in the order the builder stacks them:
- *  - `_look`: 82 correction ops over Material, each checked against its tokens: contrast (37),
+ *  - `_look`: 93 correction ops over Material, each checked against its tokens: contrast (48),
  *    brand (4), geometry (5) and focus (36), plus 17 ring-colour ops. `L` ops write the base and
  *    `colorScheme.light`, `l` only `colorScheme.light`, `D` only `colorScheme.dark`, `B` all three.
  *  - `_primary`: Material's own emerald. Its step, and the light step of every named palette, come
@@ -25,7 +25,7 @@ import { _wjMaterialPaletteSteps } from './palette-steps.ts';
 
 /**
  * The one 2 px ring, as tokens. Material hard-codes `width: 0`, `style: none` and `color: unset` on
- * 17 components. The 82 ops fix the width and the style; the colour is a further op for each of the
+ * 17 components. The 93 ops fix the width and the style; the colour is a further op for each of the
  * 17, because an `unset` colour leaves the ring's `outline` shorthand invalid, so no ring is drawn.
  */
 const ring = {
@@ -93,7 +93,20 @@ const look = {
             paddingY: '{form.field.padding.y}',
           },
         },
-        dark: { root: { danger: { background: '{red.300}' }, paddingY: '{form.field.padding.y}' } },
+        dark: {
+          root: {
+            danger: { background: '{red.300}' },
+            help: {
+              background: '{purple.300}',
+              borderColor: '{purple.300}',
+              hoverBackground: '{purple.200}',
+              hoverBorderColor: '{purple.200}',
+              activeBackground: '{purple.100}',
+              activeBorderColor: '{purple.100}',
+            },
+            paddingY: '{form.field.padding.y}',
+          },
+        },
       },
     },
     carousel: {
@@ -143,24 +156,42 @@ const look = {
       },
     },
     message: {
-      info: { color: '{blue.800}', outlined: { color: '{blue.800}' } },
-      success: { color: '{green.800}', outlined: { color: '{green.800}' } },
+      info: {
+        color: '{blue.800}',
+        outlined: { color: '{blue.800}' },
+        simple: { color: '{blue.800}' },
+      },
+      success: {
+        color: '{green.800}',
+        outlined: { color: '{green.800}' },
+        simple: { color: '{green.800}' },
+      },
       warn: {
         color: '{yellow.950}',
         outlined: { color: '{yellow.950}' },
+        simple: { color: '{yellow.950}' },
         closeButton: { focusRing: { color: '{yellow.950}' } },
       },
-      error: { color: '{red.800}' },
+      error: { color: '{red.800}', simple: { color: '{red.800}' } },
       colorScheme: {
         light: {
-          info: { color: '{blue.800}', outlined: { color: '{blue.800}' } },
-          success: { color: '{green.800}', outlined: { color: '{green.800}' } },
+          info: {
+            color: '{blue.800}',
+            outlined: { color: '{blue.800}' },
+            simple: { color: '{blue.800}' },
+          },
+          success: {
+            color: '{green.800}',
+            outlined: { color: '{green.800}' },
+            simple: { color: '{green.800}' },
+          },
           warn: {
             color: '{yellow.950}',
             outlined: { color: '{yellow.950}' },
+            simple: { color: '{yellow.950}' },
             closeButton: { focusRing: { color: '{yellow.950}' } },
           },
-          error: { color: '{red.800}' },
+          error: { color: '{red.800}', simple: { color: '{red.800}' } },
         },
         dark: { error: { color: '{red.300}' } },
       },
@@ -233,6 +264,7 @@ const look = {
           success: { background: '{green.800}' },
           danger: { background: '{red.700}' },
         },
+        dark: { danger: { background: '{red.300}' } },
       },
     },
     toast: {

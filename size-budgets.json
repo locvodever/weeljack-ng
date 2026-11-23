@@ -72,8 +72,8 @@
     {
       "entry": "weeljack-ng/preset-material",
       "optimus": "own",
-      "kb": 1.87,
-      "note": "wjMaterial, Optimus's Material base under every WeeljackNg guarantee (ADR 0010), holding its correction look, its generated palette-step table, its `_brand` rows and its `_css`. The Material base is external to the measurement. Set 2026-11-23 at measured 1.83 KB gzip (1871 B) plus 0.04 KB: a limit of 1.87 KB is 1915 B, a margin of 44 B."
+      "kb": 1.93,
+      "note": "wjMaterial, Optimus's Material base under every WeeljackNg guarantee (ADR 0010), holding its correction look, its generated palette-step table, its `_brand` rows and its `_css`. The Material base is external to the measurement. Set 2026-11-23 at measured 1.88 KB gzip (1929 B) plus 0.05 KB: a limit of 1.93 KB is 1976 B, a margin of 47 B."
     },
     {
       "entry": "weeljack-ng/splitter",

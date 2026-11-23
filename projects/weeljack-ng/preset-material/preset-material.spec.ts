@@ -28,6 +28,7 @@ import { WjListbox } from 'weeljack-ng/listbox';
 import { WjMegaMenu, type WjMegaMenuItem } from 'weeljack-ng/megamenu';
 import { WjMenu } from 'weeljack-ng/menu';
 import { WjMenubar } from 'weeljack-ng/menubar';
+import { WjMessage } from 'weeljack-ng/message';
 import { WjMultiSelect } from 'weeljack-ng/multiselect';
 import { WjPanelMenu } from 'weeljack-ng/panelmenu';
 import { wjMaterial } from 'weeljack-ng/preset-material';
@@ -39,6 +40,7 @@ import { WjSlider } from 'weeljack-ng/slider';
 import { WjStep, WjStepList, WjStepPanel, WjStepPanels, WjStepper } from 'weeljack-ng/stepper';
 import { WjColumn, WjTable } from 'weeljack-ng/table';
 import { WjTab, WjTabList, WjTabPanel, WjTabPanels, WjTabs } from 'weeljack-ng/tabs';
+import { WjTag } from 'weeljack-ng/tag';
 import { WjTextarea } from 'weeljack-ng/textarea';
 import { WjTheme } from 'weeljack-ng/theme';
 import { WjTieredMenu } from 'weeljack-ng/tieredmenu';
@@ -47,7 +49,7 @@ import { WjToggleSwitch } from 'weeljack-ng/toggleswitch';
 import { WjTree } from 'weeljack-ng/tree';
 import { WjTreeSelect } from 'weeljack-ng/treeselect';
 import { describePresetContract } from '../spec-support/preset-contract';
-import { expectNoAxeViolations } from '../spec-support/axe';
+import { expectNoAxeViolations, runAxe } from '../spec-support/axe';
 import { capture, expectPage, styleSheets, type Page } from '../spec-support/theme-snapshot';
 
 /*
@@ -480,6 +482,21 @@ class RadiusHost {
   protected readonly fruit = FRUIT;
   protected readonly menu = MENU;
 }
+
+/** The severities whose Material colours failed `color-contrast` before the T9 fix. */
+@Component({
+  selector: 'wj-material-contrast-host',
+  imports: [WjButton, WjMessage, WjTag],
+  template: `
+    <wj-button label="Help" severity="help" />
+    <wj-message severity="info" variant="simple">Info</wj-message>
+    <wj-message severity="success" variant="simple">Success</wj-message>
+    <wj-message severity="warn" variant="simple">Warn</wj-message>
+    <wj-message severity="error" variant="simple">Error</wj-message>
+    <wj-tag value="Danger" severity="danger" />
+  `,
+})
+class ContrastHost {}
 
 function clearPage(): void {
   ROOT.classList.remove('wj-dark');
@@ -1241,5 +1258,41 @@ describe.each(SCHEMES)('wjMaterial $scheme', ({ dark }) => {
       const focused = query(root, 'wj-tieredmenu .p-focus > .p-tieredmenu-item-content');
       expect(getComputedStyle(focused).outlineStyle).toBe('none');
     });
+  });
+});
+
+describe('wjMaterial colour pairs the token gate cannot see (T9 FR-17)', () => {
+  /** The `color-contrast` violations axe finds inside `selector`, as one line each. */
+  async function contrastIn(
+    fixture: ComponentFixture<unknown>,
+    selector: string,
+  ): Promise<string[]> {
+    const scope = query(nativeOf(fixture), selector);
+    await settled(scope);
+    const violations = await runAxe(scope);
+    return violations
+      .filter((violation) => violation.id === 'color-contrast')
+      .flatMap((violation) => violation.nodes.map((node) => node.target.join(' ')));
+  }
+
+  it('keeps the help button readable in dark', async () => {
+    const fixture = await mount(ContrastHost, true);
+
+    expect(await contrastIn(fixture, 'wj-button')).toEqual([]);
+  });
+
+  it.each(['info', 'success', 'warn', 'error'])(
+    'keeps the simple %s message readable in light',
+    async (severity) => {
+      const fixture = await mount(ContrastHost, false);
+
+      expect(await contrastIn(fixture, `wj-message[severity="${severity}"]`)).toEqual([]);
+    },
+  );
+
+  it('keeps the danger tag readable in dark', async () => {
+    const fixture = await mount(ContrastHost, true);
+
+    expect(await contrastIn(fixture, 'wj-tag')).toEqual([]);
   });
 });
