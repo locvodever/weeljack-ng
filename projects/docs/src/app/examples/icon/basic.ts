@@ -29,6 +29,10 @@ import { WjIcon, wjIconHeart, wjIconMail, wjIconSearch, wjIconStar } from 'weelj
     .accent {
       color: var(--wj-primary-color);
     }
+
+    .accent code {
+      background: none;
+    }
   `,
 })
 export class IconBasicExample {
