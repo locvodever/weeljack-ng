@@ -19,8 +19,8 @@
 <section aria-labelledby="options">
   <h2 id="options" tabindex="-1">Options</h2>
   <p>
-    <code>provideWeeljack</code> reads its options once, at bootstrap. Only <code>primary</code> and
-    <code>surface</code> can change later, through <code>WjTheme</code> (<a
+    <code>provideWeeljack</code> reads its options once, at bootstrap. Only <code>primary</code>,
+    <code>surface</code> and <code>preset</code> can change later, through <code>WjTheme</code> (<a
       href="guides/theming#runtime"
       (click)="jump($event, 'runtime')"
       >below</a
@@ -66,6 +66,51 @@
   <docs-code-block [code]="examples.translationVi" label="translation example" />
 </section>
 
+<section aria-labelledby="presets">
+  <h2 id="presets" tabindex="-1">Presets</h2>
+  <p>
+    A preset is the base look under your colours. Import one from its own entry and pass it as
+    <code>provideWeeljack(&#123; preset &#125;)</code>. Only WeeljackNg's presets are accepted. Noir
+    is the default and needs no import, and <code>primary</code> and <code>surface</code> still
+    apply on top of any preset.
+  </p>
+  <ul>
+    <li>
+      <strong>Noir</strong>,
+      <code>import &#123; wjNoir &#125; from 'weeljack-ng/preset-noir'</code>: the default look, the
+      Aura base with the ink primary on zinc and 8 and 12 px corners.
+    </li>
+    <li>
+      <strong>Aura</strong>,
+      <code>import &#123; wjAura &#125; from 'weeljack-ng/preset-aura'</code>: Aura's own emerald at
+      its light AA step (700), Aura's slate surfaces in light and zinc in dark, and Aura's 6 px
+      corners.
+    </li>
+  </ul>
+  <p>
+    <strong>The cost.</strong> An app on another preset also ships Aura, about 14.4 KB gzip, because
+    the default, Noir, is built into the root on Aura.
+  </p>
+  <p>Every preset keeps these, so a preset cannot break them:</p>
+  <ul>
+    <li>44, 36 and 52 px controls.</li>
+    <li>AA on every contrast pair, in light and dark.</li>
+    <li>One 2 px focus ring at 3:1.</li>
+    <li>Hit boxes of at least 24 px.</li>
+    <li>Reduced motion.</li>
+    <li><code>&#64;layer wj</code> and the <code>wj</code> layer styles.</li>
+  </ul>
+  <p>Everything else that passes, radius included, is the base's own.</p>
+
+  <h3>Switch at runtime</h3>
+  <p>
+    <code>WjTheme.setPreset(wjAura)</code> switches, and <code>setPreset()</code> returns to the
+    <code>provideWeeljack</code> preset. The result equals a bootstrap with the same values, and on
+    the server the call does nothing.
+  </p>
+  <docs-code-block [code]="examples.preset" label="WjTheme.setPreset example" />
+</section>
+
 <section aria-labelledby="runtime">
   <h2 id="runtime" tabindex="-1">Change colours at runtime</h2>
   <p>
@@ -81,8 +126,9 @@
     </li>
     <li>On the server the calls do nothing: the server renders the bootstrap theme.</li>
     <li>
-      Dark mode, radius and fonts are still read once, at bootstrap. An app that never imports
-      <code>weeljack-ng/theme</code> ships none of it.
+      Dark mode, fonts and the translation are still read once, at bootstrap. The radius changes
+      only with the preset. An app that never imports <code>weeljack-ng/theme</code> ships none of
+      it.
     </li>
   </ul>
   @if (themeService; as service) {

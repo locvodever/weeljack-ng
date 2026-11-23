@@ -52,6 +52,7 @@ export class ThemingPage {
   /** The in-page list, in the order of the sections below. */
   protected readonly sections = [
     { id: 'options', title: 'Options' },
+    { id: 'presets', title: 'Presets' },
     { id: 'runtime', title: 'Change colours at runtime' },
     { id: 'default-look', title: 'The default look' },
     { id: 'contrast', title: 'Contrast' },
@@ -72,6 +73,7 @@ export class ThemingPage {
   protected readonly examples = {
     primaryHex: example('primary-hex'),
     primaryScale: example('primary-scale'),
+    preset: example('preset'),
     runtime: example('runtime'),
     surface: example('surface'),
     darkModeSystem: example('dark-mode-system'),
