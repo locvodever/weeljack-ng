@@ -1,5 +1,5 @@
-import { DestroyRef, InjectionToken, inject } from '@angular/core';
-import { ConfirmationService } from '@openng/optimus-ui/api';
+import { DestroyRef, InjectionToken, Injector, inject, runInInjectionContext } from '@angular/core';
+import { ConfirmationService, type Confirmation } from '@openng/optimus-ui/api';
 import { _warnOnce } from './dev-warnings';
 
 /**
@@ -69,4 +69,73 @@ export function _registerConfirmationHost(key: string, selector: string): void {
       `Render one ${selector} at a time`,
     );
   }
+}
+
+/** `confirm()` ran with no host rendered for it, so the confirmation was dropped. */
+const WJ0150 = 'WJ0150';
+
+/**
+ * `WjConfirmation`'s seven fields, written out: `private` never imports the root entry.
+ *
+ * @docs-private
+ */
+// eslint-disable-next-line @typescript-eslint/consistent-type-definitions -- a type alias, as `WjConfirmation` is
+export type _ConfirmationShape = {
+  message: string;
+  header?: string;
+  acceptLabel?: string;
+  rejectLabel?: string;
+  accept?: () => void;
+  reject?: () => void;
+  target?: EventTarget;
+};
+
+/**
+ * The body of `WjConfirmationService.confirm`: warns (`WJ0150`) when no host of the routed kind is
+ * rendered, then forwards the confirmation to Optimus's service.
+ *
+ * @docs-private
+ */
+export function _confirm(
+  confirmations: ConfirmationService,
+  injector: Injector,
+  confirmation: _ConfirmationShape,
+): void {
+  const { message, header, acceptLabel, rejectLabel, accept, reject, target } = confirmation;
+  const key = target === undefined ? _CONFIRM_DIALOG_KEY : _CONFIRM_POPUP_KEY;
+  if (_confirmationHosts(confirmations, key) === 0) {
+    // `confirm()` runs from an event handler, outside any injection context.
+    runInInjectionContext(injector, () => {
+      _warnOnce(
+        WJ0150,
+        'WjConfirmationService',
+        `confirm() was called with no ${key} rendered, so the confirmation was dropped`,
+        `Render one ${key} in your app shell`,
+      );
+    });
+  }
+  // Optional keys are left out rather than set to `undefined` (`exactOptionalPropertyTypes`).
+  const forwarded: Confirmation = {
+    key,
+    message,
+    ...(header === undefined ? {} : { header }),
+    ...(acceptLabel === undefined ? {} : { acceptLabel }),
+    ...(rejectLabel === undefined ? {} : { rejectLabel }),
+    ...(accept === undefined
+      ? {}
+      : {
+          accept: () => {
+            accept();
+          },
+        }),
+    ...(reject === undefined
+      ? {}
+      : {
+          reject: () => {
+            reject();
+          },
+        }),
+    ...(target === undefined ? {} : { target }),
+  };
+  confirmations.confirm(forwarded);
 }

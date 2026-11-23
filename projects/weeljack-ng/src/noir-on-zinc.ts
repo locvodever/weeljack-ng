@@ -1,5 +1,5 @@
 import aura from '@openng/optimus-ui-themes/aura';
-import { definePreset } from '@openng/optimus-ui-themes';
+import { definePreset, palette, type ColorScale } from '@openng/optimus-ui-themes';
 
 /*
  * The default look, "Noir on zinc" (22 Q1-Q3, variant B of the default-look prototype), built on
@@ -44,19 +44,8 @@ function messageText(colour: string) {
   };
 }
 
-const zinc = {
-  50: '{zinc.50}',
-  100: '{zinc.100}',
-  200: '{zinc.200}',
-  300: '{zinc.300}',
-  400: '{zinc.400}',
-  500: '{zinc.500}',
-  600: '{zinc.600}',
-  700: '{zinc.700}',
-  800: '{zinc.800}',
-  900: '{zinc.900}',
-  950: '{zinc.950}',
-};
+// The `{zinc}` form always yields a scale; the cast narrows `palette`'s `string | ColorScale` return.
+const zinc = palette('{zinc}') as ColorScale;
 
 /**
  * Aura plus the always-on layer: focus ring, 44px controls, AA boundaries and severity fills.
