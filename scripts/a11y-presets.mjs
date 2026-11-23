@@ -14,9 +14,6 @@ import { prerenderedPagePaths } from './serve-docs.mjs';
  * light `--wj-primary-color` is in effect, and axe-checked light and dark with the same
  * `AXE_RUN_OPTIONS` the main pass uses. Docs-only pages and the extra states stay Noir-only.
  *
- * A page whose preset does not apply within 10 s is reported as a warning (`missReport`) and
- * retried once in a fresh context with the same stored preset; a second miss fails the run.
- *
  * The presets are the entries `libraryEntries()` finds, read in the order of the generated
  * `preset-loaders.ts` (written from the same entries, in M1's order). An entry the generated list
  * lacks, or a preset module that cannot be loaded, fails the run.
@@ -24,10 +21,6 @@ import { prerenderedPagePaths } from './serve-docs.mjs';
 
 /**
  * @typedef {import('playwright').Page} Page
- * @typedef {import('playwright').BrowserContext} BrowserContext
- * @typedef {{ page: Page, applied: boolean, problems: string[] }} PresetAttempt One page opened
- *   with a stored preset: whether the preset's colour applied, and the page's console errors and
- *   failed requests.
  * @typedef {object} PresetRow One row of the generated `PRESET_LOADERS`.
  * @property {string} name
  * @property {string} label
@@ -123,112 +116,6 @@ export function presetRows() {
 }
 
 /**
- * A browser context that stores the preset `name` under the docs' storage key before every load,
- * as a reader who picked it would have, and records when a `<style>` last changed.
- * @param {import('playwright').Browser} browser
- * @param {string} name
- * @returns {Promise<BrowserContext>}
- */
-async function presetContext(browser, name) {
-  const context = await browser.newContext({ reducedMotion: 'reduce' });
-  await context.addInitScript(
-    ({ key, value }) => {
-      localStorage.setItem(key, value);
-      // Optimus writes each component's styles into its own <style> after the root variables
-      // change, so the pass also waits for those writes to stop (`STYLE_QUIET_MS`).
-      Reflect.set(document, 'wjStyleChange', performance.now());
-      new MutationObserver((records) => {
-        const touchesStyle = records.some(
-          (record) =>
-            record.target.nodeName === 'STYLE' ||
-            record.target.parentNode?.nodeName === 'STYLE' ||
-            [...record.addedNodes, ...record.removedNodes].some(
-              (node) => node.nodeName === 'STYLE',
-            ),
-        );
-        if (touchesStyle) {
-          Reflect.set(document, 'wjStyleChange', performance.now());
-        }
-      }).observe(document, { subtree: true, childList: true, characterData: true });
-    },
-    { key: THEME_STORAGE_KEY, value: JSON.stringify({ preset: name }) },
-  );
-  return context;
-}
-
-/**
- * Opens `url` and waits up to 10 s for the stored preset's light primary. The page's console
- * errors and failed requests are kept for {@link missReport}.
- * @param {BrowserContext} context
- * @param {string} url
- * @param {string} light
- * @param {PresetChecks['settle']} settle
- * @returns {Promise<PresetAttempt>}
- */
-async function openWithPreset(context, url, light, settle) {
-  const page = await context.newPage();
-  /** @type {string[]} */
-  const problems = [];
-  page.on('console', (message) => {
-    if (message.type() === 'error') {
-      problems.push(`console error: ${message.text().split('\n')[0] ?? ''}`);
-    }
-  });
-  page.on('pageerror', (error) => {
-    problems.push(`page error: ${error.message}`);
-  });
-  page.on('requestfailed', (request) => {
-    problems.push(`request failed: ${request.url()} (${request.failure()?.errorText ?? '?'})`);
-  });
-  await page.goto(url, { waitUntil: 'load' });
-  await settle(page, null);
-  try {
-    // The stored preset applies once its lazy chunk has resolved: wait for its colour.
-    await page.waitForFunction(
-      (expected) =>
-        getComputedStyle(document.documentElement)
-          .getPropertyValue('--wj-primary-color')
-          .trim()
-          .toLowerCase() === expected,
-      light,
-      { timeout: 10_000 },
-    );
-    return { page, applied: true, problems };
-  } catch {
-    return { page, applied: false, problems };
-  }
-}
-
-/**
- * One line on a page whose preset did not apply: the primary it has instead, each Optimus sheet
- * that declares `--wj-primary-color` and its value, how many Optimus components are mounted (the
- * miss seen so far was on a page with none), and the first console errors and failed requests.
- * @param {PresetAttempt} attempt
- * @param {string} light
- * @returns {Promise<string>}
- */
-async function missReport({ page, problems }, light) {
-  const { actual, declared, hosts } = await page.evaluate(() => ({
-    actual: getComputedStyle(document.documentElement)
-      .getPropertyValue('--wj-primary-color')
-      .trim(),
-    declared: Array.from(document.querySelectorAll('style[data-optimus-style-id]')).flatMap(
-      (sheet) => {
-        const value = /--wj-primary-color:([^;}]+)/.exec(sheet.textContent ?? '')?.[1];
-        return value === undefined
-          ? []
-          : [`${sheet.getAttribute('data-optimus-style-id') ?? '?'} declares ${value.trim()}`];
-      },
-    ),
-    hosts: document.querySelectorAll('[data-pc-name]').length,
-  }));
-  const sheets = declared.length === 0 ? 'no Optimus sheet declares it' : declared.join(', ');
-  const seen =
-    problems.length === 0 ? 'no console error or failed request' : problems.slice(0, 3).join('; ');
-  return `--wj-primary-color is '${actual}', expected '${light}' (light); ${sheets}; ${String(hosts)} Optimus component(s) mounted; ${seen}`;
-}
-
-/**
  * Runs the axe pass once per preset but Noir.
  * @param {PresetChecks} checks
  * @returns {Promise<{ states: number, failed: number }>}
@@ -251,44 +138,66 @@ export async function checkPresets({ browser, server, settle, axeBothSchemes }) 
       )
       .trim()
       .toLowerCase();
-    const context = await presetContext(browser, row.name);
+    const context = await browser.newContext({ reducedMotion: 'reduce' });
     try {
-      for (const path of paths) {
-        let attempt = await openWithPreset(context, `${server.origin}${path}`, light, settle);
-        /** @type {BrowserContext | undefined} */
-        let retryContext;
-        if (!attempt.applied) {
-          // Bounded retry (PR #60): on a page with no Optimus component mounted, a stored preset
-          // with its own base (Lara, Nora) was seen, in about one full gate run in two, to leave
-          // `semantic-variables` at Noir's text although `WjTheme.setPreset` ran. It never
-          // reproduced outside the full run, standalone or mirrored. One retry in a fresh context
-          // tells a flake from a page that never applies its preset: a second miss still fails.
-          console.warn(
-            `check:a11y: preset ${row.name}: ${path}: ${await missReport(attempt, light)}; retrying once in a fresh context`,
-          );
-          await attempt.page.close();
-          retryContext = await presetContext(browser, row.name);
-          attempt = await openWithPreset(retryContext, `${server.origin}${path}`, light, settle);
-        }
-        try {
-          if (!attempt.applied) {
-            failed += 1;
-            console.error(
-              `check:a11y: preset ${row.name}: ${path}: ${await missReport(attempt, light)} (after one retry)`,
+      await context.addInitScript(
+        ({ key, value }) => {
+          localStorage.setItem(key, value);
+          // Optimus writes each component's styles into its own <style> after the root
+          // variables change, so the pass also waits for those writes to stop (`STYLE_QUIET_MS`).
+          Reflect.set(document, 'wjStyleChange', performance.now());
+          new MutationObserver((records) => {
+            const touchesStyle = records.some(
+              (record) =>
+                record.target.nodeName === 'STYLE' ||
+                record.target.parentNode?.nodeName === 'STYLE' ||
+                [...record.addedNodes, ...record.removedNodes].some(
+                  (node) => node.nodeName === 'STYLE',
+                ),
             );
-            continue;
-          }
-          // The root variables land first; the component styles follow within a few frames.
-          await attempt.page.waitForFunction(
-            (quiet) => performance.now() - Number(Reflect.get(document, 'wjStyleChange')) >= quiet,
-            STYLE_QUIET_MS,
+            if (touchesStyle) {
+              Reflect.set(document, 'wjStyleChange', performance.now());
+            }
+          }).observe(document, { subtree: true, childList: true, characterData: true });
+        },
+        { key: THEME_STORAGE_KEY, value: JSON.stringify({ preset: row.name }) },
+      );
+      for (const path of paths) {
+        const page = await context.newPage();
+        await page.goto(`${server.origin}${path}`, { waitUntil: 'load' });
+        await settle(page, null);
+        try {
+          // The stored preset applies once its lazy chunk has resolved: wait for its colour.
+          await page.waitForFunction(
+            (expected) =>
+              getComputedStyle(document.documentElement)
+                .getPropertyValue('--wj-primary-color')
+                .trim()
+                .toLowerCase() === expected,
+            light,
             { timeout: 10_000 },
           );
-          failed += await axeBothSchemes(attempt.page, `${path} (preset ${row.name})`);
-        } finally {
-          await attempt.page.close();
-          await retryContext?.close();
+        } catch {
+          failed += 1;
+          const actual = await page.evaluate(() =>
+            getComputedStyle(document.documentElement)
+              .getPropertyValue('--wj-primary-color')
+              .trim(),
+          );
+          console.error(
+            `check:a11y: preset ${row.name}: ${path}: --wj-primary-color is '${actual}', expected '${light}' (light)`,
+          );
+          await page.close();
+          continue;
         }
+        // The root variables land first; the component styles follow within a few frames.
+        await page.waitForFunction(
+          (quiet) => performance.now() - Number(Reflect.get(document, 'wjStyleChange')) >= quiet,
+          STYLE_QUIET_MS,
+          { timeout: 10_000 },
+        );
+        failed += await axeBothSchemes(page, `${path} (preset ${row.name})`);
+        await page.close();
       }
     } finally {
       await context.close();
