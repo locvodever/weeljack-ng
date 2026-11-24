@@ -38,6 +38,11 @@ Rules:
 - Read `CLAUDE.md` and `docs/adr/` before changing the Optimus boundary, a wrapper's API, the theme,
   the package layout, versioning or the licence.
 
+## Contributing
+
+Issues and pull requests are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) first: open PRs into
+`dev`, title them as Conventional Commits, and run `npm run check` once before you ask for review.
+
 ## Credits and licence
 
 WeeljackNg is MIT: see [LICENSE](LICENSE).
