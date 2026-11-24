@@ -16,7 +16,7 @@ import type { ComponentDoc, MappingRow } from '../component-doc';
 const droppedAlways = 'Never exposed on any wrapper (ADR 0002).';
 const droppedIcon = 'Icon slots are not exposed (02 Q6).';
 const useAPaginator =
-  'Use a `wj-paginator` beside the table: turn the table’s `paginator` off, give the table the current page from a `computed` slice, and bind `[(first)]` and `[(rows)]` on the `wj-paginator` only. Sorting then covers the shown page only. See the paginator page’s “Beside a table” example.';
+  'Use a `wj-paginator` beside the table only for another pager layout, such as another number of page links, or no page links or first and last buttons: turn the table’s `paginator` off, give the table the current page from a `computed` slice, and bind `[(first)]` and `[(rows)]` on the `wj-paginator` only. Sorting then covers the shown page only. The page report needs none of this: it is `showCurrentPageReport` on the table. See the paginator page’s “Beside a table” example.';
 
 const dropped = (optimus: string, note: string): MappingRow => ({
   optimus,
@@ -55,7 +55,7 @@ export const DOC: ComponentDoc = {
     {
       title: 'Paging',
       description:
-        "Turn `paginator` on to show a pager under the rows: `rows` is the page size (10 when you give none), `first` is the index of the first row of the page, and both are two-way. `rowsPerPageOptions` adds a select for the page size, `paginatorPosition` moves the pager to `top` or `both` (`WjPaginatorPosition`, imported `from 'weeljack-ng'`), and `totalRecords` sets the row count when it is not the length of `value`. `pageChange` emits a `WjPageEvent` (`{ first, rows }`, imported `from 'weeljack-ng'`) after `first` and `rows` have been written. This table has 23 rows, five to a page. For a page report or page links, turn `paginator` off and put a `wj-paginator` beside the table: the table does not slice its rows when its own pager is off, so give it the current page from a `computed` slice of `first` and `rows`, bound on the `wj-paginator` only (sorting then covers the shown page only). The paginator page’s “Beside a table” example shows it.",
+        "Turn `paginator` on to show a pager under the rows: `rows` is the page size (10 when you give none), `first` is the index of the first row of the page, and both are two-way. `rowsPerPageOptions` adds a select for the page size, `paginatorPosition` moves the pager to `top` or `both` (`WjPaginatorPosition`, imported `from 'weeljack-ng'`), and `totalRecords` sets the row count when it is not the length of `value`. `pageChange` emits a `WjPageEvent` (`{ first, rows }`, imported `from 'weeljack-ng'`) after `first` and `rows` have been written. `showCurrentPageReport` adds a report such as “1 of 5” to the table’s own pager, and `currentPageReportTemplate` fills in `{currentPage}`, `{totalPages}`, `{rows}`, `{first}`, `{last}` and `{totalRecords}`. The template is your text, rendered as text, and the English default is not translated. Sorting still covers every row, not only the shown page. This table has 23 rows, five to a page, with the report on. For another pager layout, such as another number of page links, turn `paginator` off and put a `wj-paginator` beside the table: the table does not slice its rows when its own pager is off, so give it the current page from a `computed` slice of `first` and `rows`, bound on the `wj-paginator` only (sorting then covers the shown page only). The paginator page’s “Beside a table” example shows it.",
       sourceKey: 'table/paging',
       component: TablePagingExample,
     },
@@ -125,7 +125,7 @@ export const DOC: ComponentDoc = {
     {
       title: 'Testing with the harness',
       description:
-        'Import `WjTableHarness` from `weeljack-ng/table/testing`. `getHeaderTexts()`, `getRows()` and `getCellTexts()` read the table as a user meets it, `sortBy(header)` and `getSortOrder(header)` drive and read a column, and `getCurrentPage()`, `goToNextPage()`, `goToPreviousPage()` and `goToPage(page)` drive the pager. `selectRow(index)`, `getSelectedRowIndexes()` and `toggleAllRows()` drive selection; `toggleRowExpansion(index)`, `isRowExpanded(index)` and `getExpansionText(index)` row expansion; `editRow(index)`, `saveRowEdit(index)` and `cancelRowEdit(index)` row editing; and `filterColumn(header, text)` types a filter and applies it, in a row or a menu. `getGroupHeaderTexts()`, `isEmpty()`, `getEmptyText()`, `isLoading()`, `getCaptionText()` and `getSummaryText()` read the states. `getHeaderTexts()` and `getCellTexts()` list data columns only, never the checkbox, toggle or actions columns. `WjTableHarness.with({ caption })` finds a table by its name: its `ariaLabel`, or the text its `ariaLabelledBy` points at. Rows and cells have their own harnesses: `WjTableRowHarness` adds `isSelected()` and `isExpanded()`, and `WjTableCellHarness` reads one data cell. Nothing here names an Optimus class.',
+        'Import `WjTableHarness` from `weeljack-ng/table/testing`. `getHeaderTexts()`, `getRows()` and `getCellTexts()` read the table as a user meets it, `sortBy(header)` and `getSortOrder(header)` drive and read a column, and `getCurrentPage()`, `goToNextPage()`, `goToPreviousPage()` and `goToPage(page)` drive the pager. `getReportText()` reads the page report, or `null` when it is off. `selectRow(index)`, `getSelectedRowIndexes()` and `toggleAllRows()` drive selection; `toggleRowExpansion(index)`, `isRowExpanded(index)` and `getExpansionText(index)` row expansion; `editRow(index)`, `saveRowEdit(index)` and `cancelRowEdit(index)` row editing; and `filterColumn(header, text)` types a filter and applies it, in a row or a menu. `getGroupHeaderTexts()`, `isEmpty()`, `getEmptyText()`, `isLoading()`, `getCaptionText()` and `getSummaryText()` read the states. `getHeaderTexts()` and `getCellTexts()` list data columns only, never the checkbox, toggle or actions columns. `WjTableHarness.with({ caption })` finds a table by its name: its `ariaLabel`, or the text its `ariaLabelledBy` points at. Rows and cells have their own harnesses: `WjTableRowHarness` adds `isSelected()` and `isExpanded()`, and `WjTableCellHarness` reads one data cell. Nothing here names an Optimus class.',
       sourceKey: 'table/testing',
       component: null,
     },
@@ -204,6 +204,7 @@ export const DOC: ComponentDoc = {
     'Selection: in multiple mode each row has a checkbox, and the header has a select-all checkbox; all are named from the translation (`aria.selectRow`, `unselectRow`, `selectAll` and `unselectAll`), with one name per checkbox in both states: "Select row" and "Select all" (vi "Chọn hàng", "Chọn tất cả"); the checkbox’s own state says whether it is checked. Optimus gap: in single mode a selected row is shown by its fill only, and nothing tells a screen reader which row is selected, so use multiple mode where that matters.',
     'Optimus gap: in single or multiple mode every row is a tab stop until one is clicked or selected by key, then only that row is. A selection you set from code, with no click, leaves no row a tab stop, and the keyboard reaches the rows only through their checkboxes, toggles and buttons.',
     'Row expansion and editing: the toggle, Edit, Save and Cancel are 28 px buttons with no visible text, named from the translation (`aria.expandRow`, `editRow`, `saveEdit` and `cancelEdit`). The toggle’s name does not change: its state is `aria-expanded`. Edit moves focus to the first editor of the row (else to Save), and Save and Cancel move it back to Edit. An editor needs its own name, such as an `aria-label` of its column, because it has no header of its own.',
+    'Translation gap: the English default of `currentPageReportTemplate`, "{currentPage} of {totalPages}", is not part of the translation, so it stays English. Pass your own wording, in the language of the page.',
     'Translation gap: Optimus’s English defaults are status wording, not names: `aria.expandRow` is "Row Expanded" and `emptyMessage` is "No available options", which is list wording. An app fixes them with the `translation` option of `provideWeeljack`, or, for the empty row, with `wjTableEmpty`.',
     'Optimus gap: `groupRowsBy` and row expansion do not combine. Optimus expands a grouped table by group, and writes each group header after the first row of its group.',
     'Loading: `loading` sets `aria-busy="true"` on the table. With `wjTableLoading` the rows give way to that slot; without it the rows stay under Optimus’s mask, and a table with no rows keeps its empty row, blank, so no text says "empty" before the rows arrive.',
@@ -285,10 +286,12 @@ export const DOC: ComponentDoc = {
       note: 'Folded into the two models.',
     },
     {
-      optimus: 'paginator, totalRecords, paginatorPosition',
-      weeljack: 'paginator, totalRecords, paginatorPosition',
+      optimus:
+        'paginator, totalRecords, paginatorPosition, showCurrentPageReport, currentPageReportTemplate',
+      weeljack:
+        'paginator, totalRecords, paginatorPosition, showCurrentPageReport, currentPageReportTemplate',
       status: 'kept',
-      note: '`paginatorPosition` is `WjPaginatorPosition` (`top`, `bottom` or `both`) from `weeljack-ng`.',
+      note: '`paginatorPosition` is `WjPaginatorPosition` (`top`, `bottom` or `both`) from `weeljack-ng`. `currentPageReportTemplate` renders as text, never as HTML.',
     },
     {
       optimus: 'rowsPerPageOptions',
@@ -455,7 +458,7 @@ export const DOC: ComponentDoc = {
       `${droppedAlways} Use the host’s \`class\` and \`style\`, and \`pt\`.`,
     ),
     dropped(
-      'pageLinks, alwaysShowPaginator, showCurrentPageReport, currentPageReportTemplate, showJumpToPageDropdown, showJumpToPageInput, showFirstLastIcon, showPageLinks, paginatorDropdownAppendTo, paginatorDropdownScrollHeight, paginatorLocale',
+      'pageLinks, alwaysShowPaginator, showJumpToPageDropdown, showJumpToPageInput, showFirstLastIcon, showPageLinks, paginatorDropdownAppendTo, paginatorDropdownScrollHeight, paginatorLocale',
       useAPaginator,
     ),
     dropped('paginatorleft, paginatorright, paginatordropdownitem templates', useAPaginator),

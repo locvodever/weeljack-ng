@@ -60,6 +60,8 @@ function manyOrders(count: number): Order[] {
         [totalRecords]="totalRecords()"
         [rowsPerPageOptions]="rowsPerPageOptions()"
         [paginatorPosition]="paginatorPosition()"
+        [showCurrentPageReport]="showCurrentPageReport()"
+        [currentPageReportTemplate]="currentPageReportTemplate()"
         [size]="size()"
         [showGridlines]="showGridlines()"
         [stripedRows]="stripedRows()"
@@ -110,6 +112,8 @@ class Host {
   readonly totalRecords = signal(0);
   readonly rowsPerPageOptions = signal<number[] | undefined>(undefined);
   readonly paginatorPosition = signal<'top' | 'bottom' | 'both'>('bottom');
+  readonly showCurrentPageReport = signal(false);
+  readonly currentPageReportTemplate = signal('{currentPage} of {totalPages}');
   readonly size = signal<WjTableSize | undefined>(undefined);
   readonly showGridlines = signal(false);
   readonly stripedRows = signal(false);
@@ -629,6 +633,93 @@ describe('WjTable', () => {
           table.getBoundingClientRect().bottom,
         );
       }
+    });
+  });
+
+  describe('page report', () => {
+    const paged = (host: Host): void => {
+      host.rows.set(manyOrders(23));
+      host.paginator.set(true);
+    };
+
+    it('is off by default', async () => {
+      const { element, table } = await render('light', paged);
+
+      expect(await table.getReportText()).toBeNull();
+      expect(element.querySelector('.p-paginator-current')).toBeNull();
+    });
+
+    it('shows the page of the pages with the default template, and follows the page', async () => {
+      const { table } = await render('light', (host) => {
+        paged(host);
+        host.showCurrentPageReport.set(true);
+      });
+      expect(await table.getReportText()).toBe('1 of 3');
+
+      await table.goToNextPage();
+
+      expect(await table.getReportText()).toBe('2 of 3');
+    });
+
+    it('fills in every placeholder of currentPageReportTemplate', async () => {
+      const { table } = await render('light', (host) => {
+        paged(host);
+        host.showCurrentPageReport.set(true);
+        host.currentPageReportTemplate.set('Showing {first} to {last} of {totalRecords}');
+      });
+
+      expect(await table.getReportText()).toBe('Showing 1 to 10 of 23');
+    });
+
+    it('follows the rows per page', async () => {
+      const { fixture, host, table } = await render('light', (initial) => {
+        paged(initial);
+        initial.showCurrentPageReport.set(true);
+      });
+      expect(await table.getReportText()).toBe('1 of 3');
+
+      host.pageSize.set(5);
+      await fixture.whenStable();
+
+      expect(await table.getReportText()).toBe('1 of 5');
+    });
+
+    it('keeps sorting every row, not only the rows of the page', async () => {
+      const { fixture, host, table } = await render('light', (initial) => {
+        paged(initial);
+        initial.showCurrentPageReport.set(true);
+      });
+      expect((await table.getCellTexts())[0]?.[1]).toBe('Customer 01');
+
+      host.sortField.set('total');
+      host.sortOrder.set(-1);
+      await fixture.whenStable();
+
+      expect((await table.getCellTexts())[0]?.[1]).toBe('Customer 23');
+      expect(await table.getRows()).toHaveLength(10);
+      expect(await table.getReportText()).toBe('1 of 3');
+    });
+
+    it('renders a template with markup as text', async () => {
+      const { element, table } = await render('light', (host) => {
+        paged(host);
+        host.showCurrentPageReport.set(true);
+        host.currentPageReportTemplate.set('<b>{currentPage}</b> of {totalPages}');
+      });
+
+      expect(await table.getReportText()).toBe('<b>1</b> of 3');
+      expect(part(element, '.p-paginator-current').querySelector('b')).toBeNull();
+    });
+
+    describe.each<Scheme>(['light', 'dark'])('%s', (scheme) => {
+      it('has no axe violations with the report on', async () => {
+        const { element } = await render(scheme, (host) => {
+          paged(host);
+          host.showCurrentPageReport.set(true);
+        });
+
+        await expectNoAxeViolations(element);
+      });
     });
   });
 

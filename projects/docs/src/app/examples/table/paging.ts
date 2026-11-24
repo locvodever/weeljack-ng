@@ -24,6 +24,7 @@ function generateOrders(count: number): Order[] {
     <wj-table
       [value]="orders"
       paginator
+      showCurrentPageReport
       [rows]="5"
       [rowsPerPageOptions]="[5, 10, 20]"
       ariaLabel="Orders, paged"

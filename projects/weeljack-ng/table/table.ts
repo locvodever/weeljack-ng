@@ -179,6 +179,14 @@ export class WjTable<T = unknown> {
   readonly rowsPerPageOptions = input<number[]>();
   /** Where the pager sits: above, below or both. */
   readonly paginatorPosition = input<WjPaginatorPosition>('bottom');
+  /** Shows the current page report in the pager. */
+  readonly showCurrentPageReport = input(false, { transform: booleanAttribute });
+  /**
+   * Template of the report: `{currentPage}`, `{totalPages}`, `{rows}`, `{first}`, `{last}` and
+   * `{totalRecords}` are replaced. Rendered as text, never as HTML. The English default is not
+   * translated: set your own wording.
+   */
+  readonly currentPageReportTemplate = input('{currentPage} of {totalPages}');
   /** Row density. */
   readonly size = input<WjTableSize>();
   /** Draws a border between every cell. */
