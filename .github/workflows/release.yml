@@ -72,8 +72,11 @@ jobs:
           fi
         env:
           TAG_NAME: ${{ needs.release-please.outputs.tag_name }}
+      # npm pack does not create --pack-destination; without the mkdir it fails with ENOENT (0.1.0's run).
       - name: Pack the library tarball
-        run: npm pack ./dist/weeljack-ng --pack-destination "$RUNNER_TEMP/tarball"
+        run: |
+          mkdir -p "$RUNNER_TEMP/tarball"
+          npm pack ./dist/weeljack-ng --pack-destination "$RUNNER_TEMP/tarball"
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: weeljack-ng-tarball
