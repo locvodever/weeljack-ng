@@ -1,0 +1,40 @@
+/* One unencapsulated stylesheet (ui-spec A2, A4, G2). Optimus's `p-imagecompare` element is inline,
+   so its 16:9 box, which needs a block, never forms: both elements are blocks. The handle is
+   Optimus's component variables set on the host, so the clip and the half-outside handle stay
+   Optimus's. The handle
+   is a two-tone 24 px disc (fill and ring each clear 3:1 against a photo in one scheme) that grows to
+   Optimus's hover size on hover and on keyboard focus; the focus ring takes the preset's colour. The
+   focus rule restates Optimus's hover rule (the slider widens by the handle size, so it is
+   re-centred). Its growth runs over Optimus's own transition, which reduced motion zeroes at the
+   root. */
+@layer wj {
+  wj-imagecompare,
+  wj-imagecompare p-imagecompare {
+    display: block;
+  }
+
+  wj-imagecompare {
+    --wj-imagecompare-handle-size: 24px;
+    --wj-imagecompare-handle-background: var(--wj-content-background);
+    --wj-imagecompare-handle-hover-background: var(--wj-content-background);
+    --wj-imagecompare-handle-border-width: 2px;
+    --wj-imagecompare-handle-border-color: var(--wj-primary-color);
+    --wj-imagecompare-handle-hover-border-color: var(--wj-primary-color);
+    --wj-imagecompare-handle-focus-ring-color: var(--wj-focus-ring-color);
+  }
+
+  wj-imagecompare .p-imagecompare-slider:focus-visible {
+    width: calc(100% + var(--wj-imagecompare-handle-hover-size));
+    margin-inline-start: calc(-1 * var(--wj-imagecompare-handle-hover-size) / 2);
+  }
+
+  wj-imagecompare .p-imagecompare-slider:focus-visible::-webkit-slider-thumb {
+    width: var(--wj-imagecompare-handle-hover-size);
+    height: var(--wj-imagecompare-handle-hover-size);
+  }
+
+  wj-imagecompare .p-imagecompare-slider:focus-visible::-moz-range-thumb {
+    width: var(--wj-imagecompare-handle-hover-size);
+    height: var(--wj-imagecompare-handle-hover-size);
+  }
+}

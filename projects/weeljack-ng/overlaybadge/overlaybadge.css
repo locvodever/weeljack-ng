@@ -1,0 +1,29 @@
+/* Optimus's root is a block `div`, which around an inline control spans the row and anchors the
+   badge to the row's edge. The host, the `p-overlaybadge` element and Optimus's root are all
+   inline-flex, so the box hugs the control and the badge sits on its corner. Optimus sets no
+   `display` on its root, so this wins without a specificity fight; the root is Optimus's, not
+   ours (no encapsulation attribute), so it is reached through `::ng-deep`. The badge stays on
+   one line (else a value wider than the control wraps inside the fixed-height pill) and passes
+   the pointer through, so a click on it reaches the control. */
+@layer wj {
+  :host,
+  p-overlaybadge {
+    display: inline-flex;
+  }
+
+  :host ::ng-deep .p-overlaybadge {
+    display: inline-flex;
+  }
+
+  :host ::ng-deep .p-overlaybadge .p-badge {
+    white-space: nowrap;
+    pointer-events: none;
+  }
+
+  /* The injected Optimus style pins the badge with `right: 0` and never mirrors it. */
+  :host ::ng-deep .p-overlaybadge .p-badge:dir(rtl) {
+    right: auto;
+    left: 0;
+    transform: translate(-50%, -50%);
+  }
+}

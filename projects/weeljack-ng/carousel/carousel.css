@@ -1,0 +1,34 @@
+/* One unencapsulated stylesheet (ui-spec A5, H2-H4). The host is a block. Each indicator button
+   grows to a 32 x 24 box: 8 px of transparent block padding, with the 32 x 8 bar painted on the
+   content box (the extra class beats Optimus's hover and active rules, whose `background`
+   shorthand resets the clip), so the bar keeps its size and the list's block padding drops 16 ->
+   8 px to keep its place. The bar's colours are the preset's 3:1 control-boundary colours (Aura's inactive is under
+   3:1). The content container gets 4 px so the navigators' rings are not clipped by its scroll
+   overflow. Optimus slides with an inline 500 ms transition that no option reaches: under reduced
+   motion it is 1 ms, never none, because `transitionend` must still fire for the circular wrap. Only
+   while Optimus's inline `transition` is set: its reset jump after the wrap clears it, and that jump
+   must stay instant, or it would start a transition (and an event) of its own. */
+@layer wj {
+  wj-carousel {
+    display: block;
+    --wj-carousel-indicator-background: var(--wj-form-field-border-color);
+    --wj-carousel-indicator-hover-background: var(--wj-form-field-hover-border-color);
+    --wj-carousel-indicator-list-padding: 8px 1rem;
+  }
+
+  wj-carousel .p-carousel-content-container {
+    padding: 4px;
+  }
+
+  wj-carousel .p-carousel-indicator .p-carousel-indicator-button {
+    box-sizing: content-box;
+    padding-block: 8px;
+    background-clip: content-box;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    wj-carousel .p-carousel-item-list[style*='transition'] {
+      transition-duration: 1ms !important; /* motion: the reduced-motion floor; never none, transitionend must fire for the circular wrap */
+    }
+  }
+}

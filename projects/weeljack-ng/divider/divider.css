@@ -1,0 +1,13 @@
+/* The host is a block, so a horizontal divider (Optimus's own element, a flex box) fills its width.
+   A vertical one is a flex box too: as an item of a flex or grid row it stretches to the row's
+   height, and Optimus's element, which has `min-height: 100%`, fills it. Everything else is the
+   preset. */
+@layer wj {
+  :host {
+    display: block;
+  }
+
+  :host([data-wj-orientation='vertical']) {
+    display: flex;
+  }
+}

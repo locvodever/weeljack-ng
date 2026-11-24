@@ -1,0 +1,5 @@
+<p-confirmDialog appendTo="self" [key]="key" [pt]="partAttributes()" (onHide)="open.set(false)">
+  <ng-template #message>
+    <p class="message" [id]="messageId">{{ text() }}</p>
+  </ng-template>
+</p-confirmDialog>

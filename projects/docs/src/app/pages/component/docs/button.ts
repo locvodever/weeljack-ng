@@ -4,6 +4,7 @@ import { ButtonLoadingExample } from '../../../examples/button/loading';
 import { ButtonSeveritiesExample } from '../../../examples/button/severities';
 import { ButtonSizesExample } from '../../../examples/button/sizes';
 import { ButtonVariantsExample } from '../../../examples/button/variants';
+import { ButtonWithIconExample } from '../../../examples/button/with-icon';
 import type { ComponentDoc, MappingRow } from '../component-doc';
 
 const droppedByNeed = 'Not exposed: WeeljackNg exposes by need, never a mirror.';
@@ -53,6 +54,13 @@ export const DOC: ComponentDoc = {
       component: ButtonVariantsExample,
     },
     {
+      title: 'With an icon',
+      description:
+        'Project a `wj-icon` into the button: it renders before the label. Text goes in `label`; projected content is for a `wj-icon`, which stays decorative. A button without `label` is icon-only: square (44 × 44 px by default, 36 × 36 small and 52 × 52 large) and named by `ariaLabel`, which it must set.',
+      sourceKey: 'button/with-icon',
+      component: ButtonWithIconExample,
+    },
+    {
       title: 'Severities',
       description: 'The colour roles. Left unset, a button takes the primary (ink) look.',
       sourceKey: 'button/severities',
@@ -76,10 +84,11 @@ export const DOC: ComponentDoc = {
     },
   ],
   aria: [
-    'The accessible name is the label or the projected content. An icon-only button must set `ariaLabel`.',
+    'The accessible name comes from `label`. Text goes in `label`: projected content is for a `wj-icon`, which is decorative and never names the button. A button without `label` is icon-only and square, and must set `ariaLabel`.',
     '`ariaLabel`, `ariaLabelledBy` and `ariaDescribedBy` are set on the focusable `button` element, not on the `wj-button` host.',
     'Setting an `aria-*` attribute on the `wj-button` host logs the dev-mode warning `WJ0003`: use the inputs instead.',
     'While `loading`, the button sets `aria-busy="true"`.',
+    'A button that opens a popup (a menu, a popover, a dialog) sets `ariaHasPopup` (`menu`, `listbox`, `tree`, `grid` or `dialog`) and `ariaExpanded`, bound to whether the popup is open. Both are set on the `button` element and are absent until set; `ariaExpanded="false"` is written as `aria-expanded="false"`.',
     'The screen-reader pass (NVDA with Chrome) is recorded on this page before `0.1.0`.',
   ],
   stylingIntro:
@@ -89,13 +98,18 @@ export const DOC: ComponentDoc = {
     {
       part: 'root',
       description:
-        'The native `button`. `wj-button` merges `aria-labelledby`, `aria-describedby` and `aria-busy` into it, and they win over a `pt` value.',
+        'The native `button`. `wj-button` merges `aria-labelledby`, `aria-describedby`, `aria-haspopup`, `aria-expanded` and `aria-busy` into it, and they win over a `pt` value.',
     },
     { part: 'label', description: 'The label text element.' },
     { part: 'loadingIcon', description: 'The spinner shown while `loading`.' },
   ],
   mapping: [
-    { optimus: 'label', weeljack: 'label', status: 'kept', note: 'Rendered as text.' },
+    {
+      optimus: 'label',
+      weeljack: 'label',
+      status: 'kept',
+      note: 'Rendered as text, and the only place for the button text: without it the button is icon-only and square, and needs `ariaLabel`.',
+    },
     { optimus: 'loading', weeljack: 'loading', status: 'kept', note: 'Accepts a bare attribute.' },
     {
       optimus: 'disabled',
@@ -115,7 +129,7 @@ export const DOC: ComponentDoc = {
       optimus: 'ariaLabel',
       weeljack: 'ariaLabel',
       status: 'kept',
-      note: 'Set on the focusable element.',
+      note: 'Set on the focusable element. Required on an icon-only button (one without `label`).',
     },
     {
       optimus: 'pt',
@@ -165,13 +179,31 @@ export const DOC: ComponentDoc = {
       status: 'added',
       note: 'Set on the focusable element.',
     },
+    {
+      optimus: 'None',
+      weeljack: 'ariaHasPopup',
+      status: 'added',
+      note: 'Set on the focusable element as `aria-haspopup`.',
+    },
+    {
+      optimus: 'None',
+      weeljack: 'ariaExpanded',
+      status: 'added',
+      note: 'Set on the focusable element as `aria-expanded`.',
+    },
     dropped('dt, unstyled, ptOptions', droppedAlways),
     dropped('style, styleClass', droppedAlways),
     dropped('raised, rounded, plain, link', droppedByNeed),
-    dropped('icon, iconPos, loadingIcon', 'Icons are projected content; the spinner is built in.'),
+    dropped(
+      'icon, iconPos, loadingIcon',
+      'Put a `wj-icon` inside as projected content; text goes in `label`. The spinner is built in.',
+    ),
     dropped('badge, badgeClass, badgeSeverity', droppedByNeed),
     dropped('fluid, tabindex, autofocus, buttonProps', droppedByNeed),
-    dropped('contentTemplate, iconTemplate, loadingIconTemplate', 'Content is projected.'),
+    dropped(
+      'contentTemplate, iconTemplate, loadingIconTemplate',
+      'Project a `wj-icon`; text goes in `label`.',
+    ),
     dropped('hostName, [pButton], pButtonLabel, pButtonIcon, ButtonModule', droppedByNeed),
   ],
 };

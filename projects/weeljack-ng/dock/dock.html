@@ -1,0 +1,19 @@
+@if (browser()) {
+  @let model = mapped();
+  <p-dock
+    [model]="model.items"
+    [position]="position()"
+    [ariaLabel]="ariaLabel()"
+    [ariaLabelledBy]="ariaLabelledBy()"
+    [pt]="partAttributes()"
+  >
+    @if (itemSlot(); as slot) {
+      <ng-template #item let-item>
+        @let entry = model.source(item);
+        @if (entry) {
+          <ng-container *ngTemplateOutlet="slot.template; context: { $implicit: entry }" />
+        }
+      </ng-template>
+    }
+  </p-dock>
+}

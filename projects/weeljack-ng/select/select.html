@@ -1,0 +1,21 @@
+<p-select
+  optionLabel="label"
+  optionValue="value"
+  optionDisabled="disabled"
+  [options]="options()"
+  [inputId]="field.id()"
+  [ariaLabel]="ariaLabel()"
+  [ariaLabelledBy]="field.labelledBy()"
+  [disabled]="isDisabled()"
+  [required]="required()"
+  [invalid]="field.invalid()"
+  [placeholder]="placeholder()"
+  [size]="size()"
+  [motionOptions]="{ safe: true }"
+  [pt]="partAttributes()"
+  (onShow)="open.set(true)"
+  (onHide)="open.set(false)"
+/>
+<span data-wj-announcer class="wj-announcer" role="status" aria-live="polite">{{
+  announcement()
+}}</span>

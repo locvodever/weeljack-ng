@@ -1,0 +1,229 @@
+import {
+  Component,
+  ElementRef,
+  afterNextRender,
+  booleanAttribute,
+  computed,
+  inject,
+  input,
+  model,
+  signal,
+  viewChild,
+} from '@angular/core';
+import { NG_VALUE_ACCESSOR, type ControlValueAccessor } from '@angular/forms';
+import { Optimus } from '@openng/optimus-ui/config';
+import { Select } from '@openng/optimus-ui/select';
+import {
+  _bridgeAccessor,
+  type _AccessorHost,
+  _mergePartAttributes,
+  _registerWithField,
+} from 'weeljack-ng/private';
+import type { WjSelectOption, WjSelectPt, WjSelectSize } from './select-types';
+
+/** How many pickable options PageDown and PageUp move focus by. */
+const PAGE_STEP = 10;
+
+/** An option index an Optimus finder returned, `-1` when it is not a number. */
+function asIndex(value: unknown): number {
+  return typeof value === 'number' ? value : -1;
+}
+
+/** Whether the pass-through context Optimus gives an `option` part describes a disabled option. */
+function isDisabledOption(options: unknown): boolean {
+  return Reflect.get(Object(Reflect.get(Object(options), 'context')), 'disabled') === true;
+}
+
+/**
+ * A single-choice select over Optimus's `p-select`: a closed combobox that opens a list of
+ * `options`. Bind `[(value)]`, or use `ngModel`, a `FormControl` or `[formField]`: it is its own
+ * value accessor, and `value` is the picked option's `value` (`null` while none is picked). Outside
+ * a `wj-field`, give it `ariaLabel` or `ariaLabelledBy`: the focusable element is a `span`, so a
+ * `<label for>` cannot name it.
+ *
+ * Inside a `wj-field` the field's label names the combobox, a click on that label focuses it, and
+ * the field describes it and marks it invalid. The list opens inside the host, and its empty
+ * message and its accessible name come from the translation. Size the control with `class` or
+ * `style` on the host.
+ */
+@Component({
+  selector: 'wj-select',
+  imports: [Select],
+  providers: [{ provide: NG_VALUE_ACCESSOR, useExisting: WjSelect, multi: true }],
+  templateUrl: './select.html',
+  styleUrl: './select.css',
+})
+export class WjSelect<T> implements ControlValueAccessor {
+  /** The picked option's `value`, `null` while none is picked. Two-way: `[(value)]`. */
+  readonly value = model<T | null>(null);
+  /** The choices, in order. An empty list shows the translation's empty message when opened. */
+  readonly options = input<WjSelectOption<T>[]>([]);
+  /** Makes the select inert. A form can disable it too. */
+  readonly disabled = input(false, { transform: booleanAttribute });
+  /** Marks the select as required. */
+  readonly required = input(false, { transform: booleanAttribute });
+  /**
+   * Shows the invalid look and `aria-invalid`. Inside a `wj-field` the field's error state is shown
+   * instead.
+   */
+  readonly invalid = input(false, { transform: booleanAttribute });
+  /** Id of the combobox element. Inside a field one is generated. */
+  readonly inputId = input<string>();
+  /** Accessible name when there is no visible label. Set on the combobox. */
+  readonly ariaLabel = input<string>();
+  /**
+   * Id of the element that names the select. Set on the combobox. Inside a `wj-field` it defaults
+   * to the field's label; a value set here wins.
+   */
+  readonly ariaLabelledBy = input<string>();
+  /** Id of the element that describes the select. Set on the combobox. */
+  readonly ariaDescribedBy = input<string>();
+  /** Hint text shown while no option is picked. Rendered as text. */
+  readonly placeholder = input<string>();
+  /** Height step: 44 px by default, 36 px `small`, 52 px `large`. */
+  readonly size = input<WjSelectSize>();
+  /**
+   * Pass-through for the select's parts. Tracks Optimus: its part names and attributes follow the
+   * installed `@openng/optimus-ui` minor and are outside this component's stable API; changes to
+   * them ship only in the release that takes a new Optimus minor and are not breaking.
+   */
+  readonly pt = input<WjSelectPt>();
+
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;
+  private readonly inner = viewChild(Select);
+  protected readonly isDisabled = _bridgeAccessor(
+    this,
+    'wj-select',
+    this.value,
+    this.inner,
+    this.disabled,
+  );
+  protected readonly field: ReturnType<typeof _registerWithField> = _registerWithField({
+    entry: 'select',
+    id: this.inputId,
+    describedBy: this.ariaDescribedBy,
+    labelledBy: this.ariaLabelledBy,
+    invalid: this.invalid,
+    labelable: false,
+  });
+
+  private readonly translation = inject(Optimus);
+
+  /** Whether the list is open: Optimus's `onShow` and `onHide`. */
+  protected readonly open = signal(false);
+
+  /**
+   * What the polite region reads: the translation's `emptyMessage` while the list is open with no
+   * options, empty otherwise. Optimus shows that message as the list's only row and announces
+   * nothing.
+   */
+  protected readonly announcement = computed(() => {
+    if (!this.open() || this.options().length > 0) {
+      return '';
+    }
+    const text: unknown = this.translation.getTranslation('emptyMessage');
+    return typeof text === 'string' ? text : '';
+  });
+
+  /**
+   * `pt` forwarded as given, plus what this wrapper routes into Optimus's parts: the ARIA
+   * attributes on the combobox, and four gaps closed here. Optimus's two hidden focus-trap spans
+   * sit in the Tab order, so Tab from an open list would land on one and lose focus when the list
+   * closed; it never marks a disabled option `aria-disabled`, so assistive tech would not know the
+   * option is unavailable; and its chevron is a second, English-only "dropdown trigger" button
+   * beside the combobox, so it is hidden from assistive tech; and its empty row is `role="option"`
+   * though nothing in it can be picked, so the row is presentational (the polite region carries
+   * its text) and, while there are no options, the list is a group, since a listbox with no
+   * option in it is invalid ARIA.
+   */
+  protected readonly partAttributes = computed<WjSelectPt>(() => {
+    const untabbable = { tabindex: '-1' };
+    const base = _mergePartAttributes(
+      _mergePartAttributes(
+        _mergePartAttributes(
+          _mergePartAttributes(
+            _mergePartAttributes(this.pt(), 'label', {
+              'aria-describedby': this.field.describedBy(),
+              'aria-invalid': this.field.invalid() ? 'true' : undefined,
+            }),
+            'hiddenFirstFocusableEl',
+            untabbable,
+          ),
+          'hiddenLastFocusableEl',
+          untabbable,
+        ),
+        'dropdown',
+        { 'aria-hidden': 'true' },
+      ),
+      'emptyMessage',
+      { role: 'presentation' },
+    );
+    const routed =
+      this.options().length === 0 ? _mergePartAttributes(base, 'list', { role: 'group' }) : base;
+    return (context) => {
+      const pt = routed(context);
+      const own = pt.option;
+      return {
+        ...pt,
+        option: (options) => {
+          const attributes = typeof own === 'function' ? own(options) : own;
+          return {
+            ...(typeof attributes === 'string' ? { class: attributes } : attributes),
+            'aria-disabled': isDisabledOption(options) ? 'true' : undefined,
+          };
+        },
+      };
+    };
+  });
+
+  constructor() {
+    // In the capture phase, so that Optimus's own handler (scroll only) never sees the key.
+    afterNextRender(() => {
+      this.host.addEventListener(
+        'keydown',
+        (event) => {
+          this.page(event);
+        },
+        { capture: true },
+      );
+    });
+  }
+
+  /**
+   * PageDown and PageUp while the list is open: focus moves ten pickable options (a disabled one is
+   * skipped), stopping at the last or first, where Optimus only scrolls the list to its end or
+   * start. A closed select is left to Optimus.
+   */
+  private page(event: KeyboardEvent): void {
+    const forward = event.key === 'PageDown';
+    const select = this.inner();
+    if ((!forward && event.key !== 'PageUp') || !select?.overlayVisible) {
+      return;
+    }
+    let index = select.focusedOptionIndex();
+    if (index < 0) {
+      const picked = asIndex(select.findSelectedOptionIndex());
+      index = picked >= 0 ? picked : asIndex(select.findNextOptionIndex(-1));
+    }
+    for (let step = 0; step < PAGE_STEP; step++) {
+      const next = asIndex(
+        forward ? select.findNextOptionIndex(index) : select.findPrevOptionIndex(index),
+      );
+      if (next === index) {
+        break;
+      }
+      index = next;
+    }
+    select.changeFocusedOptionIndex(event, index);
+    event.preventDefault();
+    event.stopPropagation();
+  }
+
+  declare registerOnChange: _AccessorHost<T | null>['registerOnChange'];
+  declare registerOnTouched: _AccessorHost<T | null>['registerOnTouched'];
+  declare setDisabledState: _AccessorHost<T | null>['setDisabledState'];
+
+  writeValue(value: T | null): void {
+    this.value.set(value);
+  }
+}

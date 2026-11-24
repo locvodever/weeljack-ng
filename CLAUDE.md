@@ -10,16 +10,19 @@ any app, not one app. **"WeeljackNg" / `weeljack-ng` has no "h" on purpose — n
 
 **Decisions.** `docs/adr/` is **required reading** before you change the Optimus boundary (0001), a
 wrapper's API (0002), the theme contract (0003), the package layout (0004), versioning (0005), the
-Optimus-lag policy (0006) or the licence (0007). Planning history lives on the effort map in Loc's
-Second Brain (`SecondBrain/projects/weeljack-ng/efforts/weeljack-ng-library/map.md`). A number in
-parentheses below is a ticket there (`questions/NN-*.md`), and nothing here is re-decided in code.
+Optimus-lag policy (0006), the licence (0007) or the icon set (0008). Planning history lives on
+the effort map in Loc's Second Brain
+(`SecondBrain/projects/weeljack-ng/efforts/weeljack-ng-library/map.md`). A number in parentheses
+below is a ticket there (`questions/NN-*.md`), and nothing here is re-decided in code.
 
 **Vocabulary.**
 - **wrapper** — a `wj-*` component or `wj` attribute directive over one Optimus entry.
 - **entry** — one secondary entry point, `weeljack-ng/<entry>`, named after the Optimus entry it
   wraps.
 - **own component** — WeeljackNg's own composite, not a wrapper (`wj-sheet`, `wj-field`).
-- **slot** — a typed `wj<Component><Slot>` template directive.
+- **slot** — a typed `wj<Component><Slot>` template directive. Its class is `Wj<Component><Slot>Slot`
+  (selector `wj<Component><Slot>`; 02 Q6 fixes only the selector, and the suffix avoids a collision
+  with an item or type name such as `WjMenuItem`).
 - **`pt`** — the pass-through escape hatch, which tracks Optimus.
 - **wave** — a group of entries released together as one minor.
 
@@ -45,6 +48,7 @@ One repo, an Angular CLI multi-project workspace on npm, with one root `package.
 ```
 projects/weeljack-ng/          library (sourceRoot)
   src/                         root entry `weeljack-ng`: provideWeeljack, theme, shared public symbols
+                               (`palette-steps.ts` is generated and checked in: `generate:palette-steps`)
   private/                     `weeljack-ng/private` — _-prefixed, @docs-private, outside semver
   <entry>/                     one per wrapped Optimus entry (button, select, toggleswitch, …)
     ng-package.json            {"lib":{"entryFile":"public-api.ts"}}
@@ -55,8 +59,11 @@ projects/weeljack-ng/          library (sourceRoot)
 projects/docs/                 the docs app (static prerender)
   src/app/pages/component/docs/<entry>.ts   one page's content, `export const DOC: ComponentDoc`
   src/app/examples/<entry>/    the page's live examples
-  src/generated/               GITIGNORED (`npm run generate`): API JSON, example sources, registries
-scripts/                       build, check and dev scripts
+  src/generated/               GITIGNORED (`npm run generate`): API JSON, example sources, registries,
+                               `catalog.json`, `errors.json`, `changelog.json`
+projects/docs/coverage.json    03's hand-kept data: wave groups, targets, "not wrapped" entries
+scripts/                       build, check and dev scripts (`extract-catalog.mjs`,
+                               `extract-errors.mjs`, `extract-changelog.mjs` write the generated files above)
 docs/adr/                      architecture decisions
 ```
 
@@ -131,15 +138,41 @@ selector suffix and docs slug all share one word, and the size budget finds the 
   always supplies its message template.
 - No inline script or `eval`.
 
+**Shared helpers (`weeljack-ng/private`, `_`-prefixed, `@docs-private`).** Reuse these, never write
+a family's own:
+- `_mergePartAttributes(pt, partPath, attributes)` routes attributes onto a `pt` part (dotted path ok):
+  consumer `pt` (object or function) and keys kept, a routed attribute wins on the same name. An
+  `undefined`/`null` value clears the attribute: it goes on as an `undefined` key, which is what makes
+  Optimus remove it, unless the consumer's `pt` sets it. Wrappers need no seeding of their own.
+  `wj-button` uses it.
+- `_wjId(prefix)` returns `wj-<prefix>-<n>`, a per-application counter (injection context).
+- `_warnOnce(code, selector, what, fix)` is the deduped dev-mode warn in the 21 Q8 shape, behind
+  `ngDevMode` (injection context). Use your family's `WJ<NNNN>` block.
+- `_checkWeeljackSetup(selector)` and `_checkAriaOnHost(selector)` go in every wrapper's constructor.
+- `_rovingFocus(items, selected?)` gives a row of buttons one Tab stop plus Arrow Left/Right, Home and
+  End (toolbar, selectbutton and stepper use it; injection context).
+
 **Budget, SSR and errors (21):**
-- A wrapper entry weighs at most the larger of 1.5 KB or 25% of the Optimus entry it wraps; an own
-  entry at most 3.2 KB (esbuild minify + gzip-6). A wrapper entry needs no row: `size` defaults
+- A wrapper entry weighs at most the larger of 2.5 KB or 25% of the Optimus entry it wraps; an own
+  entry at most 5 KB (esbuild minify + gzip-6). Loc raised both on 2026-11-16, from 1.5 KB and
+  3.2 KB, after the form controls hit them. `private` alone is 7 KB (Loc, 2026-11-18): it is
+  measured as one module, so every family's helpers and `wj` strings add up there; its row in
+  `size-budgets.json` sets `kb: 7`. A wrapper entry needs no row: `size` defaults
   `weeljack-ng/<x>` to `@openng/optimus-ui/<x>`, and only the root, `private` and own entries have
-  a row in `size-budgets.json`. No PR raises a limit.
+  a row in `size-budgets.json`, or a wrapper raised under the rule below. Since 2026-11-19 a
+  wrapper may get a `size-budgets.json` row with `kb` under Loc's raise rule: the measured gzip plus
+  at most 0.05 KB, capped at +0.25 KB (+0.75 KB for galleria); the root and `private` never change;
+  each raise is a row in the PR body. No PR raises a limit outside that rule.
 - SSR is claimed; hydration is not, in v1.
 - Optimus errors are never caught or re-wrapped.
 - Own errors follow `WJ<NNNN>: <wj-selector>: <what is wrong>. <what to do>. Find more at
   <docs>/errors/WJ<NNNN>`, behind `ngDevMode`.
+- `WJ<NNNN>` codes are allocated in blocks of ten per family, so parallel branches never collide.
+  A family uses only its block: 0001–0009 T0 (used: 0001–0003); 0010 w1-provide; 0020 w1-forms;
+  0030 w1-overlays; 0040 w1-display; 0050 w3-data; 0060 w4-menus-core; 0070 w2-forms-select;
+  0080 w2-forms-input; 0090 w2-forms-choice; 0100 w2-forms-layout; 0110 w4-panels-a;
+  0120 w4-panels-b; 0130 tree; 0140 w4-menus-more; 0150 w4-overlays; 0160 w5-feedback;
+  0170 w5-identity-media; 0180 w5-effects; 0190 w1-docs.
 
 **Theme (05, 22):**
 - `provideWeeljack({ primary, surface, darkMode, translation })`, read once.
@@ -156,6 +189,7 @@ selector suffix and docs slug all share one word, and the size budget finds the 
 | `npm run test:watch` / `test:debug` | Headless watch / headed Chromium with the Vitest UI. Focus with `-- --include=<entry>/**` |
 | `npm run generate` | Writes the gitignored `projects/docs/src/generated/` (`extract-api`, `extract-examples`, `generate-registries`); needs only library source, not `dist/`. `build:docs`, `start` and `check` run it |
 | `npm run check` | **The gate**, failing fast: generate → lint → typecheck → build → `check:contrast` → test → `build:docs` → `check:ssr` → `check:a11y` → size → `check:pack` → `check:licences` |
+| `npm run generate:palette-steps` | Writes `src/palette-steps.ts`, the AA light step of each named `{palette}` (never hand-edit); `build` runs it with `--check` and fails on drift |
 | `npm run lint` / `format` | `eslint . --max-warnings 0 && prettier --check .` / `prettier --write .` |
 | `npm run pack:local` | Build and pack a tarball for a consumer trial: `npm install --no-save <tgz>` in the app, reverted by `npm install`, never merged |
 
@@ -167,7 +201,21 @@ selector suffix and docs slug all share one word, and the size budget finds the 
   in `pages/component/component-doc.ts`).
 - Never edit `projects/docs/src/generated/` (gitignored), a registry, `size-budgets.json` (unless
   it is an own entry), `private/` (unless the slice owns a shared helper) or root config.
+- A `ComponentDoc` for an own component sets `mapping: []` (the Optimus mapping section is omitted)
+  and `parts: []` (no `pt` table), and lists its `--wj-*` variables in `customProperties`. The mapping
+  sentence names `wj-*` from the generated API and `p-<entry>`, or `optimusSelector` when Optimus's
+  differs (`input[pInputText]`).
+- The generated API also carries exported `@Injectable` classes (a "Services" section; `@docs-private`
+  and `_` members stay out) and inputs a class re-exposes through `hostDirectives`. A directive wrapper
+  gets Inputs, Outputs and Two-way models tables like a component; only an `ng-template[...]`
+  directive is a slot. `check:ssr` counts an `ng-template[...]` slot selector as covered when a
+  component selector of the same entry is.
+- The Components index, the sidebar, Coming from Optimus and the error pages are generated from the
+  API, the changelog and the `DOC` files, so a new entry edits none of them. Only a new **Optimus**
+  entry point needs a row in `projects/docs/coverage.json`.
 - Registries (`COMPONENT_DOCS`, `API_DOCUMENTS`) and the API index are generated from those files.
+  The registries map each entry to a lazy loader, and the `components/:entry` route resolves the
+  page's `DOC` and API, so a new entry adds nothing to the docs app's initial bundle.
   An API-index entry with no `DOC` fails the prerender.
 
 **Executors:**
@@ -194,7 +242,8 @@ selector suffix and docs slug all share one word, and the size budget finds the 
    the docs page.
 4. A docs page (purpose and import → examples → Accessibility → Styling → generated API) that
    prerenders, never with `RenderMode.Client`.
-5. A size within budget (no row to add for a wrapper; an own entry needs a row).
+5. A size within budget (no row to add for a wrapper, unless raised under § 5's raise rule; an own
+   entry needs a row).
 6. OnPush and zoneless.
 7. `npm run check` exits 0.
 
@@ -230,12 +279,23 @@ parser for `*.html`. All Markdown is ignored. `.gitattributes` pins `eol=lf`.
 - `THIRD-PARTY-NOTICES.md` lists, per upstream package, the full MIT text with its copyright lines
   and the WeeljackNg files adapted from it. Third-party text never goes into `LICENSE`.
 - A file that only imports, wraps or configures Optimus is not a copy.
-- **Copy only from Optimus or PrimeNG v21 and earlier. Never from PrimeNG v22+** (proprietary).
+- **Icon data (ADR 0008, amending 0007).** `scripts/generate-icons.mjs` writes
+  `projects/weeljack-ng/icon/icon-set.ts` from the pinned `lucide` devDependency and
+  `icon/icon-set.json`. It is data, not component code, under ISC (MIT for the icons Lucide derived
+  from Feather). The generated file opens with `SPDX-License-Identifier: ISC AND MIT`, the source
+  package and version, the copyright lines and a `Modifications Copyright` line;
+  `THIRD-PARTY-NOTICES.md` carries Lucide's licence and the Feather-derived list; `npm run build`
+  runs `generate-icons --check` and fails on drift. Never hand-edit `icon-set.ts`, and never wrap
+  the OpenNG icon font (`@openng/icons`).
+- **Copy only from Optimus or PrimeNG v21 and earlier, plus Lucide icon data under ADR 0008. Never
+  from PrimeNG v22+** (proprietary).
 
 ## 9. Branches, commits, releases (14, 20)
 
 - **Branches and merges:**
-  - Trunk on `main`, with short-lived `feat/`, `fix/` and `chore/<slug>` branches.
+  - Integration branch is `dev`: families branch from and PR into `dev`, with short-lived `feat/`,
+    `fix/` and `chore/<slug>` branches. `main` receives `dev` only when Loc promotes it, and
+    release-please runs on `main` only.
   - Squash merge only. The PR title is the Conventional Commit subject (`feat(weeljack-ng): …`;
     `!` or `BREAKING CHANGE:` marks a break).
 - **release-please** owns `CHANGELOG.md` and the version; never hand-edit either.
@@ -375,8 +435,9 @@ Copied from the roadmap's engineering baseline (one line per area that applies).
   - rollback per § 9.
   - Source: ticket 20.
 - **B14 NFRs and failure modes:**
-  - each wrapper entry ≤ max(1.5 KB, 25% of the Optimus entry it wraps), and own entries ≤ 3.2 KB,
-    esbuild + gzip-6; no PR raises a limit;
+  - each wrapper entry ≤ max(2.5 KB, 25% of the Optimus entry it wraps), and own entries ≤ 5 KB,
+    esbuild + gzip-6 (raised from 1.5 KB and 3.2 KB by Loc, 2026-11-16), except `private` ≤ 7 KB
+    (Loc, 2026-11-18); no PR raises a limit outside § 5's raise rule (Loc, 2026-11-19);
   - no app-level budget;
   - OnPush and zoneless as hard rules;
   - SSR claimed, hydration not in v1;

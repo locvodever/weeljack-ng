@@ -1,0 +1,47 @@
+/* The host is a block with nothing in it while the dialog is closed. These are `dialog/dialog.css`'s
+   rules, copied: the panel renders inside the host, so `--wj-*` set on the host reaches it. Header:
+   the title lines up with the body's 20px inset and the close button sits 12px from the corner; the
+   row is never shorter than the 44px button, and a long title wraps. The panel never grows past the
+   viewport minus 1rem each side (WCAG 1.4.10), and a crowded footer wraps. The body is the wrapper's
+   own message alone, kept to a readable measure. */
+@layer wj {
+  :host {
+    display: block;
+    --wj-dialog-header-padding: 12px 12px 8px 20px;
+  }
+
+  :host ::ng-deep .p-dialog {
+    max-inline-size: calc(100vw - 2rem);
+  }
+
+  :host ::ng-deep .p-dialog-header {
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  :host ::ng-deep .p-dialog-title {
+    min-inline-size: 0;
+    overflow-wrap: anywhere;
+    line-height: 1.5;
+    padding-block: calc((44px - 1.5em) / 2);
+  }
+
+  :host ::ng-deep .p-dialog-header-actions {
+    flex-shrink: 0;
+    min-block-size: 44px;
+  }
+
+  :host ::ng-deep .p-dialog-footer {
+    flex-wrap: wrap;
+  }
+
+  .message {
+    display: block;
+    margin: 0;
+    max-inline-size: 28rem;
+    overflow-wrap: anywhere;
+    font-size: 1rem;
+    line-height: 1.5;
+    color: var(--wj-text-color);
+  }
+}

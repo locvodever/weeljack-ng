@@ -1,0 +1,35 @@
+/* The host is a block. Optimus spreads the bar with `space-between`, which pushes a lone end
+   section to the start and stretches a row of default-content buttons across the bar: pack from the
+   inline start instead, centre the center section in the free space, and send the end section to
+   the inline end (dropping its auto margin after a center, so the center stays centred). Each
+   section gets the toolbar's own gap between its controls and wraps. Optimus's parts carry no `wj`
+   attribute, so they are reached with `::ng-deep` scoped to the host, which outranks Optimus's
+   rules in the same layer by specificity. */
+@layer wj {
+  :host {
+    display: block;
+  }
+
+  :host ::ng-deep .p-toolbar {
+    justify-content: flex-start;
+  }
+
+  :host ::ng-deep .p-toolbar-start,
+  :host ::ng-deep .p-toolbar-center,
+  :host ::ng-deep .p-toolbar-end {
+    flex-wrap: wrap;
+    gap: var(--wj-toolbar-gap);
+  }
+
+  :host ::ng-deep .p-toolbar-center {
+    margin-inline: auto;
+  }
+
+  :host ::ng-deep .p-toolbar-end {
+    margin-inline-start: auto;
+  }
+
+  :host ::ng-deep .p-toolbar-center + .p-toolbar-end {
+    margin-inline-start: 0;
+  }
+}

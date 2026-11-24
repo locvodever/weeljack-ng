@@ -20,7 +20,14 @@ const WJ0002 = 'WJ0002';
 /** `aria-*` is written on a component host, where it is not forwarded to the focusable part. */
 const WJ0003 = 'WJ0003';
 
-/** One warning per code per application, however many components render. */
+/**
+ * A brand colour passed to `provideWeeljack` fails WCAG AA contrast (w1-provide block, 0010-0019).
+ *
+ * @docs-private
+ */
+export const _WJ0010 = 'WJ0010';
+
+/** One warning per key (by default the code) per application, however many components render. */
 const warned = new WeakMap<object, Set<string>>();
 
 function themePrefix(theme: unknown): string | undefined {
@@ -34,15 +41,46 @@ function themePrefix(theme: unknown): string | undefined {
   return typeof options.prefix === 'string' ? options.prefix : undefined;
 }
 
-function warn(optimus: Optimus, code: string, selector: string, what: string, fix: string): void {
+function warn(
+  optimus: Optimus,
+  code: string,
+  selector: string,
+  what: string,
+  fix: string,
+  key = code,
+): void {
   const seen = warned.get(optimus) ?? new Set<string>();
   warned.set(optimus, seen);
-  if (seen.has(code)) {
+  if (seen.has(key)) {
     return;
   }
-  seen.add(code);
+  seen.add(key);
   // 21 Q8: `WJ<NNNN>: <wj-selector>: <what is wrong>. <what to do>. Find more at <docs>/errors/WJ<NNNN>`.
   console.warn(`${code}: ${selector}: ${what}. ${fix}. Find more at ${DOCS}/errors/${code}`);
+}
+
+/**
+ * Dev-mode warning (21 Q8) for a family's own `WJ<NNNN>` code: `console.warn`, never throws, once
+ * per code per application, in the message shape `WJ<NNNN>: <wj-selector>: <what is wrong>. <what
+ * to do>. Find more at <docs>/errors/WJ<NNNN>`. Must run in an injection context. A no-op in
+ * production.
+ *
+ * The warning is deduped on `key`, which defaults to `code`. Pass a more specific `key` (the
+ * message, say) to warn once per distinct case of one code.
+ *
+ * @docs-private
+ */
+export function _warnOnce(
+  code: string,
+  selector: string,
+  what: string,
+  fix: string,
+  key = code,
+): void {
+  if (!ngDevMode) {
+    return;
+  }
+  warn(inject(Optimus), code, selector, what, fix, key);
 }
 
 /**
@@ -86,9 +124,15 @@ export function _checkWeeljackSetup(selector: string): void {
  * because host `aria-*` is not forwarded. Must run in an injection context. A no-op in production.
  * Attributes added after the first render are not seen.
  *
+ * `instead` replaces the default advice (the sentence after "what is wrong"), for a component
+ * whose ARIA inputs differ: write it as a sentence without the closing period.
+ *
  * @docs-private
  */
-export function _checkAriaOnHost(selector: string): void {
+export function _checkAriaOnHost(
+  selector: string,
+  instead = 'Use the ariaLabel, ariaLabelledBy or ariaDescribedBy input instead',
+): void {
   if (!ngDevMode) {
     return;
   }
@@ -102,7 +146,7 @@ export function _checkAriaOnHost(selector: string): void {
         WJ0003,
         selector,
         `${names.join(', ')} is set on the host, where it is not forwarded to the focusable element`,
-        'Use the ariaLabel, ariaLabelledBy or ariaDescribedBy input instead',
+        instead,
       );
     }
   });

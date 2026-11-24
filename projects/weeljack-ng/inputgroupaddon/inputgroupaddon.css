@@ -1,0 +1,11 @@
+/* The host is the group's flex item (flex), and the Optimus root inside fills it. The group's
+   border and corner rules for an addon live in `inputgroup.css`, keyed on this host: inside it
+   every addon is both the first and the last child, so Optimus's position rules cannot tell. The
+   addon's text takes the muted text colour: Optimus's form-field icon colour (zinc.400, about
+   2.6:1 on white) fails WCAG 1.4.3 for a "$" or a "kg". */
+@layer wj {
+  :host {
+    display: flex;
+    --wj-inputgroup-addon-color: var(--wj-text-muted-color);
+  }
+}

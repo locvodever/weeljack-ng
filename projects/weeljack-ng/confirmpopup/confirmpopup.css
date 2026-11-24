@@ -1,0 +1,7 @@
+/* The host is a block with nothing in it: the popup renders in `document.body`, so the host never
+   has a box of its own, open or closed. No rule reaches the panel (it leaves the host). */
+@layer wj {
+  :host {
+    display: block;
+  }
+}

@@ -4,8 +4,14 @@ import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import type { MockInstance } from 'vitest';
 import { userEvent } from 'vitest/browser';
 import { provideWeeljack } from 'weeljack-ng';
-import { WjButton, type WjButtonPt, type WjButtonSeverity } from 'weeljack-ng/button';
+import {
+  WjButton,
+  type WjButtonAriaHasPopup,
+  type WjButtonPt,
+  type WjButtonSeverity,
+} from 'weeljack-ng/button';
 import { WjButtonHarness } from 'weeljack-ng/button/testing';
+import { WjIcon, wjIconSettings } from 'weeljack-ng/icon';
 import { expectNoAxeViolations } from '../spec-support/axe';
 
 const PAYLOAD = '<img src=x onerror="window.wjInjected = true">';
@@ -25,7 +31,7 @@ const SEVERITIES: WjButtonSeverity[] = [
 /** A consumer's template: a button inside a form, with the click handler on `wj-button`. */
 @Component({
   selector: 'wj-button-host',
-  imports: [WjButton],
+  imports: [WjButton, WjIcon],
   template: `
     <button type="button" id="before">Before</button>
     <form (submit)="onSubmit($event)">
@@ -41,13 +47,13 @@ const SEVERITIES: WjButtonSeverity[] = [
           [ariaLabel]="ariaLabel()"
           [ariaLabelledBy]="ariaLabelledBy()"
           [ariaDescribedBy]="ariaDescribedBy()"
+          [ariaHasPopup]="ariaHasPopup()"
+          [ariaExpanded]="ariaExpanded()"
           [pt]="pt()"
           (click)="clicks.update((count) => count + 1)"
         >
           @if (icon()) {
-            <svg aria-hidden="true" width="16" height="16" viewBox="0 0 16 16">
-              <circle cx="8" cy="8" r="6" fill="currentColor" />
-            </svg>
+            <wj-icon [icon]="settings" />
           }
         </wj-button>
       </div>
@@ -68,11 +74,14 @@ class Host {
   readonly ariaLabel = signal<string | undefined>(undefined);
   readonly ariaLabelledBy = signal<string | undefined>(undefined);
   readonly ariaDescribedBy = signal<string | undefined>(undefined);
+  readonly ariaHasPopup = signal<WjButtonAriaHasPopup | undefined>(undefined);
+  readonly ariaExpanded = signal<boolean | undefined>(undefined);
   readonly pt = signal<WjButtonPt>(undefined);
   readonly icon = signal(false);
   readonly width = signal<string | undefined>(undefined);
   readonly clicks = signal(0);
   readonly submits = signal(0);
+  protected readonly settings = wjIconSettings;
 
   protected onSubmit(event: Event): void {
     event.preventDefault();
@@ -275,6 +284,18 @@ describe('WjButton', () => {
       expect(parts(element).control.querySelector('svg[aria-hidden="true"]')).not.toBeNull();
     });
 
+    it('loading sets aria-busy on the button and removes it when loading ends', async () => {
+      const { fixture, host, element } = await render('light', (setup) => {
+        setup.loading.set(true);
+      });
+      expect(parts(element).control.getAttribute('aria-busy')).toBe('true');
+
+      host.loading.set(false);
+      await fixture.whenStable();
+
+      expect(parts(element).control.hasAttribute('aria-busy')).toBe(false);
+    });
+
     it('disabled makes the button inert without showing the spinner', async () => {
       const { button, element } = await render('light', (host) => {
         host.disabled.set(true);
@@ -474,6 +495,72 @@ describe('WjButton', () => {
       expect(warn).not.toHaveBeenCalled();
     });
 
+    it('sets neither aria-haspopup nor aria-expanded until asked', async () => {
+      const { element } = await render();
+
+      const { control } = parts(element);
+      expect(control.hasAttribute('aria-haspopup')).toBe(false);
+      expect(control.hasAttribute('aria-expanded')).toBe(false);
+    });
+
+    it('routes ariaHasPopup and ariaExpanded to the focusable element, and follows their changes', async () => {
+      const { element, host, fixture } = await render('light', (h) => {
+        h.ariaHasPopup.set('menu');
+        h.ariaExpanded.set(false);
+      });
+      const { control, host: wjHost } = parts(element);
+
+      expect(control.getAttribute('aria-haspopup')).toBe('menu');
+      expect(control.getAttribute('aria-expanded')).toBe('false');
+
+      host.ariaExpanded.set(true);
+      host.ariaHasPopup.set('dialog');
+      await fixture.whenStable();
+      expect(control.getAttribute('aria-haspopup')).toBe('dialog');
+      expect(control.getAttribute('aria-expanded')).toBe('true');
+      expect(wjHost.getAttributeNames().filter((name) => name.startsWith('aria-'))).toEqual([]);
+
+      host.ariaHasPopup.set(undefined);
+      host.ariaExpanded.set(undefined);
+      await fixture.whenStable();
+      expect(control.hasAttribute('aria-haspopup')).toBe(false);
+      expect(control.hasAttribute('aria-expanded')).toBe(false);
+      expect(warn).not.toHaveBeenCalled();
+    });
+
+    it.each<WjButtonAriaHasPopup>(['menu', 'listbox', 'tree', 'grid', 'dialog'])(
+      'ariaHasPopup %s is written as the token itself',
+      async (popup) => {
+        const { element } = await render('light', (host) => {
+          host.ariaHasPopup.set(popup);
+        });
+
+        expect(parts(element).control.getAttribute('aria-haspopup')).toBe(popup);
+      },
+    );
+
+    it('wins over a pt root value for the same attribute and keeps its other keys', async () => {
+      const { element, host, fixture } = await render('light', (h) => {
+        h.pt.set({
+          root: { 'aria-haspopup': 'tree', 'aria-expanded': 'true', 'data-probe': 'root' },
+        });
+        h.ariaHasPopup.set('menu');
+        h.ariaExpanded.set(false);
+      });
+      const { control } = parts(element);
+
+      expect(control.getAttribute('aria-haspopup')).toBe('menu');
+      expect(control.getAttribute('aria-expanded')).toBe('false');
+      expect(control.getAttribute('data-probe')).toBe('root');
+
+      // Unset, the consumer's own pt value is the one that stays.
+      host.ariaHasPopup.set(undefined);
+      host.ariaExpanded.set(undefined);
+      await fixture.whenStable();
+      expect(control.getAttribute('aria-haspopup')).toBe('tree');
+      expect(control.getAttribute('aria-expanded')).toBe('true');
+    });
+
     it('warns WJ0003 once and forwards nothing when aria-* is written on the host', async () => {
       TestBed.configureTestingModule({ providers: [provideWeeljack()] });
       const fixture = TestBed.createComponent(AriaOnHostHost);
@@ -573,6 +660,96 @@ describe('WjButton', () => {
       expect(control.scrollWidth).toBeLessThanOrEqual(control.clientWidth);
       expect(getComputedStyle(control).textOverflow).not.toBe('ellipsis');
       expect(await button.getLabel()).toContain('longer than the room');
+    });
+
+    describe.each<[string, 'small' | 'large' | undefined, number]>([
+      ['small', 'small', 36],
+      ['default', undefined, 44],
+      ['large', 'large', 52],
+    ])('with only an icon, %s', (_name, size, side) => {
+      async function renderIconOnly(): Promise<Rendered> {
+        const rendered = await render('light', (host) => {
+          host.label.set(undefined);
+          host.icon.set(true);
+          host.ariaLabel.set('Settings');
+          host.size.set(size);
+        });
+        await rendered.fixture.whenStable();
+        return rendered;
+      }
+
+      it('is square: 44 px, 36 px small, 52 px large', async () => {
+        const { element } = await renderIconOnly();
+        const { host, control } = parts(element);
+        const sizeOf = (target: HTMLElement): number[] => {
+          const rect = target.getBoundingClientRect();
+          return [rect.width, rect.height];
+        };
+
+        expect(sizeOf(host)).toEqual([side, side]);
+        expect(sizeOf(control)).toEqual([side, side]);
+      });
+
+      it('centres the icon in the button', async () => {
+        const { element } = await renderIconOnly();
+        const { control } = parts(element);
+        const svg = element.querySelector('wj-button wj-icon svg');
+        if (svg === null) {
+          throw new Error('the wj-icon rendered no svg');
+        }
+        const icon = svg.getBoundingClientRect();
+        const rect = control.getBoundingClientRect();
+
+        expect(icon.left + icon.width / 2).toBeCloseTo(rect.left + rect.width / 2, 0);
+        expect(icon.top + icon.height / 2).toBeCloseTo(rect.top + rect.height / 2, 0);
+      });
+    });
+
+    it('keeps a labelled button with an icon as it was', async () => {
+      const { element } = await render('light', (host) => {
+        host.icon.set(true);
+      });
+      const { control } = parts(element);
+      const svg = element.querySelector('wj-button wj-icon svg');
+      const label = control.querySelector('.p-button-label');
+      if (svg === null || label === null) {
+        throw new Error('the icon or the label did not render');
+      }
+
+      expect(control.classList.contains('p-button-icon-only')).toBe(false);
+      expect(control.getBoundingClientRect().height).toBe(44);
+      expect(getComputedStyle(control).paddingInlineStart).toBe('14px');
+      expect(label.getBoundingClientRect().left - svg.getBoundingClientRect().right).toBe(8);
+    });
+
+    it('does not mark a labelled button without an icon as icon-only', async () => {
+      const { element } = await render();
+
+      expect(parts(element).control.classList.contains('p-button-icon-only')).toBe(false);
+    });
+
+    // The rule, pinned on purpose: text belongs in `label`. Projected content is for a `wj-icon`, so
+    // a button without `label` is icon-only whatever it projects, and projected text gets the square.
+    it('makes a button with projected text and no label the icon-only square', async () => {
+      @Component({
+        selector: 'wj-button-projected-text-host',
+        imports: [WjButton],
+        template: `<wj-button ariaLabel="Save">Save</wj-button>`,
+      })
+      class ProjectedTextHost {}
+      TestBed.configureTestingModule({ providers: [provideWeeljack()] });
+      const fixture = TestBed.createComponent(ProjectedTextHost);
+      await fixture.whenStable();
+      const { host, control } = parts(fixture.nativeElement as HTMLElement);
+      const sizeOf = (target: HTMLElement): number[] => {
+        const rect = target.getBoundingClientRect();
+        return [rect.width, rect.height];
+      };
+
+      expect(control.classList.contains('p-button-icon-only')).toBe(true);
+      expect(getComputedStyle(control).paddingInlineStart).toBe('0px');
+      expect(sizeOf(host)).toEqual([44, 44]);
+      expect(sizeOf(control)).toEqual([44, 44]);
     });
   });
 

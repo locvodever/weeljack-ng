@@ -1,0 +1,20 @@
+/* The host is a block with no box of its own. Step titles wrap at spaces and are never ellipsized:
+   a step keeps its longest word, and the step list scrolls (Optimus's own overflow) when the row
+   still does not fit. The active step's number is filled with the primary colour; the circles,
+   the separators and the rings are Optimus's. Optimus draws the title inside its own component,
+   so it carries no `wj` attribute and is reached with `::ng-deep` scoped to the host; that rule
+   is (0,2,0) against Optimus's (0,1,0), and both sit in the `wj` layer. */
+@layer wj {
+  :host {
+    display: block;
+    --wj-stepper-step-number-active-background: var(--wj-primary-color);
+    --wj-stepper-step-number-active-border-color: var(--wj-primary-color);
+    --wj-stepper-step-number-active-color: var(--wj-primary-contrast-color);
+  }
+
+  :host ::ng-deep .p-step-title {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+  }
+}

@@ -1,0 +1,31 @@
+/* The host is a block with no box of its own: Optimus's bordered box inside fills it, so an app sizes
+   the list with host `class`/`style`. The box grows with its options up to 14rem (Optimus's own
+   cap) and then scrolls. Optimus draws no focus indicator on the list, and its focused-row fill is
+   about 1.1:1 on white, so while the list has keyboard focus (`:focus-visible`, never on a mouse
+   click) the focused row takes the focus ring inside its edge, where the scrolling list cannot clip
+   it. On a picked row the ring takes the highlight colour, as ink on ink would hide it. An empty
+   list has no row to focus: its message row takes the ring while the hidden element Optimus
+   focuses has focus. Optimus draws its rows inside its own components, so they carry no `wj`
+   attribute and are reached with `::ng-deep` scoped to the host. No transition and no animation. */
+@layer wj {
+  :host {
+    display: block;
+  }
+
+  :host ::ng-deep .p-listbox-list:focus-visible .p-listbox-option.p-focus,
+  :host
+    ::ng-deep
+    .p-hidden-focusable:focus-visible
+    ~ .p-listbox-list-container
+    > .p-listbox-empty-message {
+    outline: var(--wj-focus-ring-width) var(--wj-focus-ring-style) var(--wj-focus-ring-color);
+    outline-offset: -2px;
+  }
+
+  :host
+    ::ng-deep
+    .p-listbox-list:focus-visible
+    .p-listbox-option.p-focus.p-listbox-option-selected {
+    outline-color: var(--wj-highlight-color);
+  }
+}

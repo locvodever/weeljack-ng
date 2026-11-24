@@ -5,6 +5,8 @@
  */
 html {
   color-scheme: light;
+  /* A heading jumped or tabbed to clears the sticky top bar. */
+  scroll-padding-block-start: 72px;
 }
 
 html.wj-dark {
@@ -66,4 +68,11 @@ h3 code {
   flex-wrap: wrap;
   align-items: center;
   gap: 16px;
+}
+
+/* From 1200 px the shell's right-hand list shows: a page's own inline copy would repeat it. */
+@media (min-width: 1200px) {
+  main nav[aria-label='On this page'] {
+    display: none;
+  }
 }

@@ -1,0 +1,7 @@
+/* The host is a block that takes no space: the menu renders in `body`, and nothing paints until
+   it opens. Everything else is the preset. */
+@layer wj {
+  :host {
+    display: block;
+  }
+}

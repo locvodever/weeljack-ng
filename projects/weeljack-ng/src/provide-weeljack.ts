@@ -6,13 +6,38 @@ import {
   type EnvironmentProviders,
 } from '@angular/core';
 import { Optimus, provideOptimus } from '@openng/optimus-ui/config';
-import { definePreset } from '@openng/optimus-ui-themes';
-import { _WJ_PROVIDED } from 'weeljack-ng/private';
-import { wjLayerStyles } from './layer-styles';
-import { wjNoirOnZinc } from './noir-on-zinc';
+import { _WJ_EN, _WJ_PROVIDED } from 'weeljack-ng/private';
+import type { WjColorScale } from './brand';
+import type { WjPreset } from './preset';
+import {
+  _WJ_THEME_OPTIONS,
+  _wjThemePreset,
+  _wjWarnBadColours,
+  _wjWarnContrast,
+} from './theme-runtime';
+import type { WjTranslation } from './translation';
 
-/** The theme options `provideWeeljack` reads once at bootstrap (05 Q3). */
+/**
+ * The theme options `provideWeeljack` reads once at bootstrap (05 Q3). `WjTheme`
+ * (`weeljack-ng/theme`) can change `primary` and `surface` at runtime; nothing else changes after
+ * bootstrap.
+ */
 export interface WjThemeOptions {
+  /**
+   * The brand colour: a `#rgb` / `#rrggbb` base, a `{palette}` name such as `{indigo}` or a full
+   * 50-950 scale. A name becomes the palette's own scale and, in light, takes its lightest WCAG AA
+   * step for `primary.color` (`{indigo}` gives indigo 600), with hover and active one and two
+   * steps darker. A hex base or a full scale is used exactly as given, and logs `WJ0010` in dev
+   * mode if it fails AA contrast. Absent, the default "Noir on zinc" ink primary applies. Any other
+   * string is ignored (the default applies) and logs `WJ0200` in dev mode.
+   */
+  primary?: WjColorScale;
+  /**
+   * The surface (page, card and border) scale, with the same forms as `primary`; `{ light, dark }`
+   * sets each scheme. Absent or invalid, zinc in that scheme. `surface.0` stays `#ffffff` unless the scale
+   * sets `0`.
+   */
+  surface?: WjColorScale | { light: WjColorScale; dark: WjColorScale };
   /**
    * How dark mode is chosen. Read once; there is no runtime switch.
    * - `'off'` (default): always light.
@@ -20,6 +45,22 @@ export interface WjThemeOptions {
    * - `'class'`: dark while `.wj-dark` is on `<html>`.
    */
   darkMode?: 'off' | 'system' | 'class';
+  /**
+   * The UI-chrome strings (`weeljack-ng/locale` ships `en` and `vi`). Merged one level deep over
+   * the English default, so a partial object keeps every other string. Read once; the language
+   * is not switched at runtime, and `LOCALE_ID` and `<html lang>` are left alone.
+   */
+  translation?: WjTranslation;
+  /**
+   * A WeeljackNg base preset: an object imported from its own entry, for example
+   * `import { wjAura } from 'weeljack-ng/preset-aura'`. Absent, Noir ("Noir on zinc"), the default
+   * look, which needs no import; `{ preset: wjNoir }` is the same. Only WeeljackNg's own presets
+   * are accepted. `primary` and `surface` still apply on top of any preset. Every preset keeps
+   * WeeljackNg's guarantees: 44 px controls, AA contrast, one 2 px focus ring, 24 px hit boxes,
+   * reduced motion and `@layer wj`. An app on a preset other than Noir also ships Aura, the
+   * default's base, about 14.4 KB gzip. Read once at bootstrap.
+   */
+  preset?: WjPreset;
 }
 
 const DARK_MODE_SELECTORS = { off: 'none', system: 'system', class: '.wj-dark' } as const;
@@ -28,15 +69,26 @@ const DARK_MODE_SELECTORS = { off: 'none', system: 'system', class: '.wj-dark' }
  * Themes WeeljackNg and configures Optimus. The one place `provideOptimus` is called; apps never
  * call it themselves (09 Q6).
  *
+ * Read once at bootstrap. `WjTheme` (`weeljack-ng/theme`) can change `primary` and `surface` at
+ * runtime; nothing else changes after bootstrap.
+ *
  * The `csp.nonce` is forwarded from Angular's `CSP_NONCE` token, which reads the `ngCspNonce`
  * attribute on the root element unless the app provides the token itself, so no option is added.
  */
 export function provideWeeljack(options: WjThemeOptions = {}): EnvironmentProviders {
-  const { darkMode = 'off' } = options;
-  const preset = definePreset(wjNoirOnZinc, { css: wjLayerStyles });
+  const { darkMode = 'off', primary, surface, translation, preset: base } = options;
+  const { brand, preset } = _wjThemePreset(primary, surface, base);
+  // Optimus's `setTranslation` is shallow, so `aria` is merged here and never passed partial.
+  const merged = {
+    ..._WJ_EN,
+    ...translation,
+    aria: { ..._WJ_EN.aria, ...translation?.aria },
+    wj: { ..._WJ_EN.wj, ...translation?.wj },
+  };
 
   return makeEnvironmentProviders([
     { provide: _WJ_PROVIDED, useValue: true },
+    { provide: _WJ_THEME_OPTIONS, useValue: { primary, surface, darkMode, preset: base } },
     // Ahead of Optimus's own initializer: its config is static and cannot read the DI token, so
     // the nonce is on the service before the theme effect first injects a style.
     provideAppInitializer(() => {
@@ -45,7 +97,16 @@ export function provideWeeljack(options: WjThemeOptions = {}): EnvironmentProvid
         inject(Optimus).csp.set({ nonce });
       }
     }),
+    provideAppInitializer(() => {
+      if (!ngDevMode || (primary === undefined && surface === undefined)) {
+        return;
+      }
+      // `_warnOnce` dedupes per code, so every bad option goes into the one message.
+      _wjWarnBadColours('provideWeeljack', primary, surface);
+      _wjWarnContrast('provideWeeljack', brand, darkMode);
+    }),
     provideOptimus({
+      translation: merged,
       theme: {
         preset,
         options: {

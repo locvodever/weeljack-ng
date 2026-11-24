@@ -1,0 +1,22 @@
+<p-tabs
+  [value]="value()"
+  [selectOnFocus]="selectOnFocus()"
+  [pt]="pt()"
+  (valueChange)="$event !== undefined && value.set($event)"
+>
+  <p-tablist data-wj-part="tablist" [pt]="list()?.routedPt()">
+    @for (tab of list()?.tabs(); track tab) {
+      <p-tab data-wj-part="tab" [value]="tab.value()" [disabled]="tab.disabled()" [pt]="tab.pt()">
+        <ng-container [ngTemplateOutlet]="tab.content()" />
+      </p-tab>
+    }
+  </p-tablist>
+  <p-tabpanels data-wj-part="tabpanels" [pt]="panels()?.pt()">
+    @for (panel of panels()?.panels(); track panel) {
+      <p-tabpanel data-wj-part="tabpanel" [value]="panel.value()" [pt]="panel.routedPt()">
+        <ng-container [ngTemplateOutlet]="panel.content()" />
+      </p-tabpanel>
+    }
+  </p-tabpanels>
+</p-tabs>
+<ng-content select="wj-tablist, wj-tabpanels" />

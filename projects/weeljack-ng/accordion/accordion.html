@@ -1,0 +1,24 @@
+<p-accordion
+  [value]="value()"
+  [multiple]="multiple()"
+  [motionOptions]="motion"
+  [pt]="pt()"
+  (valueChange)="value.set($event ?? undefined)"
+>
+  @for (panel of panels(); track panel) {
+    <p-accordion-panel
+      data-wj-part="accordion-panel"
+      [value]="panel.value()"
+      [disabled]="panel.disabled()"
+      [pt]="panel.pt()"
+    >
+      <p-accordion-header data-wj-part="accordion-header" [pt]="panel.header()?.pt()">
+        <span><ng-container [ngTemplateOutlet]="panel.header()?.content() ?? null" /></span>
+      </p-accordion-header>
+      <p-accordion-content data-wj-part="accordion-content" [pt]="panel.body()?.pt()">
+        <ng-container [ngTemplateOutlet]="panel.body()?.content() ?? null" />
+      </p-accordion-content>
+    </p-accordion-panel>
+  }
+</p-accordion>
+<ng-content select="wj-accordion-panel" />

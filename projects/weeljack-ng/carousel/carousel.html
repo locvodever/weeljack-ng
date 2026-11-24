@@ -1,0 +1,18 @@
+<p-carousel
+  [value]="value()"
+  [page]="page()"
+  (onPage)="page.set($event.page ?? 0)"
+  [numVisible]="numVisible()"
+  [numScroll]="numScroll()"
+  [responsiveOptions]="options()"
+  [circular]="circular()"
+  [showIndicators]="showIndicators()"
+  [showNavigators]="showNavigators()"
+  [pt]="partAttributes()"
+>
+  @if (itemSlot(); as slot) {
+    <ng-template #item let-item>
+      <ng-container *ngTemplateOutlet="slot.template; context: { $implicit: item }" />
+    </ng-template>
+  }
+</p-carousel>

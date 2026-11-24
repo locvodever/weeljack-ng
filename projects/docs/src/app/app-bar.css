@@ -1,0 +1,114 @@
+/* The top bar: Menu (narrow), wordmark, version, GitHub and the Theme button and the dark-mode toggle. */
+.header {
+  position: sticky;
+  z-index: 10;
+  inset-block-start: 0;
+  box-sizing: border-box;
+  min-block-size: 56px;
+  padding: 6px 24px;
+  border-block-end: 1px solid var(--wj-content-border-color);
+  background: var(--wj-content-background);
+}
+
+.bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 24px;
+}
+
+.group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+}
+
+.utilities {
+  margin-inline-start: auto;
+}
+
+.wordmark {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 44px;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--wj-text-color);
+  text-decoration: none;
+}
+
+.version {
+  color: var(--wj-text-muted-color);
+  font-size: 0.875rem;
+}
+
+.action {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-block-size: 44px;
+  min-inline-size: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--wj-surface-500);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--wj-text-color);
+  font: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.action[aria-pressed='true'] {
+  background: var(--wj-primary-color);
+  border-color: var(--wj-primary-color);
+  color: var(--wj-primary-contrast-color);
+}
+
+.menu {
+  display: none;
+}
+
+.glyph {
+  inline-size: 16px;
+  block-size: 2px;
+  background: currentColor;
+  box-shadow:
+    0 -5px 0 currentColor,
+    0 5px 0 currentColor;
+}
+
+@media (max-width: 959.98px) {
+  .menu {
+    display: inline-flex;
+  }
+}
+
+/* Below 720 px the bar has no room for it: the same panel is in the Menu drawer. */
+@media (max-width: 719.98px) {
+  .theme {
+    display: none;
+  }
+}
+
+/* One row at 390 px: tighter padding and gaps, and the footer keeps GitHub. */
+@media (max-width: 599.98px) {
+  .header {
+    padding-inline: 12px;
+  }
+
+  .bar,
+  .group {
+    flex-wrap: nowrap;
+    gap: 8px;
+  }
+
+  .wordmark {
+    font-size: 1rem;
+  }
+
+  .github,
+  .state {
+    display: none;
+  }
+}

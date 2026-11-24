@@ -1,0 +1,46 @@
+/* One unencapsulated stylesheet (ui-spec A7, I3-I5): the rules reach Optimus's own elements, so
+   each is rooted at `wj-galleria`. The item navigators, Close and the caption take the photo scrim
+   through the component's own variables, set on the host so the full screen, which renders inside
+   it, inherits them. Optimus gives the focusable thumbnail no focus style: it gets the preset ring
+   inset (the strip's viewport clips an outset one) and, because the opacity sits on its parent, the
+   item shows at full opacity while focus is inside it. The full screen takes a width of its own
+   (`containerStyle` is dropped). Under reduced motion the strip's inline 500 ms slide drops to 1 ms,
+   never none, so `transitionend` still fires, and the thumbnail's hover fade is off. */
+@layer wj {
+  wj-galleria {
+    display: block;
+    --wj-galleria-scrim: color-mix(in srgb, var(--wj-surface-900) 70%, transparent);
+    --wj-galleria-nav-button-background: var(--wj-galleria-scrim);
+    --wj-galleria-close-button-background: var(--wj-galleria-scrim);
+    --wj-galleria-caption-background: var(--wj-galleria-scrim);
+    --wj-galleria-nav-button-hover-background: var(--wj-surface-900);
+    --wj-galleria-close-button-hover-background: var(--wj-surface-900);
+  }
+
+  wj-galleria .p-galleria-fullscreen {
+    inline-size: min(48rem, 90vw);
+  }
+
+  wj-galleria .p-galleria-thumbnail:focus-visible {
+    outline: var(--wj-focus-ring-width) var(--wj-focus-ring-style) var(--wj-focus-ring-color);
+    outline-offset: -2px;
+  }
+
+  wj-galleria .p-galleria-thumbnail-item {
+    overflow: hidden;
+  }
+
+  wj-galleria .p-galleria-thumbnail-item:focus-within {
+    opacity: 1;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    wj-galleria .p-galleria-thumbnail-items[style*='transition'] {
+      transition-duration: 1ms !important; /* motion: the reduced-motion floor; never none, transitionend must fire */
+    }
+
+    wj-galleria .p-galleria-thumbnail-item:hover {
+      transition: none;
+    }
+  }
+}

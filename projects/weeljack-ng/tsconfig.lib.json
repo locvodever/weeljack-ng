@@ -4,6 +4,7 @@
     "outDir": "../../out-tsc/lib",
     "declaration": true,
     "declarationMap": true,
+    "rewriteRelativeImportExtensions": true,
     "types": [],
     "paths": {
       "weeljack-ng": ["./src/public-api.ts"],

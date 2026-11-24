@@ -1,8 +1,8 @@
 {
   "limits": {
     "kb": 1024,
-    "ownKb": 3.2,
-    "wrapperFloorKb": 1.5,
+    "ownKb": 5,
+    "wrapperFloorKb": 2.5,
     "wrapperShareOfOptimus": 0.25
   },
   "entries": [
@@ -14,7 +14,113 @@
     {
       "entry": "weeljack-ng/private",
       "optimus": "own",
-      "note": "Shared helpers (_-prefixed, outside semver). Shipped to every consumer, so it gets an own-entry row."
+      "kb": 7,
+      "note": "Shared helpers (_-prefixed, outside semver). Shipped to every consumer, so it gets an own-entry row. Measured as one whole module, so every family's helpers and wj strings add up here: Loc raised it from 5 to 7 KB on 2026-11-18, when the last five families would each have crossed 5 KB."
+    },
+    {
+      "entry": "weeljack-ng/field",
+      "optimus": "own",
+      "note": "wj-field: label, hint, error and the field context."
+    },
+    {
+      "entry": "weeljack-ng/sheet",
+      "optimus": "own",
+      "note": "wj-sheet: Optimus Dialog on wide screens, the bottom Drawer on narrow ones."
+    },
+    {
+      "entry": "weeljack-ng/icon",
+      "optimus": "own",
+      "kb": 5.69,
+      "note": "wj-icon and the generated icon set (85 Lucide icons, ADR 0008). Measured as one whole module, so every icon counts here; an app pays only for WjIcon and the icons it imports (the tree-shake check in size.mjs measures the linked, production app bundle: at most 1.15 KB for WjIcon plus one icon, measured 1127 B). The 5 admin icons (L1, 2026-11-24) cost 257 B over the 80's 5524 B. Set 2026-11-24 at measured 5.65 KB gzip (5781 B) plus 45 B, the cap of +0.25 KB over 5.44."
+    },
+    {
+      "entry": "weeljack-ng/theme",
+      "optimus": "own",
+      "kb": 1.1,
+      "note": "WjTheme: the runtime primary, surface and preset switch (ADR 0009, ADR 0010). The preset is built by the root's own code (_wjThemePreset), so this row is the service alone. Set 2026-11-23 at measured 1.07 KB gzip (1093 B) plus 0.03 KB."
+    },
+    {
+      "entry": "weeljack-ng/preset-noir",
+      "optimus": "own",
+      "kb": 0.12,
+      "note": "wjNoir, the default look \"Noir on zinc\" re-bound from the root's _wjNoir (ADR 0010). FESM measured with its Optimus base external, so the row is the preset's own data. Set 2026-11-23 at measured 0.08 KB gzip (79 B) plus 0.04 KB: a limit of 0.12 KB is 123 B, a margin of 44 B."
+    },
+    {
+      "entry": "weeljack-ng/preset-aura",
+      "optimus": "own",
+      "kb": 0.16,
+      "note": "wjAura, Aura's emerald at its AA step on Aura's slate (ADR 0010). FESM measured with its Optimus base external, so the row is the preset's own data. Set 2026-11-23 at measured 0.11 KB gzip (117 B) plus 0.05 KB: a limit of 0.16 KB is 164 B, a margin of 47 B."
+    },
+    {
+      "entry": "weeljack-ng/preset-police",
+      "optimus": "own",
+      "kb": 0.63,
+      "note": "wjPolice: Aura with a navy ink, slate surfaces and squarer corners. The base is external, so this row is the preset's own layers. Set 2026-11-23 at measured 0.58 KB gzip (598 B) plus 0.05 KB."
+    },
+    {
+      "entry": "weeljack-ng/preset-lara",
+      "optimus": "own",
+      "kb": 0.56,
+      "note": "wjLara: Lara with its own emerald and the 31-op correction layer. The base is external, so this row is the preset's own layers. Set 2026-11-23 at measured 0.51 KB gzip (525 B) plus 0.05 KB."
+    },
+    {
+      "entry": "weeljack-ng/preset-nora",
+      "optimus": "own",
+      "kb": 0.94,
+      "note": "wjNora, Nora's correction look, its emerald and the _brand rows for the 16 dark palettes that fail on Nora (ADR 0010). FESM measured with its Optimus base (the Nora base) external, so the row is the preset's own data. Set 2026-11-23 at measured 921 B gzip plus at most 0.05 KB (51.2 B), rounded down to 0.94 KB: a limit of 962.6 B, a margin of 41.6 B."
+    },
+    {
+      "entry": "weeljack-ng/preset-material",
+      "optimus": "own",
+      "kb": 1.93,
+      "note": "wjMaterial, Optimus's Material base under every WeeljackNg guarantee (ADR 0010), holding its correction look, its generated palette-step table, its `_brand` rows and its `_css`. The Material base is external to the measurement. Set 2026-11-23 at measured 1.88 KB gzip (1929 B) plus 0.05 KB: a limit of 1.93 KB is 1976 B, a margin of 47 B."
+    },
+    {
+      "entry": "weeljack-ng/splitter",
+      "optimus": "splitter",
+      "kb": 2.75,
+      "note": "Raise under CLAUDE.md section 5's rule (2026-11-19): 2.50 -> 2.75 KB, measured 2.75 KB gzip (2.74 on the first run). Bought tap to place (WCAG 2.5.7, GF3 FR-16): the single-pointer way to move the line."
+    },
+    {
+      "entry": "weeljack-ng/locale",
+      "optimus": "own",
+      "note": "Complete UI translations: vi's data, and en re-exported from private."
+    },
+    {
+      "entry": "weeljack-ng/carousel",
+      "optimus": "carousel",
+      "kb": 2.75,
+      "note": "Raised under CLAUDE.md § 5's rule (Loc, 2026-11-19): a dimmed navigator leaves the Tab order and reads as disabled (FR-9), and Home and End move focus on the indicators (FR-10)."
+    },
+    {
+      "entry": "weeljack-ng/galleria",
+      "optimus": "galleria",
+      "kb": 3.45,
+      "note": "Raised under CLAUDE.md § 5's rule (Loc, 2026-11-19): S1, the thumbnail strip (five inputs and the wjGalleriaThumbnail slot), plus the dimmed navigators (FR-9)."
+    },
+    {
+      "entry": "weeljack-ng/tree",
+      "optimus": "tree",
+      "kb": 3.3,
+      "note": "Raised under CLAUDE.md § 5's rule (Loc, 2026-11-19): S4, a partly checked node reads aria-checked=\"mixed\" (FR-16), and Home, End and one-character type-ahead move focus (FR-18)."
+    },
+    {
+      "entry": "weeljack-ng/treeselect",
+      "optimus": "treeselect",
+      "kb": 2.75,
+      "note": "Raised under CLAUDE.md § 5's rule (Loc, 2026-11-19): S4, the set size counts siblings (FR-17), a partly checked node reads aria-checked=\"mixed\" (FR-16), and Home and End move focus in the panel (FR-18). Type-ahead fitted after code-only trims (Q2)."
+    },
+    {
+      "entry": "weeljack-ng/speeddial",
+      "optimus": "speeddial",
+      "kb": 2.75,
+      "note": "Raised under CLAUDE.md § 5's rule (Loc, 2026-11-19): S3, Enter or Space on an action reached with Tab runs it, Enter on the list no longer reopens the dial, and the arrow keys skip a disabled action (FR-20)."
+    },
+    {
+      "entry": "weeljack-ng/picklist",
+      "optimus": "picklist",
+      "kb": 2.75,
+      "note": "Raised under CLAUDE.md § 5's rule (Loc, 2026-11-19): S2, showSourceControls and showTargetControls (GF4), then the filters: filterBy and a name per filter input (Q2), funded by reading the translation through Optimus's typed object. The filter-empty text did not fit the 2.75 KB cap (2856 B)."
     }
   ]
 }

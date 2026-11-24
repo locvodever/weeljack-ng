@@ -1,0 +1,34 @@
+@let model = mapped();
+<p-speeddial
+  [model]="model.items"
+  [(visible)]="visible"
+  [direction]="direction()"
+  [type]="type()"
+  [radius]="radius()"
+  [disabled]="disabled()"
+  [ariaLabel]="ariaLabel() ?? strings('actions')"
+  [ariaLabelledBy]="ariaLabelledBy()"
+  [pt]="partAttributes()"
+>
+  @if (itemSlot(); as slot) {
+    <ng-template #item let-item let-toggle="toggleCallback">
+      @let entry = model.source(item);
+      @if (entry) {
+        @if (item.disabled && skipsDisabled()) {
+          <a class="p-disabled" hidden></a>
+        }
+        <button
+          type="button"
+          class="p-button p-component p-button-icon-only p-button-secondary p-button-rounded p-button-sm p-speeddial-action"
+          [attr.aria-label]="item.label"
+          [disabled]="item.disabled"
+          (click)="toggle($event, item)"
+          (keydown.enter)="act($event, toggle, item)"
+          (keydown.space)="act($event, toggle, item)"
+        >
+          <ng-container *ngTemplateOutlet="slot.template; context: { $implicit: entry }" />
+        </button>
+      }
+    </ng-template>
+  }
+</p-speeddial>

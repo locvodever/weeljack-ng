@@ -1,0 +1,19 @@
+/* The host is a start-aligned row sized by its boxes, 8 px apart at every size. In a container
+   narrower than the row the boxes shrink together, to the `small` width at most, and the row never
+   wraps. */
+@layer wj {
+  :host {
+    display: inline-flex;
+    max-inline-size: 100%;
+  }
+
+  :host ::ng-deep .p-inputotp {
+    flex-wrap: nowrap;
+    max-inline-size: 100%;
+  }
+
+  :host ::ng-deep .p-inputotp-input {
+    min-inline-size: 2rem;
+    flex: 0 1 auto;
+  }
+}

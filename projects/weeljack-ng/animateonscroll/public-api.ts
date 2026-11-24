@@ -1,0 +1,1 @@
+export { WjAnimateOnScroll } from './animateonscroll';

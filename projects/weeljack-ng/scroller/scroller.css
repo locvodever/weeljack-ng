@@ -1,0 +1,17 @@
+/* The host and Optimus's element are blocks, so the viewport fills the host's width. The one rule
+   written here is the focus ring: Optimus makes the scrolling root a tab stop and draws nothing on
+   it. Optimus's own parts carry no `wj` attribute, so it is reached with `::ng-deep` scoped to the
+   host. Optimus injects `.p-virtualscroller { outline: 0 none }` unlayered, and an unlayered rule
+   beats any layered one, so only an important declaration inside the layer can draw the ring. */
+@layer wj {
+  :host,
+  p-scroller {
+    display: block;
+  }
+
+  :host ::ng-deep .p-virtualscroller:focus-visible {
+    outline: var(--wj-focus-ring-width, 2px) var(--wj-focus-ring-style, solid)
+      var(--wj-focus-ring-color) !important;
+    outline-offset: var(--wj-focus-ring-offset, 2px) !important;
+  }
+}

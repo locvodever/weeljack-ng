@@ -1,0 +1,39 @@
+<h1 tabindex="-1">Errors and warnings</h1>
+<p class="purpose">
+  WeeljackNg's own problems are development-only warnings: a <code>console.warn</code> line that
+  never throws and is left out of a production build. Each one ends with the address of its code's
+  page below.
+</p>
+
+<div class="scroll" tabindex="0" role="region" aria-label="Error codes">
+  <table>
+    <thead>
+      <tr>
+        <th scope="col">Code</th>
+        <th scope="col">Raised by</th>
+        <th scope="col">What is wrong</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (row of rows; track row.code) {
+        <tr>
+          <th scope="row" class="token">
+            <a [routerLink]="['errors', row.code]" [relativeTo]="root"
+              ><code>{{ row.code }}</code></a
+            >
+          </th>
+          <td>
+            @if (row.summary !== null) {
+              {{ row.summary }}
+            } @else {
+              @for (selector of row.selectors; track selector; let last = $last) {
+                <code>{{ selector }}</code>{{ last ? '' : ', ' }}
+              }
+            }
+          </td>
+          <td>{{ row.what }}</td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>

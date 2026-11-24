@@ -1,0 +1,24 @@
+/* The host and Optimus's own element share one inline-flex box, so the host is exactly as tall as
+   the two joined buttons (44 px by default) with no inline-baseline gap. The menu button gets the
+   preset's icon-only width (as tall as it is wide) counted border-box: Optimus sets it on a
+   content-box, which left it 2 px wider than tall. Everything else is the preset. */
+@layer wj {
+  :host,
+  p-splitbutton {
+    display: inline-flex;
+  }
+
+  :host ::ng-deep .p-splitbutton-dropdown {
+    box-sizing: border-box;
+    width: var(--wj-button-icon-only-width);
+    padding-inline: 0;
+  }
+
+  :host ::ng-deep .p-splitbutton-dropdown.p-button-sm {
+    width: var(--wj-button-sm-icon-only-width);
+  }
+
+  :host ::ng-deep .p-splitbutton-dropdown.p-button-lg {
+    width: var(--wj-button-lg-icon-only-width);
+  }
+}

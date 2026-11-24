@@ -1,0 +1,30 @@
+/* The host is the box: the Optimus root inside stretches to the host's width, so an app sizes the
+   control with host `class`/`style`. The chevron moves off the preset's low-contrast surface.400 to
+   the muted text colour through Optimus's own component variable. The label's line-height comes
+   from the root layer styles, so the trigger measures 36 / 44 / 52 px. The panel is inside the
+   host, and its tree's nodes carry no `wj` attribute, so they are reached with `::ng-deep` scoped
+   to it, winning on specificity (one more attribute than Optimus's rules, which sit in the same
+   layer). The empty message takes Optimus's own, unused padding token and the muted colour; a
+   focused node on the highlight fill takes the highlight colour for its ring, as in `wj-tree`. */
+@layer wj {
+  :host {
+    display: inline-flex;
+    /* prettier-ignore */
+    --wj-treeselect-dropdown-color:var(--wj-text-muted-color);
+  }
+
+  p-treeselect {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  :host ::ng-deep .p-tree-empty-message {
+    padding: var(--wj-treeselect-empty-message-padding);
+    color: var(--wj-text-muted-color);
+  }
+
+  :host ::ng-deep .p-tree-node:focus-visible > .p-tree-node-content.p-tree-node-selected {
+    outline-color: var(--wj-highlight-color);
+    outline-offset: -3px;
+  }
+}

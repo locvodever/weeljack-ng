@@ -1,0 +1,42 @@
+.purpose {
+  max-inline-size: 72ch;
+  font-size: 1.125rem;
+}
+
+section {
+  margin-block-start: 48px;
+}
+
+h2 {
+  margin-block: 0 16px;
+  font-size: 1.5rem;
+}
+
+/* The date sits inside the heading, a step down: 1rem, regular, muted. */
+.date {
+  margin-inline-start: 0.25em;
+  color: var(--wj-text-muted-color);
+  font-size: 1rem;
+  font-weight: 400;
+}
+
+h3 {
+  margin-block: 24px 8px;
+  font-size: 1.125rem;
+}
+
+ul,
+p {
+  max-inline-size: 72ch;
+}
+
+ul {
+  margin-block: 0;
+  padding-inline-start: 24px;
+}
+
+/* A long URL or token wraps instead of widening the page. */
+li {
+  margin-block-end: 8px;
+  overflow-wrap: anywhere;
+}

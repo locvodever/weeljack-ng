@@ -1,0 +1,34 @@
+/* The host is Optimus's block root. Optimus's DOM is the child component's, so these rules reach it
+   through `::ng-deep`, keyed on the documented `data-pc-section` names. G10 reflow: the header's
+   buttons wrap to a second row instead of overflowing, and a file name (or the basic chosen-file
+   text) breaks anywhere instead of being cut, because it is the only on-screen name of what Remove
+   removes. A non-image row has no preview (Optimus gives its `img` an empty `src`) and the browser
+   would draw a broken image that shows the file name a second time. The progress bar's `display`
+   outranks the `hidden` the wrapper routes onto it, so it is hidden here too. Optimus's message
+   enters with a 0.3 s keyframe class that its own `motion` options do not reach: under reduced
+   motion none runs (`animation: none`, so Angular drops the enter class at once). */
+@layer wj {
+  :host {
+    display: block;
+  }
+
+  :host ::ng-deep [data-pc-section='header'] {
+    flex-wrap: wrap;
+  }
+
+  :host ::ng-deep [data-pc-section='filename'],
+  :host ::ng-deep [data-pc-section='basiccontent'] > span {
+    overflow-wrap: anywhere;
+  }
+
+  :host ::ng-deep [data-pc-section='filethumbnail'][src=''],
+  :host ::ng-deep p-progressbar[hidden] {
+    display: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    :host ::ng-deep p-message {
+      animation: none;
+    }
+  }
+}

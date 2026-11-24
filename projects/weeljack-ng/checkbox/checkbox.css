@@ -1,0 +1,7 @@
+/* The host is the box of the Optimus root inside (already inline-flex) and adds none of its own,
+   so a field's inline mode puts the 24 px box on the label's first line. */
+@layer wj {
+  :host {
+    display: inline-flex;
+  }
+}

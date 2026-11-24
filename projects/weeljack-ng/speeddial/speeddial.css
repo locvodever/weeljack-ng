@@ -1,0 +1,49 @@
+/* The host sets no position: the closed actions keep their space (they are scaled to zero, not
+   removed), so the app places the host out of flow, anchored at the toggle. Four Optimus gaps are
+   fixed below, each by a rule that beats Optimus's by specificity inside the same layer:
+   - its root is `position: static`, which would anchor the circle types' actions to whatever
+     ancestor is positioned;
+   - its 8 px root gap puts those circles off the toggle's centre (`[class*='-circle']` is the three
+     circle types);
+   - it never sets `--item-diff-x/y` (it tries before its buttons have attributes), which leaves them
+     half a toggle-to-action step off;
+   - `p-button-sm` puts 12 px of padding back on an icon-only button, which squeezes a 16 px icon to
+     10.
+   The last rule draws the ring Optimus marks (`p-focus`) but never styles. */
+@layer wj {
+  :host {
+    display: inline-flex;
+  }
+
+  :host ::ng-deep .p-speeddial {
+    position: relative;
+  }
+
+  :host ::ng-deep .p-speeddial[class*='-circle'] {
+    gap: 0;
+  }
+
+  :host ::ng-deep .p-speeddial-list {
+    --item-diff-x: calc(
+      (var(--wj-button-icon-only-width) - var(--wj-button-sm-icon-only-width)) / 2
+    );
+    --item-diff-y: var(--item-diff-x);
+  }
+
+  :host ::ng-deep .p-speeddial-action {
+    padding: 0;
+  }
+
+  :host ::ng-deep .p-speeddial-item.p-focus .p-speeddial-action {
+    outline: var(--wj-focus-ring-width) var(--wj-focus-ring-style) var(--wj-focus-ring-color);
+    outline-offset: var(--wj-focus-ring-offset);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    :host
+      ::ng-deep
+      :is(.p-speeddial-item, .p-speeddial-list, .p-speeddial-button.p-speeddial-rotate) {
+      transition: none;
+    }
+  }
+}

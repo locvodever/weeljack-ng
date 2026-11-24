@@ -1,6 +1,8 @@
 import { CSP_NONCE, Component, type Provider } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
+import type { TreeNode } from '@openng/optimus-ui/api';
 import { Optimus } from '@openng/optimus-ui/config';
+import { OrganizationChart } from '@openng/optimus-ui/organizationchart';
 import { ButtonModule } from '@openng/optimus-ui/button';
 import { InputTextModule } from '@openng/optimus-ui/inputtext';
 import { provideWeeljack, type WjThemeOptions } from './public-api';
@@ -19,6 +21,58 @@ import { provideWeeljack, type WjThemeOptions } from './public-api';
 })
 class ThemeHost {}
 
+/** An org chart, so Optimus loads its component tokens (a token is emitted with its component). */
+@Component({
+  selector: 'wj-org-chart-host',
+  imports: [OrganizationChart],
+  template: `<p-organizationChart [value]="data" />`,
+})
+class OrgChartHost {
+  protected readonly data: TreeNode[] = [{ label: 'Lead', expanded: true, children: [] }];
+}
+
+/** An app's brand scales, as fixtures. */
+const APP_PRIMARY = {
+  50: '#fff3ef',
+  100: '#ffd9c7',
+  200: '#ffb59f',
+  300: '#ff8c6e',
+  400: '#f06030',
+  500: '#c2410c',
+  600: '#a53409',
+  700: '#862a07',
+  800: '#6a2005',
+  900: '#4d1803',
+  950: '#310f01',
+};
+const APP_SURFACE = {
+  0: '#ffffff',
+  50: '#f6f4f1',
+  100: '#ede9e4',
+  200: '#e4dfd9',
+  300: '#d0c9c2',
+  400: '#b8afa8',
+  500: '#9e948c',
+  600: '#6b625c',
+  700: '#4a3f3a',
+  800: '#302622',
+  900: '#1f1a17',
+  950: '#0f0c0a',
+};
+const STONE_DARK = {
+  50: '#fafaf9',
+  100: '#f5f5f4',
+  200: '#e7e5e4',
+  300: '#d6d3d1',
+  400: '#a8a29e',
+  500: '#78716c',
+  600: '#57534e',
+  700: '#44403c',
+  800: '#292524',
+  900: '#1c1917',
+  950: '#0c0a09',
+};
+
 const ROOT = document.documentElement;
 
 async function render(
@@ -30,6 +84,13 @@ async function render(
   document.body.appendChild(fixture.nativeElement as HTMLElement);
   await fixture.whenStable();
   return fixture;
+}
+
+async function renderOrgChart(options?: WjThemeOptions): Promise<void> {
+  TestBed.configureTestingModule({ providers: [provideWeeljack(options)] });
+  const fixture = TestBed.createComponent(OrgChartHost);
+  document.body.appendChild(fixture.nativeElement as HTMLElement);
+  await fixture.whenStable();
 }
 
 function variable(name: string, element: Element = ROOT): string {
@@ -100,6 +161,20 @@ describe('provideWeeljack', () => {
       expect(variable('--wj-transition-duration')).toBe('0.2s');
     });
 
+    it('draws the submenu indicator in zinc.500, one step darker when active (FR-13)', async () => {
+      await render();
+
+      expect(variable('--wj-navigation-submenu-icon-color')).toBe('#71717a');
+      expect(variable('--wj-navigation-submenu-icon-focus-color')).toBe('#52525b');
+      expect(variable('--wj-navigation-submenu-icon-active-color')).toBe('#52525b');
+    });
+
+    it('draws the org chart node border in zinc.500, as the connectors are (FR-18)', async () => {
+      await renderOrgChart();
+
+      expect(variable('--wj-organizationchart-node-border-color')).toBe('#71717a');
+    });
+
     it('moves light severity fills to 700 with white text', async () => {
       const fixture = await render();
       const button = (fixture.nativeElement as HTMLElement).querySelector('button');
@@ -130,6 +205,77 @@ describe('provideWeeljack', () => {
     });
   });
 
+  describe('brand colours', () => {
+    it('turns a hex primary into a scale on 500 and keeps Aura mapping on top', async () => {
+      await render({ primary: '#c2410c' });
+
+      expect(variable('--wj-primary-500')).toBe('#c2410c');
+      expect(variable('--wj-primary-50')).toBe('#fcf6f3');
+      expect(variable('--wj-primary-100')).toBe('#f0d1c5');
+      expect(variable('--wj-primary-400')).toBe('#ce653a');
+      expect(variable('--wj-primary-600')).toBe('#a5370a');
+      expect(variable('--wj-primary-950')).toBe('#311003');
+      expect(variable('--wj-primary-color')).toBe('#c2410c');
+      expect(variable('--wj-primary-contrast-color')).toBe('#ffffff');
+      expect(variable('--wj-primary-hover-color')).toBe('#a5370a');
+      expect(variable('--wj-highlight-background')).not.toBe('#09090b');
+    });
+
+    it('uses primary 400 in dark', async () => {
+      await render({ primary: '#c2410c', darkMode: 'class' });
+      ROOT.classList.add('wj-dark');
+
+      expect(variable('--wj-primary-color')).toBe('#ce653a');
+    });
+
+    it('takes a full scale unchanged', async () => {
+      await render({ primary: APP_PRIMARY });
+
+      expect(variable('--wj-primary-50')).toBe('#fff3ef');
+      expect(variable('--wj-primary-400')).toBe('#f06030');
+      expect(variable('--wj-primary-500')).toBe('#c2410c');
+    });
+
+    it('takes one surface for both schemes and keeps surface.0 white', async () => {
+      await render({ surface: APP_SURFACE });
+
+      expect(variable('--wj-surface-0')).toBe('#ffffff');
+      expect(variable('--wj-surface-500')).toBe('#9e948c');
+      expect(variable('--wj-form-field-border-color')).toBe('#9e948c');
+      expect(variable('--wj-primary-color')).toBe('#09090b');
+    });
+
+    it('lets a scale that sets 0 override the white', async () => {
+      await render({ surface: { ...APP_SURFACE, 0: '#fffdfa' } });
+
+      expect(variable('--wj-surface-0')).toBe('#fffdfa');
+    });
+
+    it('reads each scheme from its own surface under { light, dark }', async () => {
+      await render({
+        surface: { light: APP_SURFACE, dark: STONE_DARK },
+        darkMode: 'class',
+      });
+
+      expect(variable('--wj-surface-500')).toBe('#9e948c');
+
+      ROOT.classList.add('wj-dark');
+
+      expect(variable('--wj-surface-500')).toBe('#78716c');
+      expect(variable('--wj-surface-950')).toBe('#0c0a09');
+    });
+
+    it('keeps the always-on layer whatever the brand', async () => {
+      const fixture = await render({ primary: APP_PRIMARY, surface: APP_SURFACE });
+      const button = (fixture.nativeElement as HTMLElement).querySelector('button');
+
+      expect(variable('--wj-focus-ring-width')).toBe('2px');
+      expect(variable('--wj-focus-ring-color')).toBe('#c2410c');
+      expect(variable('--wj-form-field-border-radius')).toBe('8px');
+      expect(variable('--wj-button-danger-background', button as Element)).toBe('#b91c1c');
+    });
+  });
+
   describe('darkMode "class"', () => {
     it('is light until .wj-dark is on <html>, then resolves the dark values', async () => {
       await render({ darkMode: 'class' });
@@ -146,6 +292,24 @@ describe('provideWeeljack', () => {
       expect(variable('--wj-form-field-invalid-border-color')).toBe('#f87171');
       expect(variable('--wj-error-color')).toBe('#f87171');
       expect(variable('--wj-content-background')).toBe('#18181b');
+    });
+  });
+
+  describe('darkMode "class" menus', () => {
+    it('draws the org chart node border in zinc.500 in .wj-dark too (FR-18)', async () => {
+      await renderOrgChart({ darkMode: 'class' });
+      ROOT.classList.add('wj-dark');
+
+      expect(variable('--wj-organizationchart-node-border-color')).toBe('#71717a');
+    });
+
+    it("keeps Aura's submenu indicator in .wj-dark (FR-13)", async () => {
+      await render({ darkMode: 'class' });
+      ROOT.classList.add('wj-dark');
+
+      expect(variable('--wj-navigation-submenu-icon-color')).toBe('#71717a');
+      expect(variable('--wj-navigation-submenu-icon-focus-color')).toBe('#a1a1aa');
+      expect(variable('--wj-navigation-submenu-icon-active-color')).toBe('#a1a1aa');
     });
   });
 
@@ -181,6 +345,61 @@ describe('provideWeeljack', () => {
       expect(reduced).toContain('--wj-transition-duration: 0s');
       expect(reduced).toContain('.p-progressspinner-spin');
       expect(reduced).toMatch(/\.p-icon-spin \{ animation: [^;]*none[^;]*!important/);
+      expect(reduced).toMatch(/\.p-ripple > \.p-ink \{ display: none/);
+      expect(reduced).toMatch(
+        /\.p-animateonscroll \{ opacity: 1 !important; animation: [^;]*none[^;]*!important; transition: none !important/,
+      );
+    });
+
+    it('shows the tooltip bubble fully opaque at once under reduced motion', async () => {
+      await render();
+      // Optimus's fade writes an inline opacity from JavaScript, as the bubble is being faded in.
+      const bubble = document.createElement('div');
+      bubble.className = 'p-tooltip p-component';
+      bubble.style.opacity = '0.3';
+      document.body.append(bubble);
+      const rule = mediaRules('prefers-reduced-motion: reduce').find((media) =>
+        media.cssText.includes('.p-tooltip'),
+      );
+
+      if (!rule) {
+        throw new Error('the reduced-motion block has no tooltip rule');
+      }
+      expect(rule.cssText).toMatch(/\.p-tooltip \{ opacity: 1 !important; \}/);
+      // Control: the reader has no reduced-motion preference, so the fade's opacity stands.
+      expect(getComputedStyle(bubble).opacity).toBe('0.3');
+
+      // Widen the real rule in place, so the shipped cascade order is what is tested.
+      const original = rule.media.mediaText;
+      try {
+        rule.media.mediaText = 'all';
+        expect(getComputedStyle(bubble).opacity).toBe('1');
+      } finally {
+        rule.media.mediaText = original;
+      }
+      expect(getComputedStyle(bubble).opacity).toBe('0.3');
+    });
+  });
+
+  describe('line-height rule', () => {
+    it('gives the input, textarea, select label and button a 1.5 line height', async () => {
+      await render();
+
+      const rule = allRules().find(
+        (r): r is CSSStyleRule => r instanceof CSSStyleRule && r.style.lineHeight === '1.5',
+      );
+      for (const selector of [
+        '.p-inputtext',
+        '.p-textarea',
+        '.p-select-label',
+        '.p-treeselect-label',
+        '.p-cascadeselect-label',
+        '.p-multiselect-label',
+        '.p-togglebutton-label',
+        '.p-button',
+      ]) {
+        expect(rule?.selectorText).toContain(selector);
+      }
     });
   });
 

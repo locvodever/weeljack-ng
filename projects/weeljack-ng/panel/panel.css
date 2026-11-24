@@ -1,0 +1,28 @@
+/* The host is a block. The header row gets an 8 px gap; the header slot's wrapper takes the free
+   space after the title, so the actions stay at the inline end (Optimus's `space-between` would
+   float it to the middle). The actions area is a centred flex row, the toggle last. Optimus's own
+   parts carry no `wj` attribute, so they are reached with `::ng-deep` scoped to the host. */
+@layer wj {
+  :host {
+    display: block;
+  }
+
+  :host ::ng-deep .p-panel-header {
+    gap: 0.5rem;
+  }
+
+  /* Optimus sets the title at line-height 1, so the lines of a wrapped title touch. */
+  :host ::ng-deep .p-panel-title {
+    line-height: 1.25;
+  }
+
+  [data-wj-part='panel-header'] {
+    margin-inline-end: auto;
+  }
+
+  :host ::ng-deep .p-panel-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+}

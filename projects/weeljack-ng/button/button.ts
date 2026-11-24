@@ -8,8 +8,9 @@ import {
   input,
 } from '@angular/core';
 import { Button } from '@openng/optimus-ui/button';
-import { _checkAriaOnHost, _checkWeeljackSetup } from 'weeljack-ng/private';
+import { _checkAriaOnHost, _checkWeeljackSetup, _mergePartAttributes } from 'weeljack-ng/private';
 import type {
+  WjButtonAriaHasPopup,
   WjButtonPt,
   WjButtonSeverity,
   WjButtonSize,
@@ -22,7 +23,10 @@ import type {
  * states of the default look. Put the click handler on `wj-button` itself. While `disabled` or
  * `loading`, the button emits no `click` to it.
  *
- * Content you project (an icon, say) renders beside the `label`. Icon-only buttons set `ariaLabel`.
+ * Text goes in `label`; projected content is for a `wj-icon`, which renders beside the label and
+ * never names the button. Without a `label` the button is icon-only: as wide as it is tall
+ * (44 × 44 px by default, 36 small, 52 large), and it must set `ariaLabel`. Projected text is not
+ * a name and does not fit the square.
  */
 @Component({
   selector: 'wj-button',
@@ -31,7 +35,10 @@ import type {
   styleUrl: './button.css',
 })
 export class WjButton {
-  /** Text of the button. Rendered as text, never as HTML. */
+  /**
+   * Text of the button, and its accessible name. Rendered as text, never as HTML. Without it the
+   * button is icon-only (square) and needs `ariaLabel`.
+   */
   readonly label = input<string>();
   /** Shows a spinner beside the label and makes the button inert. */
   readonly loading = input(false, { transform: booleanAttribute });
@@ -45,12 +52,25 @@ export class WjButton {
   readonly severity = input<WjButtonSeverity>();
   /** Native `type` of the button element. */
   readonly type = input<WjButtonType>('button');
-  /** Accessible name when the button has no visible text. Set on the focusable element. */
+  /**
+   * Accessible name of an icon-only button (one without `label`), which must set it. Set on the
+   * focusable element.
+   */
   readonly ariaLabel = input<string>();
   /** Id of the element that names the button. Set on the focusable element. */
   readonly ariaLabelledBy = input<string>();
   /** Id of the element that describes the button. Set on the focusable element. */
   readonly ariaDescribedBy = input<string>();
+  /**
+   * Kind of popup the button opens (`aria-haspopup`). Set on the focusable element. Left unset, the
+   * attribute is absent.
+   */
+  readonly ariaHasPopup = input<WjButtonAriaHasPopup>();
+  /**
+   * Whether the popup the button controls is open (`aria-expanded`). Set on the focusable element,
+   * where `false` is written as `"false"`. Left unset, the attribute is absent.
+   */
+  readonly ariaExpanded = input<boolean>();
   /**
    * Pass-through for the button's parts. Tracks Optimus: its part names and attributes follow the
    * installed `@openng/optimus-ui` minor and are outside this component's stable API; changes to
@@ -66,26 +86,15 @@ export class WjButton {
   protected readonly inertProps = { autofocus: false };
 
   /** `pt` forwarded as given, plus the ARIA attributes this wrapper routes to the button. */
-  protected readonly partAttributes = computed<WjButtonPt>(() => {
-    const pt = this.pt();
-    const own: Record<string, string> = {};
-    const labelledBy = this.ariaLabelledBy();
-    const describedBy = this.ariaDescribedBy();
-    if (labelledBy !== undefined) {
-      own['aria-labelledby'] = labelledBy;
-    }
-    if (describedBy !== undefined) {
-      own['aria-describedby'] = describedBy;
-    }
-    if (this.loading()) {
-      own['aria-busy'] = 'true';
-    }
-    return (context) => {
-      const parts = typeof pt === 'function' ? pt(context) : pt;
-      const root = typeof parts?.root === 'function' ? parts.root(context) : parts?.root;
-      return { ...parts, root: { ...(typeof root === 'string' ? { class: root } : root), ...own } };
-    };
-  });
+  protected readonly partAttributes = computed<WjButtonPt>(() =>
+    _mergePartAttributes(this.pt(), 'root', {
+      'aria-labelledby': this.ariaLabelledBy(),
+      'aria-describedby': this.ariaDescribedBy(),
+      'aria-haspopup': this.ariaHasPopup(),
+      'aria-expanded': this.ariaExpanded()?.toString(),
+      'aria-busy': this.loading() ? 'true' : undefined,
+    }),
+  );
 
   constructor() {
     _checkWeeljackSetup('wj-button');

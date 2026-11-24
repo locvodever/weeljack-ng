@@ -1,0 +1,7 @@
+/* The host is a block, so the timeline (Optimus's own element, a flex box) fills its width.
+   Everything else is the preset. */
+@layer wj {
+  :host {
+    display: block;
+  }
+}

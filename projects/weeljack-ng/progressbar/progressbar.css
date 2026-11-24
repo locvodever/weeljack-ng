@@ -1,0 +1,18 @@
+/* The host takes its container's width; Optimus's own element is the painted track. */
+@layer wj {
+  :host {
+    display: block;
+  }
+
+  /* The determinate fill eases its width over 1 s. Under reduced motion it jumps to each value.
+     Optimus's part is not ours (no encapsulation attribute), so the rule reaches it through
+     `::ng-deep`, scoped under the host: its specificity (0,3,0) beats Optimus's
+     `.p-progressbar-determinate .p-progressbar-value` (0,2,0) inside the same layer. The
+     indeterminate sweep is an animation, not this transition, and keeps running: it is the bar's
+     only visible sign of activity. */
+  @media (prefers-reduced-motion: reduce) {
+    :host ::ng-deep .p-progressbar-determinate .p-progressbar-value {
+      transition: none;
+    }
+  }
+}

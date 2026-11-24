@@ -1,0 +1,77 @@
+@let e = entry();
+<h1 tabindex="-1">{{ e.code }}</h1>
+
+<section aria-labelledby="the-message">
+  <h2 id="the-message" tabindex="-1">The message</h2>
+  @for (block of blocks(); track block.label) {
+    <docs-code-block [code]="block.message" [label]="block.label" />
+  }
+  @if (hasHole()) {
+    <p>The <code>…</code> stands for text filled in when the warning runs.</p>
+  }
+</section>
+
+<section aria-labelledby="raised-by">
+  <h2 id="raised-by" tabindex="-1">Raised by</h2>
+  @if (e.everyComponent) {
+    <p>Every WeeljackNg component.</p>
+  } @else {
+    <ul class="chips">
+      @for (selector of e.selectors; track selector) {
+        <li>
+          <code>{{ selector }}</code>
+        </li>
+      }
+    </ul>
+  }
+</section>
+
+<section aria-labelledby="what-is-wrong">
+  <h2 id="what-is-wrong" tabindex="-1">What is wrong</h2>
+  @if (wrong().length === 1) {
+    <p>{{ wrong()[0] }}</p>
+  } @else {
+    <ul>
+      @for (item of wrong(); track item) {
+        <li>{{ item }}</li>
+      }
+    </ul>
+  }
+</section>
+
+<section aria-labelledby="what-to-do">
+  <h2 id="what-to-do" tabindex="-1">What to do</h2>
+  @if (todo().length === 1) {
+    <p>{{ todo()[0] }}</p>
+  } @else {
+    <ul>
+      @for (item of todo(); track item) {
+        <li>{{ item }}</li>
+      }
+    </ul>
+  }
+  @if (components().length > 0) {
+    <div class="scroll" tabindex="0" role="region" aria-label="What to do for each component">
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">Component</th>
+            <th scope="col">What to do</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of components(); track item.selector) {
+            <tr>
+              <th scope="row" class="token">
+                <code>{{ item.selector }}</code>
+              </th>
+              <td>{{ item.fix }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>
+
+<p class="next"><a routerLink="errors" [relativeTo]="root">All errors and warnings</a></p>

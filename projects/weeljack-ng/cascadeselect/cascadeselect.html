@@ -1,0 +1,17 @@
+<p-cascadeselect
+  optionLabel="label"
+  optionGroupLabel="label"
+  optionDisabled="disabled"
+  [options]="tree().items"
+  [optionGroupChildren]="tree().levels"
+  [inputId]="field.id()"
+  [ariaLabel]="ariaLabel()"
+  [ariaLabelledBy]="field.labelledBy()"
+  [disabled]="isDisabled()"
+  [required]="required()"
+  [invalid]="field.invalid()"
+  [placeholder]="placeholder()"
+  [size]="size()"
+  [motionOptions]="motion"
+  [pt]="partAttributes()"
+/>

@@ -1,0 +1,50 @@
+<h1 tabindex="-1">Changelog</h1>
+<p class="purpose">Every WeeljackNg release, newest first.</p>
+
+@for (release of releases; track release.version) {
+  <section [attr.aria-labelledby]="release.id">
+    <h2 [id]="release.id">
+      @if (release.url !== null) {
+        <a [href]="release.url" rel="noopener">{{ release.version }}</a>
+      } @else {
+        {{ release.version }}
+      }
+      @if (release.date !== null) {
+        <time class="date" [attr.datetime]="release.date">{{ release.date }}</time>
+      }
+    </h2>
+    @for (section of release.sections; track section.title) {
+      <h3>{{ section.title }}</h3>
+      <ul>
+        @for (item of section.items; track $index) {
+          <li>
+            @for (token of item; track $index) {
+              @switch (token.type) {
+                @case ('code') {
+                  <code>{{ token.text }}</code>
+                }
+                @case ('strong') {
+                  <strong>{{ token.text }}</strong>
+                }
+                @case ('link') {
+                  <a [href]="token.href" rel="noopener">{{ token.text }}</a>
+                }
+                @case ('component') {
+                  <a [routerLink]="['components', token.entry]" [relativeTo]="root"
+                    ><code>{{ token.text }}</code></a
+                  >
+                }
+                @default {
+                  {{ token.text }}
+                }
+              }
+            }
+          </li>
+        }
+      </ul>
+    }
+    @for (note of release.notes; track $index) {
+      <p>{{ note }}</p>
+    }
+  </section>
+}

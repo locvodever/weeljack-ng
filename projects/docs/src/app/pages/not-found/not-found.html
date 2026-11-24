@@ -1,6 +1,16 @@
 <h1 tabindex="-1">No page here</h1>
-<p>That address does not match a page in these docs.</p>
+@if (planned && slug !== null) {
+  <p>
+    <code>wj-{{ slug }}</code> is planned for wave {{ planned.wave }}.
+  </p>
+} @else if (notWrapped && slug !== null) {
+  <p>
+    <code>{{ slug }}</code> is not wrapped — use <docs-text [value]="notWrapped.useInstead" />.
+  </p>
+} @else {
+  <p>That address does not match a page in these docs.</p>
+}
 <ul>
   <li><a routerLink="" [relativeTo]="root">Home</a></li>
-  <li><a routerLink="components/button" [relativeTo]="root">Button</a></li>
+  <li><a routerLink="components" [relativeTo]="root">Components</a></li>
 </ul>

@@ -2,16 +2,21 @@
 import { existsSync, mkdirSync, readdirSync, writeFileSync } from 'node:fs';
 import { dirname, join, parse } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { libraryEntries } from './entries.mjs';
 
 /**
  * Docs registries, generated so a new entry edits no shared file. Writes two TypeScript files under
- * `projects/docs/src/generated/` (gitignored):
- * - `component-docs.ts`: `COMPONENT_DOCS`, from every `pages/component/docs/<entry>.ts` (each
- *   exports `DOC: ComponentDoc`);
- * - `api-documents.ts`: `API_DOCUMENTS`, from every `generated/api/<entry>.json` that
- *   `extract-api.mjs` wrote. Each JSON is assigned to `ApiDocument`, so the compiler checks its
- *   shape against the script's output.
- * Output is sorted by entry, hence deterministic. Run after `extract-api.mjs`.
+ * `projects/docs/src/generated/` (gitignored). Both are maps of loaders, so every page's content,
+ * examples and API sit in their own lazy chunk and the docs app's initial bundle does not grow with
+ * each entry:
+ * - `component-docs.ts`: `COMPONENT_DOCS`, entry -> `() => import(<entry>.ts).DOC`, from every
+ *   `pages/component/docs/<entry>.ts` (each exports `DOC: ComponentDoc`);
+ * - `api-documents.ts`: `API_DOCUMENTS`, entry -> `() => import(<entry>.json)`, from every
+ *   `generated/api/<entry>.json` that `extract-api.mjs` wrote. Each loader's result is typed
+ *   `ApiDocument`, so the compiler checks the JSON's shape against the script's output.
+ * A third file, `preset-loaders.ts`, lists the `weeljack-ng/preset-*` entries as `import()` loaders, in
+ * the order of `PRESET_ORDER`, so the docs app never imports a preset statically.
+ * Output is deterministic. Run after `extract-api.mjs`.
  */
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const docsSrc = join(root, 'projects', 'docs', 'src');
@@ -30,25 +35,38 @@ function stems(dir, keep) {
     .sort();
 }
 
-/** @param {string} entry @returns {string} a valid identifier for the entry */
-const identifier = (entry) => `${entry.replace(/[^A-Za-z0-9]/g, '_')}_`;
-
 const docEntries = stems(
   pagesDir,
   (name) => name.endsWith('.ts') && !name.endsWith('.spec.ts') && !name.endsWith('.d.ts'),
 );
 const apiEntries = stems(apiDir, (name) => name.endsWith('.json') && name !== 'index.json');
 
+/** The presets M1 names, in the order the theme panel lists them. */
+const PRESET_ORDER = ['noir', 'aura', 'lara', 'nora', 'material', 'police'];
+const presetNames = libraryEntries()
+  .map((entry) => /^weeljack-ng\/preset-([^/]+)$/.exec(entry))
+  .flatMap((match) => (match?.[1] === undefined ? [] : [match[1]]));
+const unknownPreset = presetNames.find((name) => !PRESET_ORDER.includes(name));
+if (unknownPreset !== undefined) {
+  console.error(
+    `generate-registries: unknown preset entry weeljack-ng/preset-${unknownPreset}; add it to PRESET_ORDER`,
+  );
+  process.exit(1);
+}
+const presets = PRESET_ORDER.filter((name) => presetNames.includes(name)).map((name) => {
+  const label = name.charAt(0).toUpperCase() + name.slice(1);
+  return { name, label, exportName: `wj${label}`, entry: `weeljack-ng/preset-${name}` };
+});
+
 mkdirSync(outDir, { recursive: true });
 
 writeFileSync(
   join(outDir, 'component-docs.ts'),
   `${HEADER}import type { ComponentDoc } from '../app/pages/component/component-doc';
-${docEntries.map((entry) => `import { DOC as ${identifier(entry)} } from '../app/pages/component/docs/${entry}';`).join('\n')}
 
-/** Page content per entry. Every entry in the API index needs one (prerender fails). */
-export const COMPONENT_DOCS: ReadonlyMap<string, ComponentDoc> = new Map([
-${docEntries.map((entry) => `  ['${entry}', ${identifier(entry)}],`).join('\n')}
+/** Page content per entry, loaded on demand. Every entry in the API index needs one (prerender fails). */
+export const COMPONENT_DOCS: ReadonlyMap<string, () => Promise<ComponentDoc>> = new Map([
+${docEntries.map((entry) => `  ['${entry}', () => import('../app/pages/component/docs/${entry}').then((m) => m.DOC)],`).join('\n')}
 ]);
 `,
 );
@@ -56,17 +74,44 @@ ${docEntries.map((entry) => `  ['${entry}', ${identifier(entry)}],`).join('\n')}
 writeFileSync(
   join(outDir, 'api-documents.ts'),
   `${HEADER}import type { ApiDocument } from '../app/api/api-types';
-${apiEntries.map((entry) => `import ${identifier(entry)}Json from './api/${entry}.json';`).join('\n')}
 
-${apiEntries.map((entry) => `const ${identifier(entry)}: ApiDocument = ${identifier(entry)}Json;`).join('\n')}
-
-/** Generated API per entry. */
-export const API_DOCUMENTS: ReadonlyMap<string, ApiDocument> = new Map([
-${apiEntries.map((entry) => `  ['${entry}', ${identifier(entry)}],`).join('\n')}
+/** Generated API per entry, loaded on demand. */
+export const API_DOCUMENTS: ReadonlyMap<string, () => Promise<ApiDocument>> = new Map([
+${apiEntries.map((entry) => `  ['${entry}', () => import('./api/${entry}.json').then((m): ApiDocument => m.default)],`).join('\n')}
 ]);
 `,
 );
 
+writeFileSync(
+  join(outDir, 'preset-loaders.ts'),
+  `${HEADER}import type { WjPreset } from 'weeljack-ng';
+
+/** One base preset of the theme panel's Preset row. */
+export interface PresetLoader {
+  readonly name: string;
+  readonly label: string;
+  readonly exportName: string;
+  readonly entry: string;
+  readonly load: () => Promise<WjPreset>;
+}
+
+/** The presets, in the panel's order. Each loads its own lazy chunk; none is in the initial bundle. */
+export const PRESET_LOADERS: readonly PresetLoader[] = [
+${presets
+  .map(
+    (p) => `  {
+    name: '${p.name}',
+    label: '${p.label}',
+    exportName: '${p.exportName}',
+    entry: '${p.entry}',
+    load: () => import('${p.entry}').then((m) => m.${p.exportName}),
+  },`,
+  )
+  .join('\n')}
+];
+`,
+);
+
 console.log(
-  `generate-registries: ${String(docEntries.length)} doc page(s), ${String(apiEntries.length)} API document(s)`,
+  `generate-registries: ${String(docEntries.length)} doc page(s), ${String(apiEntries.length)} API document(s), ${String(presets.length)} preset(s)`,
 );

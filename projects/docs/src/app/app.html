@@ -1,16 +1,87 @@
 <a class="skip-link" href="#main" (click)="skipToMain($event)">Skip to content</a>
 <header class="header">
-  <div class="group">
-    <a class="wordmark" routerLink="">WeeljackNg</a>
-    <span class="version">v{{ version }}</span>
-  </div>
-  <div class="group">
-    <a class="action" href="https://github.com/locvodever/weeljack-ng" rel="noopener">GitHub</a>
-    <button type="button" class="action" [attr.aria-pressed]="dark()" (click)="toggleDark()">
-      Dark mode <span aria-hidden="true">{{ dark() ? 'on' : 'off' }}</span>
+  <div class="bar">
+    <button
+      type="button"
+      class="action menu"
+      aria-haspopup="dialog"
+      [attr.aria-expanded]="menuOpen()"
+      (click)="openMenu()"
+    >
+      <span class="glyph" aria-hidden="true"></span>
+      Menu
     </button>
+    <div class="group">
+      <a class="wordmark" routerLink="">WeeljackNg</a>
+      @let v = version();
+      @if (v) {
+        <span class="version">v{{ v }}</span>
+      }
+    </div>
+    <div class="group utilities">
+      <a class="action github" href="https://github.com/locvodever/weeljack-ng" rel="noopener"
+        >GitHub</a
+      >
+      <button
+        #themeButton
+        type="button"
+        class="action theme"
+        aria-haspopup="dialog"
+        [attr.aria-expanded]="themeOpen()"
+        (click)="toggleTheme($event, themeButton)"
+      >
+        Theme
+      </button>
+      <button type="button" class="action" [attr.aria-pressed]="dark()" (click)="toggleDark()">
+        Dark mode <span class="state" aria-hidden="true">{{ dark() ? 'on' : 'off' }}</span>
+      </button>
+    </div>
   </div>
 </header>
-<main id="main" tabindex="-1">
-  <router-outlet />
-</main>
+<div class="shell">
+  <docs-sidebar class="side" idPrefix="sidebar" />
+  <div class="centre">
+    <div class="alert-slot" role="alert">
+      @if (failed() !== null) {
+        <div class="banner">
+          <p>Couldn't load this page.</p>
+          <button #reload type="button" class="action" (click)="loadFailedPage()">Reload</button>
+        </div>
+      }
+    </div>
+    <main id="main" tabindex="-1">
+      <router-outlet />
+    </main>
+  </div>
+  <div class="aside">
+    <ng-container #toc />
+  </div>
+</div>
+<ng-container #drawer />
+<ng-container #themePopover />
+<footer class="footer">
+  <div class="footer-inner">
+    <nav aria-label="Footer">
+      <ul class="footer-links">
+        <li><a routerLink="platform-support">Platform support</a></li>
+        <li><a routerLink="errors">Errors</a></li>
+        <li><a routerLink="guides/from-optimus">Coming from Optimus</a></li>
+        <li><a href="https://github.com/locvodever/weeljack-ng" rel="noopener">GitHub</a></li>
+      </ul>
+    </nav>
+    <div class="lineage">
+      <p>
+        WeeljackNg is built on Optimus UI by OpenNG, an MIT-licensed fork of PrimeNG v21 by
+        PrimeTek. Their licences:
+        <a href="https://github.com/openng-org/optimus-ui/blob/main/LICENSE.md" rel="noopener"
+          >Optimus UI</a
+        >
+        and
+        <a href="https://github.com/primefaces/primeng/blob/21.0.0/LICENSE.md" rel="noopener"
+          >PrimeNG v21</a
+        >.
+      </p>
+      <p>WeeljackNg is not affiliated with or endorsed by OpenNG or PrimeTek.</p>
+    </div>
+  </div>
+</footer>

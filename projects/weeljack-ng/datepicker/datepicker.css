@@ -1,0 +1,59 @@
+/* The host is the box: the Optimus root and the text box stretch to the host's width, so an app
+   sizes the control with host `class`/`style`. The focused input sits above the calendar button, so
+   its 2px ring is drawn whole, and a disabled button takes the disabled fill with the input. The
+   inline calendar sizes to its content, starts at the start edge and scrolls inside itself when its
+   container is narrower. Month and year buttons take the page's font. A day, month or year that
+   cannot be picked is the muted text colour at full opacity from the preset's `@layer wj` rule
+   (`src/layer-styles.ts`), so this file has no copy. Today keeps Optimus's fill and gets a 1px ring
+   in the field boundary colour, drawn on the day's own transparent border. */
+@layer wj {
+  :host {
+    display: inline-flex;
+  }
+
+  :host(.wj-datepicker-inline) {
+    justify-self: start;
+    min-inline-size: 0;
+    max-inline-size: 100%;
+  }
+
+  p-datepicker {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  :host ::ng-deep .p-datepicker-input {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  :host ::ng-deep .p-datepicker-input:focus {
+    z-index: 1;
+  }
+
+  :host ::ng-deep .p-datepicker-dropdown:disabled {
+    background: var(--wj-form-field-disabled-background);
+    color: var(--wj-form-field-disabled-color);
+  }
+
+  :host ::ng-deep .p-datepicker-select-month,
+  :host ::ng-deep .p-datepicker-select-year {
+    font: inherit;
+  }
+
+  :host ::ng-deep .p-datepicker-today > .p-datepicker-day {
+    border-color: var(--wj-form-field-border-color);
+  }
+
+  :host(.wj-datepicker-inline) ::ng-deep p-motion {
+    min-width: 0;
+  }
+
+  :host ::ng-deep .p-datepicker-panel-inline {
+    max-width: 100%;
+  }
+
+  :host ::ng-deep .p-invalid .p-datepicker-panel-inline {
+    border-color: var(--wj-form-field-invalid-border-color);
+  }
+}

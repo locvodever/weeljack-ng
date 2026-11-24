@@ -1,0 +1,10 @@
+/* The host is a row that sizes to its buttons: Optimus's inline-flex group inside keeps each button's
+   own width, so inside a field the group sits at the start and the rest of the row stays empty. The
+   buttons' heights (44 / 36 / 52 px), the picked pill and the unpicked text colour are the preset's
+   `togglebutton` tokens (`wjGuarantees`), shared with `wj-togglebutton`; nothing of the look is set
+   here. No transition and no animation of its own. */
+@layer wj {
+  :host {
+    display: inline-flex;
+  }
+}

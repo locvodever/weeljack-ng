@@ -1,0 +1,1 @@
+export { WjRipple } from './ripple';

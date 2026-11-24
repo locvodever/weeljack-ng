@@ -1,0 +1,23 @@
+/* The host is the 24 px preview: Optimus's root is `inline-block` and so is the host. The preview is
+   an inline input, so its line box would leave a baseline gap under it; top-aligning it removes
+   the gap. A swatch near its background would vanish, so the preview takes a 1 px inset boundary in
+   the field-border colour (SC 1.4.11); Optimus's own focus rule is more specific and replaces it
+   while focused, where the family ring identifies the preview. The area and the hue strip of the
+   dark panel take the same ring in the handles' white (`--wj-colorpicker-handle-color`, `{surface.0}`
+   in both schemes), because the ink ring is invisible there. */
+@layer wj {
+  :host {
+    display: inline-block;
+  }
+
+  :host ::ng-deep .p-colorpicker-preview {
+    vertical-align: top;
+    box-shadow: inset 0 0 0 1px var(--wj-form-field-border-color);
+  }
+
+  :host ::ng-deep [role='slider']:focus-visible {
+    outline: var(--wj-focus-ring-width) var(--wj-focus-ring-style)
+      var(--wj-colorpicker-handle-color);
+    outline-offset: var(--wj-focus-ring-offset);
+  }
+}

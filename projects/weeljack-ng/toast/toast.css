@@ -1,0 +1,12 @@
+/* Optimus's toast is `position: fixed` (a 20px inset), so the host takes no room in the flow. Aura
+   gives the stack a fixed 25rem width: capped at the viewport minus the inset on both sides, a
+   message fits a 320px viewport (WCAG 1.4.10 Reflow). */
+@layer wj {
+  :host {
+    display: block;
+  }
+
+  :host p-toast {
+    max-width: calc(100% - 40px);
+  }
+}

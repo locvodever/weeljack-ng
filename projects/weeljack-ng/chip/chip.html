@@ -1,0 +1,24 @@
+<p-chip
+  [label]="label()"
+  [image]="image()"
+  [alt]="alt()"
+  [removable]="removable()"
+  [pt]="partAttributes()"
+  (onImageError)="imageError.emit($event)"
+>
+  <ng-content />
+  @if (removable()) {
+    <ng-template #removeicon>
+      <button
+        type="button"
+        [disabled]="disabled()"
+        [attr.aria-label]="removeLabel"
+        [attr.aria-describedby]="label() ? labelId : null"
+        (click)="remove($event)"
+        (keydown)="onKeydown($event)"
+      >
+        <svg data-p-icon="times-circle" aria-hidden="true" focusable="false"></svg>
+      </button>
+    </ng-template>
+  }
+</p-chip>

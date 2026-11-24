@@ -1,0 +1,26 @@
+/* The host is the box: the Optimus root inside stretches to the host's width, so an app sizes the
+   control with host `class`/`style`. The input's line-height comes from the root layer styles
+   (`.p-inputtext`), so it measures 36 / 44 / 52 px. The announcer is visually hidden and takes no
+   space: it is for screen readers only. */
+@layer wj {
+  :host {
+    display: inline-flex;
+  }
+
+  p-autocomplete {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .wj-announcer {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    margin: -1px;
+    padding: 0;
+    border: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}

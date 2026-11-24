@@ -1,0 +1,7 @@
+/* The host is a block; Optimus's own element keeps its flex column of panels. Everything else is
+   the preset. */
+@layer wj {
+  :host {
+    display: block;
+  }
+}

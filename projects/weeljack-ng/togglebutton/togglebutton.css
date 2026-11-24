@@ -1,0 +1,17 @@
+/* The host is the box of the Optimus button inside and sizes to it, so inside a field the button
+   sits at the start and the rest of the row stays empty. An app that gives the host an inline size
+   gets a steady-width button: the Optimus root fills it and its label stays centred. The heights
+   (44 / 36 / 52 px), the picked pill and the unpicked text colour are the preset's `togglebutton`
+   tokens (`wjGuarantees`), shared with `wj-selectbutton`; nothing of the look is set here. No
+   transition and no animation of its own. */
+@layer wj {
+  :host {
+    display: inline-flex;
+    justify-self: start;
+  }
+
+  p-togglebutton {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+}

@@ -1,0 +1,23 @@
+<p-autocomplete
+  optionLabel="label"
+  optionDisabled="disabled"
+  forceSelection
+  fluid
+  [suggestions]="suggestions()"
+  (completeMethod)="query.emit($event.query)"
+  [inputId]="field.id()"
+  [ariaLabel]="ariaLabel()"
+  [ariaLabelledBy]="field.labelledBy()"
+  [disabled]="isDisabled()"
+  [required]="required()"
+  [invalid]="field.invalid()"
+  [placeholder]="placeholder()"
+  [size]="size()"
+  [motionOptions]="motion"
+  [pt]="partAttributes()"
+  (onShow)="open.set(true)"
+  (onHide)="open.set(false)"
+/>
+<span data-wj-announcer class="wj-announcer" role="status" aria-live="polite">{{
+  announcement()
+}}</span>

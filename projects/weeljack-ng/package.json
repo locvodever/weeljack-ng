@@ -8,7 +8,9 @@
   },
   "peerDependencies": {
     "@angular/cdk": "^22.2.0",
+    "@angular/common": "^22.2.0",
     "@angular/core": "^22.2.0",
+    "@angular/forms": "^22.2.0",
     "@openng/optimus-ui": "~2.0.2",
     "@openng/optimus-ui-themes": "~2.0.2"
   },

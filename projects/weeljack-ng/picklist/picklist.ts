@@ -1,0 +1,156 @@
+import { NgTemplateOutlet } from '@angular/common';
+import {
+  Component,
+  booleanAttribute,
+  computed,
+  contentChild,
+  inject,
+  input,
+  model,
+} from '@angular/core';
+import { Optimus } from '@openng/optimus-ui/config';
+import { PickList } from '@openng/optimus-ui/picklist';
+import { _checkAriaOnHost, _checkWeeljackSetup, _mergePartAttributes } from 'weeljack-ng/private';
+import { WjPickListEmptySlot, WjPickListItemSlot } from './picklist-slots';
+import type { WjPickListPt } from './picklist-types';
+
+/*
+ * Notes on the template, which is one line on purpose: a partially compiled template ships as text,
+ * inside the size budget.
+ * - Optimus splices the arrays it is given in place and never writes its own `source` / `target`
+ *   models, so it is handed copies (`from`, `to`), and a move or reorder, which Optimus announces
+ *   through its `on…` events, writes new arrays to the models: copies of the arrays Optimus holds
+ *   at that moment (read from `pl`, not from `from` / `to`, which are already a step ahead after
+ *   an earlier write), so the app's arrays keep their reference and order (FR-9). A transfer
+ *   writes both arrays, a reorder only its own.
+ * - Optimus stacks the buttons between the lists below 960 px only when `responsive` is on, so it is.
+ * - The item template is declared only for a slot the app gave, and serves both lists. The empty
+ *   template is always declared, for both lists: the app's slot, else the translation's
+ *   text, because Optimus renders an empty list blank. Optimus uses it for a filter that matches
+ *   nothing too: the filter-empty text (a template of its own) did not fit the size cap (21).
+ * - With an item template the option's own `aria-label` (the item's name field) is cleared, so the
+ *   option is named by its content, as axe's label-content-name-mismatch requires.
+ * - The filters are back: `filterBy` shows one above each list, and each input is named from its own
+ *   list's label, routed through `pt` (see `partAttributes`). Dropped by need: `showSourceFilter` /
+ *   `showTargetFilter`, the filter placeholders, `filterMatchMode`, `filterLocale` and the filter
+ *   templates. The show-controls switches hide a list's four reorder buttons and never the transfer
+ *   buttons.
+ */
+
+/**
+ * Two lists, with buttons that move items from one to the other, over Optimus's `p-picklist`. Give
+ * it `source` and `target` as `[(source)]` and `[(target)]`: each move writes new arrays, and
+ * your arrays are never changed. Select items, then use the transfer buttons; `dragdrop` adds
+ * dragging as an extra. Name the lists with `sourceAriaLabel` and `targetAriaLabel`.
+ */
+@Component({
+  selector: 'wj-picklist',
+  imports: [PickList, NgTemplateOutlet],
+  // prettier-ignore
+  template: `<p-picklist #pl [source]="from()" [target]="to()" [sourceHeader]="sourceHeader()" [targetHeader]="targetHeader()" [dataKey]="dataKey()" [sourceAriaLabel]="sourceAriaLabel()" [targetAriaLabel]="targetAriaLabel()" [filterBy]="filterBy()" [dragdrop]="dragdrop()" [stripedRows]="stripedRows()" [showSourceControls]="showSourceControls()" [showTargetControls]="showTargetControls()" [disabled]="disabled()" [scrollHeight]="scrollHeight()" [responsive]="true" [pt]="partAttributes()" (onMoveToTarget)="both(pl)" (onMoveAllToTarget)="both(pl)" (onMoveToSource)="both(pl)" (onMoveAllToSource)="both(pl)" (onSourceReorder)="source.set(pl.source().slice())" (onTargetReorder)="target.set(pl.target().slice())">@if (itemSlot(); as s) {<ng-template #item let-item let-selected="selected" let-index="index" let-disabled="disabled"><ng-container *ngTemplateOutlet="s.template; context: { $implicit: item, index, selected, disabled }" /></ng-template>}<ng-template #none let-list="list">@if (emptySlot(); as s) {<ng-container *ngTemplateOutlet="s.template; context: { list }" />} @else { {{ empty }} }</ng-template><ng-template #emptymessagesource><ng-container *ngTemplateOutlet="none; context: { list: 'source' }" /></ng-template><ng-template #emptymessagetarget><ng-container *ngTemplateOutlet="none; context: { list: 'target' }" /></ng-template></p-picklist>`,
+  styleUrl: './picklist.css',
+})
+export class WjPickList<T = unknown> {
+  /** The items of the first list. Two-way: `[(source)]`. Every move writes a new array. */
+  readonly source = model<T[]>([]);
+  /** The items of the second list. Two-way: `[(target)]`. Every move writes a new array. */
+  readonly target = model<T[]>([]);
+  /** Text above the source list. */
+  readonly sourceHeader = input<string>();
+  /** Text above the target list. */
+  readonly targetHeader = input<string>();
+  /** The field shown for an item when there is no item template. `name` when unset. */
+  readonly dataKey = input<string>();
+  /** Accessible name of the source list. Set on the listbox, not on the host. */
+  readonly sourceAriaLabel = input<string>();
+  /** Accessible name of the target list. Set on the listbox, not on the host. */
+  readonly targetAriaLabel = input<string>();
+  /** Lets the user drag items to reorder them and between the lists. The buttons stay the keyboard path. */
+  readonly dragdrop = input(false, { transform: booleanAttribute });
+  /** The field the filters search. Setting it shows a filter input above each list. */
+  readonly filterBy = input<string>();
+  /** Accessible name of the source list's filter input. */
+  readonly ariaSourceFilterLabel = input<string>();
+  /** Accessible name of the target list's filter input. */
+  readonly ariaTargetFilterLabel = input<string>();
+  /** Alternating row fills. */
+  readonly stripedRows = input(false, { transform: booleanAttribute });
+  /** Shows the four reorder buttons beside the source list. The transfer buttons always show. */
+  readonly showSourceControls = input(true, { transform: booleanAttribute });
+  /** Shows the four reorder buttons beside the target list. The transfer buttons always show. */
+  readonly showTargetControls = input(true, { transform: booleanAttribute });
+  /** Disables both lists and every button. */
+  readonly disabled = input(false, { transform: booleanAttribute });
+  /** Height of each list, past which it scrolls. A CSS length. */
+  readonly scrollHeight = input('14rem');
+  /**
+   * Pass-through for the parts. Tracks Optimus: its part names and attributes follow the
+   * installed `@openng/optimus-ui` minor and are outside this component's stable API; changes to
+   * them ship only in the release that takes a new Optimus minor and are not breaking.
+   */
+  readonly pt = input<WjPickListPt>();
+
+  protected readonly itemSlot = contentChild(WjPickListItemSlot);
+  protected readonly emptySlot = contentChild(WjPickListEmptySlot);
+
+  /** The copies Optimus works on. */
+  protected readonly from = computed(() => this.source().slice());
+  protected readonly to = computed(() => this.target().slice());
+  /** The translation's "Move Bottom" name, which Optimus replaces with "Move Down". */
+  private readonly bottom = inject(Optimus).translation.aria?.moveBottom;
+  /** The translation's text for an empty list, which Optimus would render blank. */
+  protected readonly empty = inject(Optimus).translation.emptyMessage ?? '';
+  /**
+   * `pt` forwarded as given, plus what this wrapper routes: the translation's "Move Bottom" name,
+   * which Optimus replaces with "Move Down", with an item template, a cleared option name, and the
+   * name of each list's filter input. Optimus hands both lists one `pcListbox` part and never passes
+   * the filter labels on, so `pcFilter` is a function part: each listbox resolves it as its own
+   * `instance`, and the one whose id ends in `_target_list` is the target's (a spec pins the suffix).
+   * `aria-owns` is cleared: it names a list that is not rendered while the list is empty.
+   */
+  protected readonly partAttributes = computed<WjPickListPt>(() => {
+    const named = ['pcSourceMoveBottomButton.root', 'pcTargetMoveBottomButton.root'].reduce(
+      (pt, part) => _mergePartAttributes(pt, part, { 'aria-label': this.bottom }),
+      this.pt(),
+    );
+    const own = _mergePartAttributes(
+      this.itemSlot()
+        ? _mergePartAttributes(named, 'pcListbox.option', { 'aria-label': undefined })
+        : named,
+      'pcListbox',
+      {},
+    );
+    const source = this.ariaSourceFilterLabel();
+    const target = this.ariaTargetFilterLabel();
+    return (context) => {
+      const pt = own(context);
+      const box = typeof pt.pcListbox === 'object' ? pt.pcListbox : null;
+      const mine: unknown = box?.pcFilter;
+      const filter = typeof mine === 'object' || typeof mine === 'function' ? mine : undefined;
+      return {
+        ...pt,
+        pcListbox: {
+          ...box,
+          pcFilter: (list: { instance: { id?: string } }) =>
+            _mergePartAttributes(filter, 'root', {
+              'aria-label': list.instance.id?.endsWith('_target_list') ? target : source,
+              'aria-owns': undefined,
+            })(list),
+        },
+      };
+    };
+  });
+
+  /** A transfer moved items out of one list and into the other. */
+  protected both(pick: PickList): void {
+    // type-escape: Optimus types its source and target models as any[]; they hold this component's T
+    this.source.set(pick.source().slice() as T[]);
+    // type-escape: Optimus types its source and target models as any[]; they hold this component's T
+    this.target.set(pick.target().slice() as T[]);
+  }
+
+  constructor() {
+    _checkWeeljackSetup('wj-picklist');
+    _checkAriaOnHost('wj-picklist', 'Use sourceAriaLabel and targetAriaLabel instead');
+  }
+}

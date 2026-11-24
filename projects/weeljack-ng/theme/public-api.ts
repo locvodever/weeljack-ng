@@ -1,0 +1,1 @@
+export { WjTheme } from './theme';

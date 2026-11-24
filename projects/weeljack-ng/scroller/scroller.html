@@ -1,0 +1,37 @@
+<p-scroller
+  [items]="items()"
+  [itemSize]="itemSize()"
+  [scrollHeight]="scrollHeight()"
+  [scrollWidth]="scrollWidth()"
+  [orientation]="orientation()"
+  [lazy]="lazy()"
+  [loading]="loading()"
+  [showLoader]="loaderSlot() !== undefined"
+  [pt]="partAttributes()"
+  (onLazyLoad)="lazyLoad.emit($event)"
+  (onScrollIndexChange)="scrollIndexChange.emit($event)"
+>
+  @if (itemSlot(); as slot) {
+    <ng-template #item let-item let-options="options">
+      <ng-container
+        *ngTemplateOutlet="
+          slot.template;
+          context: {
+            $implicit: item,
+            index: options.index,
+            count: options.count,
+            first: options.first,
+            last: options.last,
+            even: options.even,
+            odd: options.odd,
+          }
+        "
+      />
+    </ng-template>
+  }
+  @if (loaderSlot(); as slot) {
+    <ng-template #loader let-options="options">
+      <ng-container *ngTemplateOutlet="slot.template; context: { index: options.index }" />
+    </ng-template>
+  }
+</p-scroller>

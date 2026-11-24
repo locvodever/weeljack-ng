@@ -3,12 +3,17 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { prerenderedPagePaths, startDocsServer } from './serve-docs.mjs';
+import { hasRenderedIconSvg, missingProbes, probesFor } from './ssr-probes.mjs';
+
+/** @typedef {import('./ssr-probes.mjs').ApiFile} ApiFile
+ * @typedef {import('./ssr-probes.mjs').FileProbes} FileProbes */
 
 /**
  * `check:ssr` (FR-30, 16 Q5). Serves the built docs under `/weeljack-ng/` and fails if any
  * exported `wj-*` selector is missing from every prerendered page: a wrapper that does not render
  * on the server shows up here. Exported selectors come from the generated API JSON, which is built
- * from each entry's public API.
+ * from each entry's public API. A slot selector on `ng-template` is covered when a component
+ * selector of the same API file is (`ssr-probes.mjs`).
  */
 const apiDir = join(
   dirname(fileURLToPath(import.meta.url)),
@@ -20,35 +25,17 @@ const apiDir = join(
   'api',
 );
 
-/**
- * @typedef {{ selector: string }} ApiClassSelector
- * @typedef {{ classes: ApiClassSelector[] }} ApiFile
- */
-
-/** @returns {{ selector: string, search: RegExp }[]} one probe per exported selector */
+/** @returns {FileProbes[]} one probe set per generated API file */
 function exportedSelectors() {
-  /** @type {{ selector: string, search: RegExp }[]} */
-  const probes = [];
-  for (const file of readdirSync(apiDir)) {
-    if (!file.endsWith('.json') || file === 'index.json') continue;
-    /** @type {ApiFile} */
-    const api = JSON.parse(readFileSync(join(apiDir, file), 'utf8'));
-    for (const { selector } of api.classes) {
-      for (const single of selector.split(',').map((part) => part.trim())) {
-        const element = /^([a-z][\w-]*)/.exec(single)?.[1];
-        const attribute = /\[([\w-]+)/.exec(single)?.[1];
-        if (element?.startsWith('wj-') === true) {
-          probes.push({ selector: single, search: new RegExp(`<${element}[\\s>]`, 'i') });
-        } else if (attribute?.startsWith('wj') === true) {
-          probes.push({ selector: single, search: new RegExp(`\\s${attribute}[\\s=>]`, 'i') });
-        }
-      }
-    }
-  }
-  return probes;
+  return readdirSync(apiDir)
+    .filter((file) => file.endsWith('.json') && file !== 'index.json')
+    .map((file) =>
+      probesFor(/** @type {ApiFile} */ (JSON.parse(readFileSync(join(apiDir, file), 'utf8')))),
+    );
 }
 
-const probes = exportedSelectors();
+const files = exportedSelectors();
+const probes = files.flatMap((file) => file.own);
 const paths = prerenderedPagePaths();
 if (probes.length === 0 || paths.length === 0) {
   console.error(
@@ -69,7 +56,18 @@ try {
     html.push(await response.text());
   }
 
-  const missing = probes.filter((probe) => !html.some((page) => probe.search.test(page)));
+  const iconPath = paths.find((path) => path.endsWith('/components/icon/'));
+  const iconHtml = iconPath === undefined ? undefined : html[paths.indexOf(iconPath)];
+  if (iconPath === undefined || iconHtml === undefined || !hasRenderedIconSvg(iconHtml)) {
+    console.error(
+      `check:ssr: ${iconPath ?? 'the components/icon page'} holds no wj-icon with an svg that has a viewBox and a shape.`,
+    );
+    process.exitCode = 1;
+  } else {
+    console.log(`check:ssr: ${iconPath} holds a wj-icon with a full svg (viewBox and shapes)`);
+  }
+
+  const missing = missingProbes(files, html);
   if (missing.length > 0) {
     console.error(
       `check:ssr: ${String(missing.length)} exported selector(s) are on no prerendered page:\n  ${missing.map((probe) => probe.selector).join('\n  ')}`,

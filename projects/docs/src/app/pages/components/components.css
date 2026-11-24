@@ -1,0 +1,134 @@
+.purpose {
+  max-inline-size: 72ch;
+  font-size: 1.125rem;
+}
+
+.filter-label {
+  display: block;
+  margin-block-end: 8px;
+  font-weight: 600;
+}
+
+.filter-input {
+  box-sizing: border-box;
+  inline-size: min(100%, 24rem);
+  padding: 9px 14px;
+  border: 1px solid var(--wj-form-field-border-color);
+  border-radius: 8px;
+  background: var(--wj-form-field-background);
+  color: var(--wj-form-field-color);
+  font: inherit;
+  line-height: 1.5;
+}
+
+.filter-input:hover {
+  border-color: var(--wj-form-field-hover-border-color);
+}
+
+/* The row keeps its height, so nothing below it jumps when the status text appears. */
+.status-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  min-block-size: 24px;
+  margin-block-start: 8px;
+}
+
+.status {
+  margin: 0;
+  font-size: 0.9375rem;
+}
+
+.action {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--wj-surface-500);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--wj-text-color);
+  font: inherit;
+  cursor: pointer;
+}
+
+section {
+  margin-block-start: 32px;
+}
+
+h2 {
+  margin-block: 0 12px;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.rows {
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--wj-content-border-color);
+  border-radius: 12px;
+  background: var(--wj-content-background);
+  list-style: none;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 4px;
+  padding: 12px 16px;
+  border-block-end: 1px solid var(--wj-content-border-color);
+}
+
+.row:last-child {
+  border-block-end: 0;
+}
+
+@media (min-width: 640px) {
+  .row {
+    grid-template-columns: minmax(0, 15rem) minmax(0, 1fr);
+    column-gap: 24px;
+  }
+}
+
+.who {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  min-inline-size: 0;
+}
+
+.title {
+  min-block-size: 24px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.chip {
+  max-inline-size: 100%;
+  overflow-wrap: anywhere;
+}
+
+.what,
+.use,
+.why {
+  margin: 0;
+  font-size: 0.9375rem;
+}
+
+.why {
+  color: var(--wj-text-muted-color);
+  font-size: 0.875rem;
+}
+
+/* Planned: muted text, never opacity. Muted text cannot sit on the global code chip (under 4.5:1). */
+.muted .what,
+.muted .chip {
+  color: var(--wj-text-muted-color);
+}
+
+.muted .chip {
+  padding: 0;
+  background: none;
+}

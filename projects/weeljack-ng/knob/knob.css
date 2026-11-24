@@ -1,0 +1,17 @@
+/* The host is Optimus's `p-knob`, which declares no display, so it would be inline and its inline
+   `svg` would leave a baseline gap under it. Both are inline flex, so the box is exactly the
+   `diameter` square. The range arc's fixed 0.1s stroke fade is Optimus's, and the root's reduced
+   motion rule does not reach it: it is zeroed here. */
+@layer wj {
+  :host,
+  :host ::ng-deep .p-knob {
+    display: inline-flex;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    :host ::ng-deep .p-knob-range {
+      transition-property: stroke;
+      transition-duration: 0s;
+    }
+  }
+}

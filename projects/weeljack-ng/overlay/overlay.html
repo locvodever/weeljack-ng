@@ -1,0 +1,12 @@
+<p-overlay
+  [target]="overlayTarget()"
+  [(visible)]="visible"
+  appendTo="self"
+  [motionOptions]="motion"
+  [pt]="pt()"
+  [listener]="listener"
+  (onShow)="shown()"
+  (onAfterLeave)="left()"
+>
+  <ng-content />
+</p-overlay>

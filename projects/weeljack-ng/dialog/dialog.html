@@ -1,0 +1,19 @@
+<p-dialog
+  [(visible)]="visible"
+  [header]="header()"
+  [closable]="closable()"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [focusOnShow]="false"
+  [closeAriaLabel]="closeLabel"
+  [closeButtonProps]="closeButtonProps"
+  [footerTemplate]="footer()?.template"
+  [motionOptions]="motion"
+  [maskMotionOptions]="motion"
+  [pt]="partAttributes()"
+  (onShow)="entered()"
+  (onHide)="lifecycle.left()"
+>
+  <ng-content />
+</p-dialog>

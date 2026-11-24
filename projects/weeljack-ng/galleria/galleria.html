@@ -1,0 +1,30 @@
+<p-galleria
+  [value]="value()"
+  [(activeIndex)]="activeIndex"
+  [(visible)]="visible"
+  [fullScreen]="fullScreen()"
+  [numVisible]="numVisible()"
+  [responsiveOptions]="responsiveOptions()"
+  [circular]="circular()"
+  [showItemNavigators]="showItemNavigators()"
+  [showThumbnails]="showThumbnails()"
+  [showThumbnailNavigators]="showThumbnailNavigators()"
+  [thumbnailsPosition]="thumbnailsPosition()"
+  [motionOptions]="motion"
+  [maskMotionOptions]="motion"
+  [pt]="partAttributes()"
+>
+  <ng-template #item let-item>
+    <ng-container *ngTemplateOutlet="itemSlot().template; context: { $implicit: item }" />
+  </ng-template>
+  @if (thumbnailSlot(); as slot) {
+    <ng-template #thumbnail let-item>
+      <ng-container *ngTemplateOutlet="slot.template; context: { $implicit: item }" />
+    </ng-template>
+  }
+  @if (captionSlot(); as slot) {
+    <ng-template #caption let-item>
+      <ng-container *ngTemplateOutlet="slot.template; context: { $implicit: item }" />
+    </ng-template>
+  }
+</p-galleria>

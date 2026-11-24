@@ -4,6 +4,8 @@ import { join } from 'node:path';
 import { gzipSync } from 'node:zlib';
 import { transformSync } from 'esbuild';
 import { ROOT, libraryEntries } from './entries.mjs';
+import { ICON_IMPORT_LIMIT, measureIconImport } from './icon-import-size.mjs';
+import { measurePresetImports } from './preset-import-size.mjs';
 
 /**
  * `size` (FR-31, 21 Q1-Q2). One budget per shipped entry: the entry's FESM, minified with esbuild
@@ -11,10 +13,12 @@ import { ROOT, libraryEntries } from './entries.mjs';
  * wraps that entry); `size-budgets.json` rows cover the root, `private` and other own entries. Angular, Optimus and the other entries stay
  * external because the FESM is a module that only imports them; nothing is bundled. A wrapper's
  * limit is the larger of a floor and a share of the Optimus entry it wraps, measured the same way
- * from the pinned `node_modules`. `/testing` entries are not shipped to apps and are excluded. No
- * PR raises a limit.
+ * from the pinned `node_modules`. `/testing` entries are not shipped to apps and are excluded. The
+ * limits change only by Loc's call (21; on 2026-11-16 the floor went 1.5 -> 2.5 KB and own entries
+ * 3.2 -> 5 KB; on 2026-11-18 `private` alone went 5 -> 7 KB); no family PR raises one. An own row may
+ * set `kb` to override `ownKb` for that entry only.
  *
- * @typedef {{ entry: string, optimus: string, note: string }} Row
+ * @typedef {{ entry: string, optimus: string, note: string, kb?: number }} Row
  * @typedef {{ kb: number, ownKb: number, wrapperFloorKb: number, wrapperShareOfOptimus: number }} Limits
  */
 
@@ -94,13 +98,14 @@ const kb = (/** @type {number} */ bytes) => (bytes / limits.kb).toFixed(2);
 const results = budgeted.map((row) => {
   const bytes = measure(libraryFesm(row.entry));
   if (row.optimus === 'own') {
-    return { row, bytes, optimusBytes: undefined, limit: limits.ownKb * limits.kb };
+    return { row, bytes, optimusBytes: undefined, limit: (row.kb ?? limits.ownKb) * limits.kb };
   }
   const optimusBytes = measure(optimusFesm(row.optimus));
-  const limit = Math.max(
-    limits.wrapperFloorKb * limits.kb,
-    limits.wrapperShareOfOptimus * optimusBytes,
-  );
+  // A wrapper row with `kb` is a raise under CLAUDE.md § 5's rule; without it the computed limit.
+  const limit =
+    row.kb === undefined
+      ? Math.max(limits.wrapperFloorKb * limits.kb, limits.wrapperShareOfOptimus * optimusBytes)
+      : row.kb * limits.kb;
   return { row, bytes, optimusBytes, limit };
 });
 
@@ -112,6 +117,24 @@ const lines = [
     return `| \`${row.entry}\` | ${row.optimus} | ${optimusBytes === undefined ? '-' : `${kb(optimusBytes)} KB`} | ${kb(limit)} KB | ${kb(bytes)} KB | ${ok ? 'ok' : 'OVER'} |`;
   }),
 ];
+
+// The tree-shake check (ADR 0008): an app importing `WjIcon` and one icon pays at most 1 KB, and the
+// bundle holds exactly one generated icon object, so the other icons were dropped.
+const iconImport = await measureIconImport();
+const iconImportOk = iconImport.bytes <= ICON_IMPORT_LIMIT && iconImport.icons === 1;
+lines.push(
+  `| app: \`WjIcon\` + \`wjIconPlus\` (linked, production) | - | - | ${kb(ICON_IMPORT_LIMIT)} KB | ${kb(iconImport.bytes)} KB (${String(iconImport.icons)} icon) | ${iconImportOk ? 'ok' : 'OVER'} |`,
+);
+
+// The preset-import check (ADR 0010): the Optimus base folders each preset-carrying bundle pulls.
+// The gzip is printed with no limit; a wrong composition fails the run.
+const presetImports = await measurePresetImports();
+for (const { entry, bases, bytes, problems } of presetImports) {
+  const composition = bases.length === 0 ? 'no base' : bases.join(', ');
+  lines.push(
+    `| import: \`${entry}\` (bases bundled, production) | - | - | - | ${kb(bytes)} KB (${composition}) | ${problems.length === 0 ? 'ok' : 'WRONG'} |`,
+  );
+}
 console.log(lines.join('\n'));
 
 const summary = process.env['GITHUB_STEP_SUMMARY'];
@@ -119,10 +142,24 @@ if (summary !== undefined && summary !== '') {
   appendFileSync(summary, `### Bundle size (esbuild minify + gzip-6)\n\n${lines.join('\n')}\n`);
 }
 
+if (!iconImportOk) {
+  console.error(
+    `size: an app importing WjIcon and one icon measures ${String(iconImport.bytes)} B with ${String(iconImport.icons)} icon object(s); the limit is ${String(ICON_IMPORT_LIMIT)} B and exactly 1 icon object (tree-shaking).`,
+  );
+  process.exitCode = 1;
+}
+
+for (const { entry, problems } of presetImports) {
+  for (const problem of problems) {
+    console.error(`size: the app bundle of \`${entry}\` ${problem}.`);
+    process.exitCode = 1;
+  }
+}
+
 const over = results.filter(({ bytes, limit }) => bytes > limit);
 if (over.length > 0) {
   console.error(
-    `size: over the limit: ${over.map(({ row }) => row.entry).join(', ')}. No PR raises a limit.`,
+    `size: over the limit: ${over.map(({ row }) => row.entry).join(', ')}. A raise needs the rule in CLAUDE.md § 5 (measured gzip plus at most 0.05 KB, capped; root and private never change).`,
   );
   process.exit(1);
 }
