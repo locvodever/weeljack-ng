@@ -1,11 +1,22 @@
 # WeeljackNg
 
+[![npm](https://img.shields.io/npm/v/weeljack-ng)](https://www.npmjs.com/package/weeljack-ng)
+
 An Angular UI library: a design-system layer over Optimus UI (`@openng/optimus-ui`) with its own
-`wj-*` API and theme. Not published yet — the first release is `0.0.1`.
+`wj-*` API and theme.
 
 The name is spelled without an "h" on purpose.
 
 Docs: <https://locvodever.github.io/weeljack-ng/>
+
+## Install
+
+```sh
+npm install weeljack-ng @openng/optimus-ui@~2.0.2 @openng/optimus-ui-themes@~2.0.2
+```
+
+Then call `provideWeeljack()` in your app's providers. The docs'
+[Get started](https://locvodever.github.io/weeljack-ng/getting-started) page walks through it.
 
 ## Compatibility
 
