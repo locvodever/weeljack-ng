@@ -122,6 +122,7 @@ export class WjTableHarness extends ComponentHarness {
   );
   private readonly previousButton = this.locatorForOptional('.p-paginator-prev');
   private readonly nextButton = this.locatorForOptional('.p-paginator-next');
+  private readonly report = this.locatorForOptional('.p-paginator-current');
   private readonly rowsAndExpansions = this.locatorForAll(
     'tr[data-wj-row], tr.p-datatable-row-expansion',
   );
@@ -189,6 +190,14 @@ export class WjTableHarness extends ComponentHarness {
   async getCurrentPage(): Promise<number> {
     const link = await this.currentPageLink();
     return link === null ? 0 : Number((await link.text()).trim());
+  }
+
+  /**
+   * The text of the current page report, `null` when `showCurrentPageReport` is off. With
+   * `paginatorPosition="both"` there are two reports and this returns the first.
+   */
+  async getReportText(): Promise<string | null> {
+    return (await (await this.report())?.text())?.trim() ?? null;
   }
 
   /** Moves to the next page with the pager's next button. */

@@ -44,7 +44,7 @@ export const DOC: ComponentDoc = {
     {
       title: 'Beside a table',
       description:
-        'A `wj-table`, or a `wj-dataview`, offers only the basics of paging. For the report, the page links or the first and last buttons, turn its `paginator` off and put a `wj-paginator` under it, bound with `[(first)]` and `[(rows)]` and given the same record count. With its pager off, the table shows every row it is given, so the app gives it the current page: the rows from `first` to `first + rows`. Sorting then covers that page only.',
+        'A `wj-table`, or a `wj-dataview`, offers only the basics of paging. A `wj-table` shows a page report on its own pager with `showCurrentPageReport`. To set the page links or the first and last buttons, or for a report on a `wj-dataview`, turn its `paginator` off and put a `wj-paginator` under it, bound with `[(first)]` and `[(rows)]` and given the same record count. With its pager off, the table shows every row it is given, so the app gives it the current page: the rows from `first` to `first + rows`. Sorting then covers that page only.',
       sourceKey: 'paginator/beside-a-table',
       component: PaginatorBesideATableExample,
     },
