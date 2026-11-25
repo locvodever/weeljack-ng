@@ -31,6 +31,7 @@
 .wordmark {
   display: inline-flex;
   align-items: center;
+  gap: 8px;
   min-block-size: 44px;
   font-size: 1.125rem;
   font-weight: 700;

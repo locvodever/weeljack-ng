@@ -15,6 +15,7 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router';
 import { filter } from 'rxjs';
+import { DocsLogo } from './logo/logo';
 import { NavigationFailure } from './navigation-failure/navigation-failure';
 import type { DocsNavDrawer } from './nav-drawer/nav-drawer';
 import { DocsShellData } from './sidebar/nav-data';
@@ -30,7 +31,7 @@ const DARK_CLASS = 'wj-dark';
 const WIDE = '(min-width: 960px)';
 
 @Component({
-  imports: [DocsSidebar, RouterLink, RouterOutlet],
+  imports: [DocsLogo, DocsSidebar, RouterLink, RouterOutlet],
   selector: 'docs-root',
   templateUrl: './app.html',
   styleUrls: ['./app.css', './app-bar.css'],

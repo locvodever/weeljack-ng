@@ -1,0 +1,44 @@
+:host {
+  display: inline-flex;
+  flex: none;
+}
+
+svg {
+  display: block;
+}
+
+/* The preset guarantees AA for its contrast colour on both fills (button text on rest and pressed). */
+.left {
+  fill: var(--wj-primary-color);
+}
+
+.right {
+  fill: var(--wj-primary-active-color);
+}
+
+.glyph {
+  fill: none;
+  stroke: var(--wj-primary-contrast-color);
+  stroke-width: 4.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.dot {
+  fill: var(--wj-primary-contrast-color);
+}
+
+@media (forced-colors: active) {
+  .left,
+  .right {
+    fill: CanvasText;
+  }
+
+  .glyph {
+    stroke: Canvas;
+  }
+
+  .dot {
+    fill: Canvas;
+  }
+}
