@@ -1,3 +1,10 @@
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="projects/docs/public/weeljack-mark-on-dark.svg" />
+    <img src="projects/docs/public/weeljack-mark.svg" width="96" height="96" alt="WeeljackNg logo" />
+  </picture>
+</p>
+
 # WeeljackNg
 
 [![npm](https://img.shields.io/npm/v/weeljack-ng)](https://www.npmjs.com/package/weeljack-ng)
