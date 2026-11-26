@@ -116,6 +116,7 @@ export class WjDialogService {
     const closable = config.closable ?? true;
     // Optimus's own duplicate check sees one component type, so it is switched off (`duplicate`);
     // `shown` is the check by the app's component. `open` returns `null` only for a duplicate.
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-class-instance-assignment -- Optimus's DynamicDialogConfig is an options bag (optional fields only, no constructor logic or private state), and `open` takes a literal
     const dialog = this.dialogs.open(WjDynamicDialogContent, {
       header: config.header,
       closable,

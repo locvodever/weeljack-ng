@@ -20,7 +20,9 @@ import { ROOT } from './entries.mjs';
 /**
  * The `@babel/core` the linker was built against: a dependency of `@angular/compiler-cli`, resolved
  * from it, so the plugin and the transform agree (the workspace root may hoist another version).
- * @type {typeof import('../node_modules/@angular/compiler-cli/node_modules/@babel/core')}
+ * The type names the package, not a path: npm nests a copy under `@angular/compiler-cli` only while
+ * the versions differ, and it removed the nested copy when Angular 22.3 matched the root's.
+ * @type {typeof import('@babel/core')}
  */
 const babel = createRequire(
   createRequire(import.meta.url).resolve('@angular/compiler-cli/package.json'),
