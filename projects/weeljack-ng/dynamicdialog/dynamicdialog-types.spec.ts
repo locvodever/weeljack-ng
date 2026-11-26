@@ -16,6 +16,7 @@ describe('WjDialogService types', () => {
     >();
     expectTypeOf<WjDynamicDialogPt>().toEqualTypeOf<DialogPassThrough>();
 
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-class-instance-assignment -- the literal is how apps fill Optimus's DynamicDialogConfig, an options bag with no constructor logic
     const config: DynamicDialogConfig = {
       header: 'a',
       closable: false,
